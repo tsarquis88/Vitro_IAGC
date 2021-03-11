@@ -1,0 +1,13 @@
+# compile verilog/system verilog design source files
+verilog xil_defaultlib  --include "../../../../monopulse.gen/sources_1/ip/clk_wiz_0" \
+"../../../../monopulse.gen/sources_1/ip/clk_wiz_0/clk_wiz_0_clk_wiz.v" \
+"../../../../monopulse.gen/sources_1/ip/clk_wiz_0/clk_wiz_0.v" \
+"../../../../monopulse.srcs/sources_1/imports/new/file_reader.v" \
+"../../../../monopulse.srcs/sources_1/imports/new/top.v" \
+"../../../../monopulse.srcs/sources_1/imports/new/testbench.v" \
+
+# compile glbl module
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort

@@ -1,0 +1,10 @@
+0.7
+2020.2
+Nov 18 2020
+09:20:35
+/home/tomsar/eclypse-z7/monopulse/monopulse.gen/sources_1/ip/clk_wiz_0/clk_wiz_0.v,1615482612,verilog,,/home/tomsar/eclypse-z7/monopulse/monopulse.srcs/sources_1/imports/new/file_reader.v,,clk_wiz_0,,,../../../../monopulse.gen/sources_1/ip/clk_wiz_0,,,,,
+/home/tomsar/eclypse-z7/monopulse/monopulse.gen/sources_1/ip/clk_wiz_0/clk_wiz_0_clk_wiz.v,1615482612,verilog,,/home/tomsar/eclypse-z7/monopulse/monopulse.gen/sources_1/ip/clk_wiz_0/clk_wiz_0.v,,clk_wiz_0_clk_wiz,,,../../../../monopulse.gen/sources_1/ip/clk_wiz_0,,,,,
+/home/tomsar/eclypse-z7/monopulse/monopulse.sim/sim_1/behav/xsim/glbl.v,1605673889,verilog,,,,glbl,,,,,,,,
+/home/tomsar/eclypse-z7/monopulse/monopulse.srcs/sources_1/imports/new/file_reader.v,1615482795,verilog,,/home/tomsar/eclypse-z7/monopulse/monopulse.srcs/sources_1/imports/new/top.v,,file_reader,,,../../../../monopulse.gen/sources_1/ip/clk_wiz_0,,,,,
+/home/tomsar/eclypse-z7/monopulse/monopulse.srcs/sources_1/imports/new/testbench.v,1615477642,verilog,,,,testbench,,,../../../../monopulse.gen/sources_1/ip/clk_wiz_0,,,,,
+/home/tomsar/eclypse-z7/monopulse/monopulse.srcs/sources_1/imports/new/top.v,1615477647,verilog,,/home/tomsar/eclypse-z7/monopulse/monopulse.srcs/sources_1/imports/new/testbench.v,,top,,,../../../../monopulse.gen/sources_1/ip/clk_wiz_0,,,,,
