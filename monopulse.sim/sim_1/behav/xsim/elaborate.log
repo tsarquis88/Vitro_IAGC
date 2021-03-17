@@ -1,6 +1,6 @@
 Vivado Simulator 2020.2
 Copyright 1986-1999, 2001-2020 Xilinx, Inc. All Rights Reserved.
-Running: /home/tomsar/programas/vivado_2020.2/Vivado/2020.2/bin/unwrapped/lnx64.o/xelab -wto 5e71257cdebd465fadb4f8c129f225cb --incr --debug typical --relax --mt 8 -L xil_defaultlib -L unisims_ver -L unimacro_ver -L secureip -L xpm --snapshot testbench_behav xil_defaultlib.testbench xil_defaultlib.glbl -log elaborate.log 
+Running: /home/tomsar/programas/vivado_2020.2/Vivado/2020.2/bin/unwrapped/lnx64.o/xelab -wto ea58293143374afbad10df1bf68abaf9 --incr --debug typical --relax --mt 8 -L xil_defaultlib -L blk_mem_gen_v8_4_4 -L uvm -L unisims_ver -L unimacro_ver -L secureip -L xpm --snapshot testbench_behav xil_defaultlib.testbench xil_defaultlib.glbl -log elaborate.log 
 Using 8 slave threads.
 Starting static elaboration
 Pass Through NonSizing Optimizer
@@ -9,13 +9,21 @@ Starting simulation data flow analysis
 Completed simulation data flow analysis
 Time Resolution for simulation is 1ps
 Compiling module unisims_ver.IBUF
-Compiling module unisims_ver.MMCME2_ADV(CLKFBOUT_MULT_F=10.0,...
+Compiling module unisims_ver.MMCME2_ADV(CLKFBOUT_MULT_F=49.87...
 Compiling module unisims_ver.BUFG
 Compiling module xil_defaultlib.clk_wiz_0_clk_wiz
 Compiling module xil_defaultlib.clk_wiz_0
-Compiling module xil_defaultlib.file_reader
-WARNING: [XSIM 43-3373] "/home/tomsar/eclypse-z7/monopulse/monopulse.srcs/sources_1/imports/new/file_reader.v" Line 74. System function $fscanf is used as system task. This system function should have a LHS e.g. x=$fscanf().
-WARNING: [XSIM 43-3373] "/home/tomsar/eclypse-z7/monopulse/monopulse.srcs/sources_1/imports/new/file_reader.v" Line 75. System function $fscanf is used as system task. This system function should have a LHS e.g. x=$fscanf().
+Compiling module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4_output_stage(...
+Compiling module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4_output_stage(...
+Compiling module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4_softecc_outpu...
+Compiling module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4_mem_module(C_...
+Compiling module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4(C_FAMILY="zyn...
+Compiling module xil_defaultlib.blk_mem_gen_0
+Compiling module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4_mem_module(C_...
+Compiling module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4(C_FAMILY="zyn...
+Compiling module xil_defaultlib.blk_mem_gen_1
+Compiling module xil_defaultlib.memory_reader
+Compiling module xil_defaultlib.monopulse
 Compiling module xil_defaultlib.top
 Compiling module xil_defaultlib.testbench
 Compiling module xil_defaultlib.glbl

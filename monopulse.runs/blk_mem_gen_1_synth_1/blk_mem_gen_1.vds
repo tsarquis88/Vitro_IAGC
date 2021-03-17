@@ -1,0 +1,16 @@
+#-----------------------------------------------------------
+# Vivado v2020.2 (64-bit)
+# SW Build 3064766 on Wed Nov 18 09:12:47 MST 2020
+# IP Build 3064653 on Wed Nov 18 14:17:31 MST 2020
+# Start of session at: Wed Mar 17 11:36:01 2021
+# Process ID: 11128
+# Current directory: /home/tomsar/eclypse_z7/monopulse/monopulse.runs/blk_mem_gen_1_synth_1
+# Command line: vivado -log blk_mem_gen_1.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source blk_mem_gen_1.tcl
+# Log file: /home/tomsar/eclypse_z7/monopulse/monopulse.runs/blk_mem_gen_1_synth_1/blk_mem_gen_1.vds
+# Journal file: /home/tomsar/eclypse_z7/monopulse/monopulse.runs/blk_mem_gen_1_synth_1/vivado.jou
+#-----------------------------------------------------------
+source blk_mem_gen_1.tcl -notrace
+WARNING: [Vivado 12-818] No files matched '/home/tomsar/eclypse_z7/monopulse/monopulse.gen/sources_1/ip/blk_mem_gen_1_1/blk_mem_gen_1_ooc.xdc'
+ERROR: [Common 17-55] 'set_property' expects at least one object.
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+INFO: [Common 17-206] Exiting Vivado at Wed Mar 17 11:36:25 2021...
