@@ -13,6 +13,7 @@ module top
     
     wire    [ DATA_SIZE - 1 : 0 ]   reference;
     wire    [ DATA_SIZE - 1 : 0 ]   error;
+    wire    [ DATA_SIZE - 1 : 0 ]   monopulse_output;
 
     clk_wiz_0
     u_clk_wiz_0
@@ -39,7 +40,7 @@ module top
         .i_reset                (i_reset_tb),
         .i_reference            (reference),
         .i_error                (error),
-        .o_relation             ()
+        .o_relation             (monopulse_output)
     );
      
 endmodule

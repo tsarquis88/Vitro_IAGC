@@ -29,7 +29,7 @@ module testbench
             reset_tb    =   1'b0;
         end
         
-        #10
+        #100
         reset_tb    =   1'b1;
         
         #10

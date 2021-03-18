@@ -3,8 +3,8 @@
 module memory_reader #
 (
     parameter DATA_SIZE     =   64,
-    parameter DATA_DEPTH    =   20,
-    parameter ADDR_MODULE   =   10
+    parameter DATA_DEPTH    =   10501,
+    parameter ADDR_MODULE   =   14
 )
 (
     input i_clock,
@@ -16,21 +16,25 @@ module memory_reader #
     reg                             ena;
     reg                             wea;
     reg     [ ADDR_MODULE - 1 : 0 ] addra;
-    
-    always@( posedge i_reset )
-    begin
-        addra   =   { ADDR_MODULE { 1'b0 } };
-        ena     =   1'b1;
-        wea     =   1'b0;
-    end
+    reg     [ DATA_SIZE - 1 : 0 ]   dina;
     
     always@( posedge i_clock )
     begin
-        addra   <=  addra + 1'b1;
-        
-        if( addra   >=  DATA_DEPTH )
+        if( i_reset )
         begin
-            addra   <=  { ADDR_MODULE { 1'b0 } };;
+            addra   <=   { ADDR_MODULE { 1'b0 } };
+            dina    <=   { ADDR_MODULE { 1'b0 } };
+            ena     <=   1'b1;
+            wea     <=   1'b0;
+        end
+        else
+        begin
+            addra   <=  addra + 1'b1;
+            
+            if( addra   >=  DATA_DEPTH )
+            begin
+                addra   <=  { ADDR_MODULE { 1'b0 } };;
+            end
         end
     end
     
@@ -41,7 +45,7 @@ module memory_reader #
         .ena        (ena),
         .wea        (wea),
         .addra      (addra),
-        .dina       (),
+        .dina       (dina),
         .douta      (o_reference)
     );
     
@@ -52,7 +56,7 @@ module memory_reader #
         .ena        (ena),
         .wea        (wea),
         .addra      (addra),
-        .dina       (),
+        .dina       (dina),
         .douta      (o_error)
     );
 
