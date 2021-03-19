@@ -9,8 +9,8 @@ module memory_reader #
 (
     input i_clock,
     input i_reset,
-    output [ DATA_SIZE - 1 : 0 ] o_reference,
-    output [ DATA_SIZE - 1 : 0 ] o_error
+    output [ DATA_SIZE - 1 : 0 ]    o_reference,
+    output [ DATA_SIZE - 1 : 0 ]    o_error
 );
     
     reg                             ena;
@@ -22,10 +22,10 @@ module memory_reader #
     begin
         if( i_reset )
         begin
-            addra   <=   { ADDR_MODULE { 1'b0 } };
-            dina    <=   { ADDR_MODULE { 1'b0 } };
-            ena     <=   1'b1;
-            wea     <=   1'b0;
+            addra   <=      { ADDR_MODULE { 1'b0 } };
+            dina    <=      { ADDR_MODULE { 1'b0 } };
+            ena     <=      1'b1;
+            wea     <=      1'b0;
         end
         else
         begin
@@ -33,7 +33,7 @@ module memory_reader #
             
             if( addra   >=  DATA_DEPTH )
             begin
-                addra   <=  { ADDR_MODULE { 1'b0 } };;
+                addra   <=      { ADDR_MODULE { 1'b0 } };
             end
         end
     end

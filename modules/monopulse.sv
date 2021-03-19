@@ -14,12 +14,14 @@ module monopulse #
 
     reg [ DATA_SIZE - 1 : 0 ]   abs_reference;
     reg [ DATA_SIZE - 1 : 0 ]   abs_error;
-    reg                         relation;
     
-    always@( negedge i_reset )
+    always@( posedge i_clock )
     begin
-        abs_reference   =   { DATA_SIZE { 1'b0 } };
-        abs_error       =   { DATA_SIZE { 1'b0 } };
+        if( i_reset )
+        begin
+            abs_reference   =   { DATA_SIZE { 1'b0 } };
+            abs_error       =   { DATA_SIZE { 1'b0 } };
+        end
     end
     
     always @( i_reference ) 
@@ -46,11 +48,6 @@ module monopulse #
         end
     end
     
-    always @( posedge i_clock ) 
-    begin
-        relation  <=  abs_error   *   abs_reference;
-    end
-
-    assign o_relation   =   relation;
+    assign o_relation   =   abs_error   *   abs_reference;
 
 endmodule
