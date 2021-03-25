@@ -33,7 +33,7 @@ module memory_reader #
             
             if( addra   >=  DATA_DEPTH )
             begin
-                addra   <=      { ADDR_MODULE { 1'b0 } };
+                addra   <=  { ADDR_MODULE { 1'b0 } };
             end
         end
     end

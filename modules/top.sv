@@ -1,20 +1,21 @@
 `timescale 1ns / 1ps
 
-module top
+module top #
 (
-    input   i_reset,
-    input   i_clock,
-    output  o_led_b,
-    output  o_led_r
+    parameter   DATA_SIZE   =   64
+)
+(
+    input                           i_reset,
+    input                           i_clock,
+    output  [ DATA_SIZE - 1 : 0 ]   o_rel,
+    output                          o_led_b,
+    output                          o_led_r
 );  
-
-    localparam  DATA_SIZE   =   64;
     
     wire                            clock;
     wire                            locked;
     wire    [ DATA_SIZE - 1 : 0 ]   reference;
     wire    [ DATA_SIZE - 1 : 0 ]   error;
-    wire    [ DATA_SIZE - 1 : 0 ]   monopulse_output;
 
     clk_wiz_0
     u_clk_wiz_0
@@ -41,7 +42,7 @@ module top
         .i_reset                (~locked),
         .i_reference            (reference),
         .i_error                (error),
-        .o_relation             (monopulse_output)
+        .o_relation             (o_rel)
     );
     
     assign  o_led_r =   ~locked;
