@@ -9,7 +9,6 @@ module testbench
     reg clock;
     reg reset;
     
-    /* Initial */
     initial begin
         clock       =   1'b0;
         
@@ -20,13 +19,11 @@ module testbench
         reset       =   1'b0;
     end
     
-    /* 100 MHz CLK GEN */
     always begin
         #( CLOCK_PERIOD / 2 )
         clock       =   ~clock;
     end
     
-    /* TOP instance */
     top
     u_top
     (
