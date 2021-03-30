@@ -5,7 +5,9 @@ module testbench
 );
 
     localparam      CLOCK_PERIOD    =   8;
-
+    localparam      DATA_SIZE       =   10;
+    localparam      FRACTIONAL_SIZE =   8;
+    
     reg clock;
     reg reset;
     
@@ -24,11 +26,15 @@ module testbench
         clock       =   ~clock;
     end
     
-    top
+    top #
+    (
+        .DATA_SIZE          (DATA_SIZE),
+        .FRACTIONAL_SIZE    (FRACTIONAL_SIZE)
+    )
     u_top
     (
-        .i_reset        (reset),
-        .i_clock        (clock)
+        .i_reset            (reset),
+        .i_clock            (clock)
     );
   
 endmodule

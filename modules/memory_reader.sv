@@ -2,7 +2,7 @@
 
 module memory_reader #
 (
-    parameter DATA_SIZE     =   64,
+    parameter DATA_SIZE     =   10,
     parameter DATA_DEPTH    =   7514,
     parameter ADDR_MODULE   =   13
 )

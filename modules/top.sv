@@ -2,7 +2,8 @@
 
 module top #
 (
-    parameter   DATA_SIZE   =   64
+    parameter   DATA_SIZE       =   10,
+    parameter   FRACTIONAL_SIZE =   8
 )
 (
     input                               i_reset,
@@ -41,7 +42,10 @@ module top #
         .locked                 (locked)
     );
     
-    memory_reader
+    memory_reader #
+    (
+        .DATA_SIZE              (DATA_SIZE)
+    )
     u_memory_reader
     (
         .i_clock                (clock),
@@ -51,8 +55,12 @@ module top #
         .o_error                (error)
     );
     
-    monopulse
-    u_monopulse
+    processor #
+    (
+        .DATA_SIZE              (DATA_SIZE),
+        .FRACTIONAL_SIZE        (FRACTIONAL_SIZE)
+    )
+    u_processor
     (
         .i_clock                (clock),
         .i_reset                (~locked),

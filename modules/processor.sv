@@ -1,8 +1,9 @@
 `timescale 1ns / 1ps
 
-module monopulse #
+module processor #
 (
-    parameter DATA_SIZE     =   64
+    parameter DATA_SIZE         =   10,
+    parameter FRACTIONAL_SIZE   =   8
 )
 (
     input   i_reset,
@@ -14,10 +15,10 @@ module monopulse #
     output                              o_valid
 );
 
-    reg [ DATA_SIZE - 1 : 0 ]   abs_reference;
-    reg [ DATA_SIZE - 1 : 0 ]   abs_error;
-    reg [ DATA_SIZE - 1 : 0 ]   quotient;
-    reg [ DATA_SIZE - 1 : 0 ]   fractional;
+    reg [ DATA_SIZE - 1 : 0 ]       abs_reference;
+    reg [ DATA_SIZE - 1 : 0 ]       abs_error;
+    reg [ DATA_SIZE - 1 : 0 ]       quotient;
+    reg [ FRACTIONAL_SIZE - 1 : 0 ] fractional;
     
     always@( i_reference ) begin
         if( i_reference[ DATA_SIZE - 1 ] == 1'b1 )
@@ -34,8 +35,8 @@ module monopulse #
     end
     
     always@( o_result ) begin
-        quotient    =   o_result[ DATA_SIZE * 2 - 1 : DATA_SIZE ];
-        fractional  =   o_result[ DATA_SIZE - 1 : 0 ];
+        quotient    =   o_result[ DATA_SIZE + FRACTIONAL_SIZE - 1 : FRACTIONAL_SIZE ];
+        fractional  =   o_result[ FRACTIONAL_SIZE - 1 : 0 ];
     end
     
     div_gen_0
