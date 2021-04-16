@@ -5,20 +5,31 @@ module testbench
 );
 
     localparam      CLOCK_PERIOD    =   8;
-    localparam      DATA_SIZE       =   10;
-    localparam      FRACTIONAL_SIZE =   8;
     
-    reg clock;
-    reg reset;
+    reg     clock;
+    reg     reset;
+    reg     tx_send;
+    wire    serial;
     
     initial begin
         clock       =   1'b0;
         
         #10
         reset       =   1'b1;
+        tx_send     =   1'b0;
         
         #50
         reset       =   1'b0;
+        tx_send     =   1'b1;
+        
+        #10000
+        tx_send     =   1'b0;
+        
+        #500
+        tx_send     =   1'b1;
+        
+        #500
+        tx_send     =   1'b0;
     end
     
     always begin
@@ -26,15 +37,13 @@ module testbench
         clock       =   ~clock;
     end
     
-    top #
-    (
-        .DATA_SIZE          (DATA_SIZE),
-        .FRACTIONAL_SIZE    (FRACTIONAL_SIZE)
-    )
+    top
     u_top
     (
         .i_reset            (reset),
-        .i_clock            (clock)
+        .i_clock            (clock),
+        .i_serial_start     (tx_send),
+        .o_serial           (serial)
     );
   
 endmodule
