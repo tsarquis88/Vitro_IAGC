@@ -2,16 +2,17 @@
 
 module serial #
 (
-    parameter   SERIAL_DATA_SIZE    =   8
+    parameter   SERIAL_DATA_SIZE    =   16
 )
 (
-    input   i_clock,
-    input   i_reset,
-    input   i_start,
-    output  o_serial
+    input                                   i_clock,
+    input                                   i_reset,
+    input                                   i_tx_start,
+    input   [ SERIAL_DATA_SIZE - 1 : 0 ]    i_tx_data,
+    output                                  o_tx
 );
 
-    localparam  UART_PRESCALE       =   16'b0000010100010110;   /* 9600 BR */
+    localparam  UART_PRESCALE       =   16'b0000010100010110;   /* 9600 BR 8-bit    */
     localparam  UART_PRESCALE_SIZE  =   16;
 
     reg     [ SERIAL_DATA_SIZE - 1 : 0 ]    tx_data;
@@ -25,24 +26,21 @@ module serial #
     
         if( i_reset ) begin
             tx_prescale     <= UART_PRESCALE;
-            tx_data         <= 48;
+            tx_data         <= 0;
             tx_start_last   <= 1'b0;
             tx_valid        <= 1'b0;
         end 
         else begin
-            if( i_start && ~tx_start_last ) begin
-                tx_valid    <= 1'b1;
-                tx_data     <= tx_data + 1'b1;
-                
-                if( tx_data == 57 )
-                    tx_data <= 48;     
+            if( i_tx_start && ~tx_start_last ) begin
+                tx_data     <= i_tx_data;
+                tx_valid    <= 1'b1;   
             end
-            else if( i_start && tx_start_last )
+            else if( i_tx_start && tx_start_last )
                 tx_valid    <= 1'b0;
-            else if( ~i_start )
+            else if( ~i_tx_start )
                 tx_valid    <= 1'b0;
             
-            tx_start_last    <= i_start;
+            tx_start_last    <= i_tx_start;
         end
     end
     
@@ -58,7 +56,7 @@ module serial #
         .s_axis_tdata   (tx_data),
         .s_axis_tvalid  (tx_valid),
         .s_axis_tready  (tx_ready),
-        .txd            (o_serial),
+        .txd            (o_tx),
         .busy           (tx_busy),
         .prescale       (tx_prescale)
     );

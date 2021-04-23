@@ -2,10 +2,43 @@
 
 module top
 (
-    input                                   i_reset,
-    input                                   i_clock,
-    input                                   i_serial_start,
-    output                                  o_serial
+    input   i_reset,
+    input   i_clock,
+    
+    input   i_tx_start,
+    output  o_tx,
+    
+    output  syzygy_d_n_0,       /* sc1_ac_l         */
+    output  syzygy_d_p_0,       /* sc1_ac_h         */
+    output  syzygy_d_n_1,       /* sc2_ac_l         */
+    output  syzygy_d_p_1,       /* sc2_ac_h         */
+    output  syzygy_d_n_2,       /* sclk_sc          */
+    inout   syzygy_d_p_2,       /* sdio_sc          */
+    output  syzygy_d_n_3,       /* sc2_gain_l       */
+    output  syzygy_d_p_3,       /* sc2_gain_h       */
+    input   syzygy_d_n_4,       /* data 2           */
+    input   syzygy_d_p_4,       /* data 9           */
+    output  syzygy_d_n_5,       /* sc1_gain_l       */
+    output  syzygy_d_p_5,       /* sc1_gain_h       */
+    input   syzygy_d_n_6,       /* data 4           */
+    input   syzygy_d_p_6,       /* data 3           */
+    output  syzygy_d_n_7,       /* com_sc_l         */
+    output  syzygy_d_p_7,       /* com_sc_h         */
+    input   syzygy_s_16,        /* data 5           */
+    input   syzygy_s_17,        /* data 8           */
+    input   syzygy_s_18,        /* data 6           */
+    input   syzygy_s_19,        /* data 10          */
+    input   syzygy_s_20,        /* data 7           */
+    input   syzygy_s_21,        /* data 11          */
+    input   syzygy_s_22,        /* data 1           */
+    input   syzygy_s_23,        /* data 12          */
+    input   syzygy_s_24,        /* data 0           */
+    input   syzygy_s_25,        /* data 13          */
+    output  syzygy_s_26,        /* cs_sc1n          */
+    output  syzygy_s_27,        /* sync_adc         */
+    output  syzygy_c2p_clk_n,   /* adc clock in n   */
+    output  syzygy_c2p_clk_p,   /* adc clock in p   */
+    input   syzygy_p2c_clk_p    /* clkout adc       */
 );  
     
     /* System */
@@ -16,8 +49,31 @@ module top
     localparam  SERIAL_DATA_SIZE    =   8;
     
     /* ADC */
-    localparam  ADC_DATA_SIZE       =   16;
+    localparam  ADC_DATA_OUT_SIZE   =   16;
+    localparam  ADC_DATA_IN_SIZE    =   14;
     wire                                    adc_clock;
+    wire    [ ADC_DATA_OUT_SIZE - 1 : 0 ]   adc_data_out_ch1;
+    wire    [ ADC_DATA_OUT_SIZE - 1 : 0 ]   adc_data_out_ch2;
+    wire    [ ADC_DATA_IN_SIZE  - 1 : 0 ]   adc_data_in;
+    wire                                    adc_test_mode;
+    wire                                    adc_fifo_empty_ch1;
+    wire                                    adc_fifo_empty_ch2;
+    
+    assign  adc_test_mode       =   1'b0;
+    assign  adc_data_in[ 0  ]   =   syzygy_s_24;
+    assign  adc_data_in[ 1  ]   =   syzygy_s_22;
+    assign  adc_data_in[ 2  ]   =   syzygy_d_n_4;
+    assign  adc_data_in[ 3  ]   =   syzygy_d_p_6;
+    assign  adc_data_in[ 4  ]   =   syzygy_d_n_6;
+    assign  adc_data_in[ 5  ]   =   syzygy_s_16;
+    assign  adc_data_in[ 6  ]   =   syzygy_s_18;
+    assign  adc_data_in[ 7  ]   =   syzygy_s_20;
+    assign  adc_data_in[ 8  ]   =   syzygy_s_17;
+    assign  adc_data_in[ 9  ]   =   syzygy_d_p_4;
+    assign  adc_data_in[ 10 ]   =   syzygy_s_19;
+    assign  adc_data_in[ 11 ]   =   syzygy_s_21;
+    assign  adc_data_in[ 12 ]   =   syzygy_s_23;
+    assign  adc_data_in[ 13 ]   =   syzygy_s_25;
     
     /* ###################################### */
     clk_wiz_0
@@ -38,51 +94,42 @@ module top
     (
         .i_clock                (clock),
         .i_reset                (~locked),
-        .i_start                (i_serial_start),
-        .o_serial               (o_serial)
+        .i_tx_start             (i_tx_start),
+        .i_tx_data              (adc_data_out_ch1[7:0]),
+        .o_tx                   (o_tx)
     );
     /* ###################################### */
-    /*
     ZmodADC1410_Controller_0
     u_ZmodADC1410_Controller_0
     (
-        .SysClk     (clock),
-        .ADC_InClk  (adc_clock),
-        .sRst_n     (~locked),
-        .sCh1Out    (tx_data)
+        .SysClk             (clock),                //  IN STD_LOGIC;
+        .ADC_InClk          (adc_clock),            //  IN STD_LOGIC;
+        .sRst_n             (locked),               //  IN STD_LOGIC;
+        .sInitDone_n        (adc_init_done),        //  OUT STD_LOGIC;
+        .FIFO_EMPTY_CHA     (adc_fifo_empty_ch1),   //  OUT STD_LOGIC;
+        .FIFO_EMPTY_CHB     (adc_fifo_empty_ch2),   //  OUT STD_LOGIC;
+        .sCh1Out            (adc_data_out_ch1),     //  OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+        .sCh2Out            (adc_data_out_ch2),     //  OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+        .sTestMode          (adc_test_mode),        //  IN STD_LOGIC;
+        .adcClkIn_p         (syzygy_c2p_clk_p),     //  OUT STD_LOGIC;
+        .adcClkIn_n         (syzygy_c2p_clk_n),     //  OUT STD_LOGIC;
+        .adcSync            (syzygy_s_27),          //  OUT STD_LOGIC;
+        .DcoClk             (syzygy_p2c_clk_p),     //  IN STD_LOGIC;
+        .dADC_Data          (adc_data_in),          //  IN STD_LOGIC_VECTOR(13 DOWNTO 0);
+        .sADC_SDIO          (syzygy_d_p_2),         //  INOUT STD_LOGIC;
+        .sADC_CS            (syzygy_s_26),          //  OUT STD_LOGIC;
+        .sADC_Sclk          (syzygy_d_n_2),         //  OUT STD_LOGIC;
+        .sCh1CouplingH      (syzygy_d_p_0),         //  OUT STD_LOGIC;
+        .sCh1CouplingL      (syzygy_d_n_0),         //  OUT STD_LOGIC;
+        .sCh2CouplingH      (syzygy_d_p_1),         //  OUT STD_LOGIC;
+        .sCh2CouplingL      (syzygy_d_n_1),         //  OUT STD_LOGIC;
+        .sCh1GainH          (syzygy_d_p_5),         //  OUT STD_LOGIC;
+        .sCh1GainL          (syzygy_d_n_5),         //  OUT STD_LOGIC;
+        .sCh2GainH          (syzygy_d_p_3),         //  OUT STD_LOGIC;
+        .sCh2GainL          (syzygy_d_n_3),         //  OUT STD_LOGIC;
+        .sRelayComH         (syzygy_d_p_7),         //  OUT STD_LOGIC;
+        .sRelayComL         (syzygy_d_n_7)          //  OUT STD_LOGIC
     );
-    */
     /* ###################################### */
 
 endmodule
-
-
-/*
-    SysClk :        IN STD_LOGIC;                          100mhz input clock
-    ADC_InClk :     IN STD_LOGIC;                       400mhz input clock
-    sRst_n :        IN STD_LOGIC;                          synchronous reset negative polarity
-    sInitDone_n :       OUT STD_LOGIC;                    active low flag, inidicate zmod initialization complete
-    FIFO_EMPTY_CHA :    OUT STD_LOGIC;                 
-    FIFO_EMPTY_CHB :    OUT STD_LOGIC;
-    sCh1Out :           OUT STD_LOGIC_VECTOR(15 DOWNTO 0);    output data ch1 synchronoues with sysclk
-    sTestMode :     IN STD_LOGIC;                       
-    adcClkIn_p :        OUT STD_LOGIC;                     adc positive differential clock input
-    adcClkIn_n :        OUT STD_LOGIC;                     adc negative differential clock input
-    adcSync :           OUT STD_LOGIC;                        synchronitazino signal
-    DcoClk :        IN STD_LOGIC;                          data strobe generated by the ADC used to captura dADC_Data
-    dADC_Data :     IN STD_LOGIC_VECTOR(13 DOWNTO 0);   ddr parallel data bus exportes by ADC containgin ch1 and ch2 multiplexed samples
-    sADC_SDIO :             INOUT STD_LOGIC;                    spi sdio signal
-    sADC_CS :           OUT STD_LOGIC;                        spi cs signal
-    sADC_Sclk :         OUT STD_LOGIC;                      spi output clock
-    sCh1CouplingH :     OUT STD_LOGIC;                  Channel1 AC DC coupling relay driver control input.
-    sCh1CouplingL :     OUT STD_LOGIC;                  Channel1 AC DC coupling select relay driver control input
-    sCh1GainH :         OUT STD_LOGIC;                      Channel1 gain select relay driver control input.
-    sCh1GainL :         OUT STD_LOGIC;                      Channel1 gain select relay driver control input.
-    sRelayComH :        OUT STD_LOGIC;                     Common relay terminal driver control input.
-    sRelayComL :        OUT STD_LOGIC                      Common relay terminal driver control input.
-    
-    sExtCh1LgMultCoef :     IN STD_LOGIC_VECTOR(17 DOWNTO 0);
-    sExtCh1LgAddCoef :      IN STD_LOGIC_VECTOR(17 DOWNTO 0);
-    sExtCh1HgMultCoef :     IN STD_LOGIC_VECTOR(17 DOWNTO 0);
-    sExtCh1HgAddCoef :      IN STD_LOGIC_VECTOR(17 DOWNTO 0);
-*/
