@@ -20,15 +20,17 @@ module testbench
         
         #50
         reset       =   1'b0;
-        tx_send     =   1'b1;
         
         #10000
-        tx_send     =   1'b0;
-        
-        #500
         tx_send     =   1'b1;
         
-        #500
+        #1000
+        tx_send     =   1'b0;
+        
+        #2500000
+        tx_send     =   1'b1;
+        
+        #1000
         tx_send     =   1'b0;
     end
     
@@ -42,8 +44,8 @@ module testbench
     (
         .i_reset            (reset),
         .i_clock            (clock),
-        .i_serial_start     (tx_send),
-        .o_serial           (serial)
+        .i_tx_start         (tx_send),
+        .o_tx               (serial)
     );
   
 endmodule
