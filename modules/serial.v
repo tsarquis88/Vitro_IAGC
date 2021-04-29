@@ -1,3 +1,7 @@
+/**
+ *  Sends one 16-bit value as two 8-bit values.
+*/
+
 `timescale 1ns / 1ps
 
 module serial #
@@ -7,9 +11,10 @@ module serial #
 (
     input                                   i_clock,
     input                                   i_reset,
-    input                                   i_tx_start,
-    input   [ SERIAL_DATA_SIZE - 1 : 0 ]    i_tx_data_l,
-    input   [ SERIAL_DATA_SIZE - 1 : 0 ]    i_tx_data_h,
+    input   [ SERIAL_DATA_SIZE - 1 : 0 ]    i_data_l,
+    input   [ SERIAL_DATA_SIZE - 1 : 0 ]    i_data_h,
+    input                                   i_send,
+    output                                  o_ready,
     output                                  o_tx
 );
 
@@ -22,7 +27,6 @@ module serial #
     reg     [ UART_PRESCALE_SIZE - 1 : 0 ]  tx_prescale;
     wire                                    tx_ready;
     wire                                    tx_busy;
-    reg                                     tx_start_last;
     reg                                     tx_valid;
     reg                                     tx_logging;
     integer                                 tx_c;
@@ -32,16 +36,15 @@ module serial #
     
         if( i_reset ) begin
             tx_prescale     <= UART_PRESCALE;
-            tx_start_last   <= 1'b0;
             tx_valid        <= 1'b0;
             tx_c            <= 0;
+            tx_logging      <= 1'b0;
         end 
         else begin
         
-            if( i_tx_start && ~tx_start_last ) begin
-                tx_logging  <= 1'b1;
+            if( i_send && ~tx_logging ) begin
+                tx_logging      <= 1'b1;
             end
-            tx_start_last   <= i_tx_start;
             
             if( tx_logging ) begin
                 tx_c    <= tx_c_next;
@@ -76,12 +79,13 @@ module serial #
     
     always@( * ) begin
         tx_data_in[ 0 ]     <= "\n";
-        tx_data_in[ 1 ]     <= i_tx_data_h;
-        tx_data_in[ 2 ]     <= i_tx_data_l;
+        tx_data_in[ 1 ]     <= i_data_h;
+        tx_data_in[ 2 ]     <= i_data_l;
         
         tx_data             <= tx_data_in[ tx_c ];
     end
     
+    assign  o_ready =  ~tx_logging;
     
     /* ###################################### */
     uart_tx #

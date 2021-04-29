@@ -5,7 +5,6 @@ module top
     input   i_reset,
     input   i_clock,
     
-    input   i_tx_start,
     output  o_tx,
     
     output  syzygy_d_n_0,       /* sc1_ac_l         */
@@ -39,18 +38,15 @@ module top
     output  syzygy_c2p_clk_n,   /* adc clock in n   */
     output  syzygy_c2p_clk_p,   /* adc clock in p   */
     input   syzygy_p2c_clk_p    /* clkout adc       */
-);  
-    
+);      
     /* System */
     wire            clock;
     wire            locked;
-    
-    /* Serial */
-    localparam  SERIAL_DATA_SIZE    =   8;
-    
+        
     /* ADC */
     localparam  ADC_DATA_OUT_SIZE   =   16;
     localparam  ADC_DATA_IN_SIZE    =   14;
+    wire                                    adc_init_done;
     wire                                    adc_clock;
     wire    [ ADC_DATA_OUT_SIZE - 1 : 0 ]   adc_data_out_ch1;
     wire    [ ADC_DATA_OUT_SIZE - 1 : 0 ]   adc_data_out_ch2;
@@ -58,6 +54,40 @@ module top
     wire                                    adc_test_mode;
     wire                                    adc_fifo_empty_ch1;
     wire                                    adc_fifo_empty_ch2;
+    integer                                 adc_data_count;
+    
+    /* Serial */
+    localparam  SERIAL_DATA_SIZE    =   8;
+    localparam  SERIAL_CLK_COUNT    =   62000000;   
+    reg                                     serial_send;
+    wire                                    serial_ready;
+    reg     [ SERIAL_DATA_SIZE - 1 : 0 ]    serial_data_l;
+    reg     [ SERIAL_DATA_SIZE - 1 : 0 ]    serial_data_h;
+    integer                                 clk_counter;
+    
+    always@( posedge clock ) begin
+        if( ~locked ) begin
+            clk_counter <= 0;
+        end
+        else begin
+            clk_counter <= clk_counter + 1;
+        
+            if( clk_counter == SERIAL_CLK_COUNT ) begin
+                clk_counter <= 0;
+                if( serial_ready )
+                    serial_send <= 1'b1;
+            end
+            else begin
+                serial_send <= 1'b0;
+            end
+            
+        end
+    end
+    
+    always@( adc_data_out_ch1 ) begin
+        serial_data_l = adc_data_out_ch1[7:0 ];
+        serial_data_h = adc_data_out_ch1[15:8];    
+    end
     
     assign  adc_test_mode       =   1'b0;
     assign  adc_data_in[ 0  ]   =   syzygy_s_24;
@@ -94,8 +124,10 @@ module top
     (
         .i_clock                (clock),
         .i_reset                (~locked),
-        .i_tx_start             (i_tx_start),
-        .i_tx_data              (adc_data_out_ch1[7:0]),
+        .i_send                 (serial_send),
+        .i_data_h               (serial_data_h),
+        .i_data_l               (serial_data_l),
+        .o_ready                (serial_ready),
         .o_tx                   (o_tx)
     );
     /* ###################################### */
