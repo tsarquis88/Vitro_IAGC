@@ -2,10 +2,10 @@
 
 module top
 (
-    input   i_reset,
-    input   i_clock,
+    input   i_reset,            /* onboard button   */
+    input   i_clock,            /* 125 MHz onboard  */
     
-    output  o_tx,
+    output  o_tx,               /* uart output      */
     
     output  syzygy_d_n_0,       /* sc1_ac_l         */
     output  syzygy_d_p_0,       /* sc1_ac_h         */
@@ -67,6 +67,7 @@ module top
     reg     [ SERIAL_DATA_SIZE - 1 : 0 ]    serial_data_h;
     integer                                 clk_counter;
     
+    /* UART: send one convertion each SERIAL_CLK_COUNT cycles */
     always@( posedge clock ) begin
         if( ~locked ) begin
             clk_counter <= 0;
@@ -86,6 +87,7 @@ module top
         end
     end
     
+    /* Serial data setting */
     always@( adc_data_out_ch1 ) begin
         serial_data_l = adc_data_out_ch1[7:0 ];
         serial_data_h = adc_data_out_ch1[15:8];    
@@ -114,8 +116,8 @@ module top
     (
         .clk_in1                (i_clock),
         .reset                  (i_reset),
-        .clk_out1               (clock),
-        .clk_out2               (adc_clock),
+        .clk_out1               (clock),            /* sys clock: 100MHz    */
+        .clk_out2               (adc_clock),        /* adc clock: 400MHz    */
         .locked                 (locked)
     );
     /* ###################################### */
