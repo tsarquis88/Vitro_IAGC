@@ -58,7 +58,7 @@ set_property -dict { PACKAGE_PIN K18  IOSTANDARD LVCMOS18 } [get_ports { syzygy_
 set_property -dict { PACKAGE_PIN J18  IOSTANDARD LVCMOS18 } [get_ports { syzygy_d_p_6 }]; #IO_L7P_T1 Sch=syzygy_a_d_p[6]
 set_property -dict { PACKAGE_PIN K21  IOSTANDARD LVCMOS18 } [get_ports { syzygy_d_n_7 }]; #IO_L9N_T1_DQS Sch=syzygy_a_d_n[7]
 set_property -dict { PACKAGE_PIN J20  IOSTANDARD LVCMOS18 } [get_ports { syzygy_d_p_7 }]; #IO_L9P_T1_DQS Sch=syzygy_a_d_p[7]
-#set_property -dict { PACKAGE_PIN M20  } [get_ports { syzygy_p2c_clk_n }]; #IO_L13N_T2_MRCC Sch=syzygy_a_p2c_clk_n
+set_property -dict { PACKAGE_PIN M20  IOSTANDARD LVCMOS18 } [get_ports { syzygy_p2c_clk_n }]; #IO_L13N_T2_MRCC Sch=syzygy_a_p2c_clk_n
 set_property -dict { PACKAGE_PIN M19  IOSTANDARD LVCMOS18 } [get_ports { syzygy_p2c_clk_p }]; #IO_L13P_T2_MRCC Sch=syzygy_a_p2c_clk_p
 set_property -dict { PACKAGE_PIN L19  IOSTANDARD LVCMOS18 } [get_ports { syzygy_s_16 }]; #IO_L12N_T1_MRCC Sch=syzygy_a_s[16]
 set_property -dict { PACKAGE_PIN K20  IOSTANDARD LVCMOS18 } [get_ports { syzygy_s_17 }]; #IO_L11N_T1_SRCC Sch=syzygy_a_s[17]
