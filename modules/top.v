@@ -37,8 +37,10 @@ module top
     output  syzygy_s_27,        /* sync_adc         */
     output  syzygy_c2p_clk_n,   /* adc clock in n   */
     output  syzygy_c2p_clk_p,   /* adc clock in p   */
-    input   syzygy_p2c_clk_p    /* clkout adc       */
+    input   syzygy_p2c_clk_p,   /* clkout adc       */
+    output  syzygy_p2c_clk_n    /* GND              */
 );      
+    
     /* System */
     wire            clock;
     wire            locked;
@@ -58,7 +60,7 @@ module top
     
     /* Serial */
     localparam  SERIAL_DATA_SIZE    =   8;
-    localparam  SERIAL_CLK_COUNT    =   62000000;   
+    localparam  SERIAL_CLK_COUNT    =   31000000;   
     reg                                     serial_send;
     wire                                    serial_ready;
     reg     [ SERIAL_DATA_SIZE - 1 : 0 ]    serial_data_l;
@@ -89,6 +91,7 @@ module top
         serial_data_h = adc_data_out_ch1[15:8];    
     end
     
+    assign  syzygy_p2c_clk_n    =   1'b0;
     assign  adc_test_mode       =   1'b0;
     assign  adc_data_in[ 0  ]   =   syzygy_s_24;
     assign  adc_data_in[ 1  ]   =   syzygy_s_22;
