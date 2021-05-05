@@ -1,11 +1,13 @@
-`timescale 1ns / 1ps
+`timescale 1ns / 1ps 
 
 module top
 (
-    input   i_reset,            /* onboard button   */
-    input   i_clock,            /* 125 MHz onboard  */
+    input   i_reset,
+    input   i_clock,
     
-    output  o_tx,               /* uart output      */
+    output  o_tx,
+    
+    output  o_led_g,
     
     output  syzygy_d_n_0,       /* sc1_ac_l         */
     output  syzygy_d_p_0,       /* sc1_ac_h         */
@@ -40,10 +42,14 @@ module top
     input   syzygy_p2c_clk_p,   /* clkout adc       */
     output  syzygy_p2c_clk_n    /* GND              */
 );      
-    
     /* System */
     wire            clock;
     wire            locked;
+    
+    /* ADC Init led */
+    reg                                     led_g;
+    integer                                 led_clk_counter;
+    localparam      LED_CLK_COUNT    =  40;   
         
     /* ADC */
     localparam  ADC_DATA_OUT_SIZE   =   16;
@@ -51,50 +57,69 @@ module top
     wire                                    adc_init_done;
     wire                                    adc_clock;
     wire    [ ADC_DATA_OUT_SIZE - 1 : 0 ]   adc_data_out_ch1;
+    reg     [ ADC_DATA_OUT_SIZE - 1 : 0 ]   adc_data_aux;
     wire    [ ADC_DATA_OUT_SIZE - 1 : 0 ]   adc_data_out_ch2;
     wire    [ ADC_DATA_IN_SIZE  - 1 : 0 ]   adc_data_in;
     wire                                    adc_test_mode;
     wire                                    adc_fifo_empty_ch1;
     wire                                    adc_fifo_empty_ch2;
-    integer                                 adc_data_count;
     
     /* Serial */
     localparam  SERIAL_DATA_SIZE    =   8;
-    localparam  SERIAL_CLK_COUNT    =   31000000;   
+    localparam  SERIAL_CLK_COUNT    =   5000000;    /* cycles per data send */
     reg                                     serial_send;
     wire                                    serial_ready;
     reg     [ SERIAL_DATA_SIZE - 1 : 0 ]    serial_data_l;
     reg     [ SERIAL_DATA_SIZE - 1 : 0 ]    serial_data_h;
-    integer                                 clk_counter;
+    integer                                 serial_clk_counter;
     
-    /* UART: send one convertion each SERIAL_CLK_COUNT cycles */
+    /* cycles counters for led and serial */
     always@( posedge clock ) begin
         if( ~locked ) begin
-            clk_counter <= 0;
+            serial_clk_counter  <= 0;
+            led_clk_counter     <= 0;
         end
-        else begin
-            clk_counter <= clk_counter + 1;
-        
-            if( clk_counter == SERIAL_CLK_COUNT ) begin
-                clk_counter <= 0;
-                if( serial_ready )
-                    serial_send <= 1'b1;
-            end
-            else begin
-                serial_send <= 1'b0;
-            end
+        else begin            
+            serial_clk_counter  <= serial_clk_counter + 1;
+            led_clk_counter     <= led_clk_counter    + 1;
             
+            if( led_clk_counter == LED_CLK_COUNT )
+                led_clk_counter     <= 0;
+        
+            if( serial_clk_counter == SERIAL_CLK_COUNT )
+                serial_clk_counter  <= 0;
         end
     end
     
-    /* Serial data setting */
+    /* led pwm and serial start */
+    always@( * ) begin
+        if( led_clk_counter == LED_CLK_COUNT - 1 ) 
+            led_g   =   1'b1;
+        else 
+            led_g   =   1'b0;
+            
+        if( serial_clk_counter == SERIAL_CLK_COUNT - 1 && serial_ready )
+            serial_send =   1'b1;
+        else
+            serial_send =   1'b0;
+    end
+    
+    /* adc data convertion to decimal */
     always@( adc_data_out_ch1 ) begin
-        serial_data_l = adc_data_out_ch1[7:0 ];
-        serial_data_h = adc_data_out_ch1[15:8];    
+        if( adc_data_out_ch1[ 15 ] ) begin  /* negative */
+            adc_data_aux    = ~adc_data_out_ch1 + 1'b1;;
+            serial_data_l   = adc_data_aux[ 7:0 ];
+            serial_data_h   = adc_data_aux[15:8 ];
+        end
+        else begin                          /* positive */
+            serial_data_l = adc_data_out_ch1[7:0 ];
+            serial_data_h = adc_data_out_ch1[15:8];
+        end    
     end
     
     assign  syzygy_p2c_clk_n    =   1'b0;
     assign  adc_test_mode       =   1'b0;
+    
     assign  adc_data_in[ 0  ]   =   syzygy_s_24;
     assign  adc_data_in[ 1  ]   =   syzygy_s_22;
     assign  adc_data_in[ 2  ]   =   syzygy_d_n_4;
@@ -110,14 +135,16 @@ module top
     assign  adc_data_in[ 12 ]   =   syzygy_s_23;
     assign  adc_data_in[ 13 ]   =   syzygy_s_25;
     
+    assign  o_led_g             =   adc_init_done ? 1'b0 : led_g;
+    
     /* ###################################### */
     clk_wiz_0
     u_clk_wiz_0
     (
         .clk_in1                (i_clock),
         .reset                  (i_reset),
-        .clk_out1               (clock),            /* sys clock: 100MHz    */
-        .clk_out2               (adc_clock),        /* adc clock: 400MHz    */
+        .clk_out1               (clock),
+        .clk_out2               (adc_clock),
         .locked                 (locked)
     );
     /* ###################################### */

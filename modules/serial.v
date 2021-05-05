@@ -20,7 +20,7 @@ module serial #
 
     localparam  UART_PRESCALE       =   16'b0000010100010110;   /* 9600 BR 8-bit    */
     localparam  UART_PRESCALE_SIZE  =   16;
-    localparam  UART_DATA_CANT      =   3;
+    localparam  UART_DATA_CANT      =   5;
     
     reg     [ SERIAL_DATA_SIZE - 1 : 0 ]    tx_data_in [ UART_DATA_CANT - 1 : 0 ];
     reg     [ SERIAL_DATA_SIZE - 1 : 0 ]    tx_data;
@@ -79,8 +79,10 @@ module serial #
     
     always@( * ) begin
         tx_data_in[ 0 ]     <= "\n";
-        tx_data_in[ 1 ]     <= i_data_h;
-        tx_data_in[ 2 ]     <= i_data_l;
+        tx_data_in[ 1 ]     <= 8'b11111111;
+        tx_data_in[ 2 ]     <= 8'b11111111;
+        tx_data_in[ 3 ]     <= i_data_h;
+        tx_data_in[ 4 ]     <= i_data_l;
         
         tx_data             <= tx_data_in[ tx_c ];
     end
