@@ -1,199 +1,207 @@
-`timescale 1ns / 1ps 
+`timescale 1ns / 1ps
 
 module top
 (
-    input   i_reset,
     input   i_clock,
+    
+    input   i_reset,
     
     output  o_tx,
     
-    output  o_led_g,
+    output  o_led0_g,
+    output  o_led0_r,
     
-    output  syzygy_d_n_0,       /* sc1_ac_l         */
-    output  syzygy_d_p_0,       /* sc1_ac_h         */
-    output  syzygy_d_n_1,       /* sc2_ac_l         */
-    output  syzygy_d_p_1,       /* sc2_ac_h         */
-    output  syzygy_d_n_2,       /* sclk_sc          */
-    inout   syzygy_d_p_2,       /* sdio_sc          */
-    output  syzygy_d_n_3,       /* sc2_gain_l       */
-    output  syzygy_d_p_3,       /* sc2_gain_h       */
-    input   syzygy_d_n_4,       /* data 2           */
-    input   syzygy_d_p_4,       /* data 9           */
-    output  syzygy_d_n_5,       /* sc1_gain_l       */
-    output  syzygy_d_p_5,       /* sc1_gain_h       */
-    input   syzygy_d_n_6,       /* data 4           */
-    input   syzygy_d_p_6,       /* data 3           */
-    output  syzygy_d_n_7,       /* com_sc_l         */
-    output  syzygy_d_p_7,       /* com_sc_h         */
-    input   syzygy_s_16,        /* data 5           */
-    input   syzygy_s_17,        /* data 8           */
-    input   syzygy_s_18,        /* data 6           */
-    input   syzygy_s_19,        /* data 10          */
-    input   syzygy_s_20,        /* data 7           */
-    input   syzygy_s_21,        /* data 11          */
-    input   syzygy_s_22,        /* data 1           */
-    input   syzygy_s_23,        /* data 12          */
-    input   syzygy_s_24,        /* data 0           */
-    input   syzygy_s_25,        /* data 13          */
-    output  syzygy_s_26,        /* cs_sc1n          */
-    output  syzygy_s_27,        /* sync_adc         */
-    output  syzygy_c2p_clk_n,   /* adc clock in n   */
-    output  syzygy_c2p_clk_p,   /* adc clock in p   */
-    input   syzygy_p2c_clk_p,   /* clkout adc       */
-    output  syzygy_p2c_clk_n    /* GND              */
-);      
-    /* System */
-    wire            clock;
-    wire            locked;
+    output  o_syzygy_a_c2p_clk_n,
+    output  o_syzygy_a_c2p_clk_p,
+    output  o_syzygy_a_d_n_0,
+    output  o_syzygy_a_d_p_0,
+    output  o_syzygy_a_d_n_1,
+    output  o_syzygy_a_d_p_1,
+    output  o_syzygy_a_d_n_2,
+    inout   io_syzygy_a_d_p_2,
+    output  o_syzygy_a_d_n_3,
+    output  o_syzygy_a_d_p_3,
+    input   i_syzygy_a_d_n_4,
+    input   i_syzygy_a_d_p_4,
+    output  o_syzygy_a_d_n_5,
+    output  o_syzygy_a_d_p_5,
+    input   i_syzygy_a_d_n_6,
+    input   i_syzygy_a_d_p_6,
+    output  o_syzygy_a_d_n_7,
+    output  o_syzygy_a_d_p_7,
+    output  o_syzygy_a_p2c_clk_n,
+    input   i_syzygy_a_p2c_clk_p,
+    input   i_syzygy_a_s_16,
+    input   i_syzygy_a_s_17,
+    input   i_syzygy_a_s_18,
+    input   i_syzygy_a_s_19,
+    input   i_syzygy_a_s_20,
+    input   i_syzygy_a_s_21,
+    input   i_syzygy_a_s_22,
+    input   i_syzygy_a_s_23,
+    input   i_syzygy_a_s_24,
+    input   i_syzygy_a_s_25,
+    output  o_syzygy_a_s_26,
+    output  o_syzygy_a_s_27
+       
+);
     
-    /* ADC Init led */
-    reg                                     led_g;
-    integer                                 led_clk_counter;
-    localparam      LED_CLK_COUNT    =  40;   
-        
-    /* ADC */
-    localparam  ADC_DATA_OUT_SIZE   =   16;
-    localparam  ADC_DATA_IN_SIZE    =   14;
-    wire                                    adc_init_done;
-    wire                                    adc_clock;
-    wire    [ ADC_DATA_OUT_SIZE - 1 : 0 ]   adc_data_out_ch1;
-    reg     [ ADC_DATA_OUT_SIZE - 1 : 0 ]   adc_data_aux;
-    wire    [ ADC_DATA_OUT_SIZE - 1 : 0 ]   adc_data_out_ch2;
-    wire    [ ADC_DATA_IN_SIZE  - 1 : 0 ]   adc_data_in;
-    wire                                    adc_test_mode;
-    wire                                    adc_fifo_empty_ch1;
-    wire                                    adc_fifo_empty_ch2;
+    /* ########################################################### */
+    /* CLOCK WIZARD ############################################## */
     
-    /* Serial */
-    localparam  SERIAL_DATA_SIZE    =   8;
-    localparam  SERIAL_CLK_COUNT    =   5000000;    /* cycles per data send */
-    reg                                     serial_send;
-    wire                                    serial_ready;
-    reg     [ SERIAL_DATA_SIZE - 1 : 0 ]    serial_data_l;
-    reg     [ SERIAL_DATA_SIZE - 1 : 0 ]    serial_data_h;
-    integer                                 serial_clk_counter;
+    wire    sys_clock;
+    wire    adc_clock;
+    wire    locked;
     
-    /* cycles counters for led and serial */
-    always@( posedge clock ) begin
-        if( ~locked ) begin
-            serial_clk_counter  <= 0;
-            led_clk_counter     <= 0;
-        end
-        else begin            
-            serial_clk_counter  <= serial_clk_counter + 1;
-            led_clk_counter     <= led_clk_counter    + 1;
-            
-            if( led_clk_counter == LED_CLK_COUNT )
-                led_clk_counter     <= 0;
-        
-            if( serial_clk_counter == SERIAL_CLK_COUNT )
-                serial_clk_counter  <= 0;
-        end
-    end
-    
-    /* led pwm and serial start */
-    always@( * ) begin
-        if( led_clk_counter == LED_CLK_COUNT - 1 ) 
-            led_g   =   1'b1;
-        else 
-            led_g   =   1'b0;
-            
-        if( serial_clk_counter == SERIAL_CLK_COUNT - 1 && serial_ready )
-            serial_send =   1'b1;
-        else
-            serial_send =   1'b0;
-    end
-    
-    /* adc data convertion to decimal */
-    always@( adc_data_out_ch1 ) begin
-        if( adc_data_out_ch1[ 15 ] ) begin  /* negative */
-            adc_data_aux    = ~adc_data_out_ch1 + 1'b1;;
-            serial_data_l   = adc_data_aux[ 7:0 ];
-            serial_data_h   = adc_data_aux[15:8 ];
-        end
-        else begin                          /* positive */
-            serial_data_l = adc_data_out_ch1[7:0 ];
-            serial_data_h = adc_data_out_ch1[15:8];
-        end    
-    end
-    
-    assign  syzygy_p2c_clk_n    =   1'b0;
-    assign  adc_test_mode       =   1'b0;
-    
-    assign  adc_data_in[ 0  ]   =   syzygy_s_24;
-    assign  adc_data_in[ 1  ]   =   syzygy_s_22;
-    assign  adc_data_in[ 2  ]   =   syzygy_d_n_4;
-    assign  adc_data_in[ 3  ]   =   syzygy_d_p_6;
-    assign  adc_data_in[ 4  ]   =   syzygy_d_n_6;
-    assign  adc_data_in[ 5  ]   =   syzygy_s_16;
-    assign  adc_data_in[ 6  ]   =   syzygy_s_18;
-    assign  adc_data_in[ 7  ]   =   syzygy_s_20;
-    assign  adc_data_in[ 8  ]   =   syzygy_s_17;
-    assign  adc_data_in[ 9  ]   =   syzygy_d_p_4;
-    assign  adc_data_in[ 10 ]   =   syzygy_s_19;
-    assign  adc_data_in[ 11 ]   =   syzygy_s_21;
-    assign  adc_data_in[ 12 ]   =   syzygy_s_23;
-    assign  adc_data_in[ 13 ]   =   syzygy_s_25;
-    
-    assign  o_led_g             =   adc_init_done ? 1'b0 : led_g;
-    
-    /* ###################################### */
     clk_wiz_0
     u_clk_wiz_0
     (
-        .clk_in1                (i_clock),
-        .reset                  (i_reset),
-        .clk_out1               (clock),
-        .clk_out2               (adc_clock),
-        .locked                 (locked)
+        .clk_out1           ( sys_clock ),
+        .clk_out2           ( adc_clock ),
+        .reset              ( i_reset   ),
+        .locked             ( locked    ),
+        .clk_in1            ( i_clock   )
     );
-    /* ###################################### */
-    serial #
-    (
-        .SERIAL_DATA_SIZE       (SERIAL_DATA_SIZE)
-    )
-    u_serial
-    (
-        .i_clock                (clock),
-        .i_reset                (~locked),
-        .i_send                 (serial_send),
-        .i_data_h               (serial_data_h),
-        .i_data_l               (serial_data_l),
-        .o_ready                (serial_ready),
-        .o_tx                   (o_tx)
-    );
-    /* ###################################### */
+    
+    /* ########################################################### */
+    /* ADC1410 ################################################### */
+    
+    localparam  ADC_CHDATA_SIZE = 16;
+    localparam  ADC_DATA_SIZE   = 14;
+    
+    wire    [ ADC_CHDATA_SIZE - 1 : 0 ] adc_data_ch1;
+    wire    [ ADC_CHDATA_SIZE - 1 : 0 ] adc_data_ch2;
+    reg     [ ADC_DATA_SIZE   - 1 : 0 ] adc_data;
+    wire                                adc_init_done;
+    wire                                adc_fifo_empty_cha;
+    wire                                adc_fifo_empty_chb;
+    reg                                 adc_test_mode;
+    
+    always@( * ) begin
+        adc_data[ 0  ]          = i_syzygy_a_s_24;
+        adc_data[ 1  ]          = i_syzygy_a_s_22;
+        adc_data[ 2  ]          = i_syzygy_a_d_n_4;
+        adc_data[ 3  ]          = i_syzygy_a_d_p_6;
+        adc_data[ 4  ]          = i_syzygy_a_d_n_6;
+        adc_data[ 5  ]          = i_syzygy_a_s_16;
+        adc_data[ 6  ]          = i_syzygy_a_s_18;
+        adc_data[ 7  ]          = i_syzygy_a_s_20;
+        adc_data[ 8  ]          = i_syzygy_a_s_17;
+        adc_data[ 9  ]          = i_syzygy_a_d_p_4;
+        adc_data[ 10 ]          = i_syzygy_a_s_19;
+        adc_data[ 11 ]          = i_syzygy_a_s_21;
+        adc_data[ 12 ]          = i_syzygy_a_s_23;
+        adc_data[ 13 ]          = i_syzygy_a_s_25;
+        
+        adc_test_mode           = 1'b0;
+    end
+    
+    assign  o_syzygy_a_p2c_clk_n    = 1'b0;
+    
     ZmodADC1410_Controller_0
     u_ZmodADC1410_Controller_0
     (
-        .SysClk             (clock),                //  IN STD_LOGIC;
-        .ADC_InClk          (adc_clock),            //  IN STD_LOGIC;
-        .sRst_n             (locked),               //  IN STD_LOGIC;
-        .sInitDone_n        (adc_init_done),        //  OUT STD_LOGIC;
-        .FIFO_EMPTY_CHA     (adc_fifo_empty_ch1),   //  OUT STD_LOGIC;
-        .FIFO_EMPTY_CHB     (adc_fifo_empty_ch2),   //  OUT STD_LOGIC;
-        .sCh1Out            (adc_data_out_ch1),     //  OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-        .sCh2Out            (adc_data_out_ch2),     //  OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-        .sTestMode          (adc_test_mode),        //  IN STD_LOGIC;
-        .adcClkIn_p         (syzygy_c2p_clk_p),     //  OUT STD_LOGIC;
-        .adcClkIn_n         (syzygy_c2p_clk_n),     //  OUT STD_LOGIC;
-        .adcSync            (syzygy_s_27),          //  OUT STD_LOGIC;
-        .DcoClk             (syzygy_p2c_clk_p),     //  IN STD_LOGIC;
-        .dADC_Data          (adc_data_in),          //  IN STD_LOGIC_VECTOR(13 DOWNTO 0);
-        .sADC_SDIO          (syzygy_d_p_2),         //  INOUT STD_LOGIC;
-        .sADC_CS            (syzygy_s_26),          //  OUT STD_LOGIC;
-        .sADC_Sclk          (syzygy_d_n_2),         //  OUT STD_LOGIC;
-        .sCh1CouplingH      (syzygy_d_p_0),         //  OUT STD_LOGIC;
-        .sCh1CouplingL      (syzygy_d_n_0),         //  OUT STD_LOGIC;
-        .sCh2CouplingH      (syzygy_d_p_1),         //  OUT STD_LOGIC;
-        .sCh2CouplingL      (syzygy_d_n_1),         //  OUT STD_LOGIC;
-        .sCh1GainH          (syzygy_d_p_5),         //  OUT STD_LOGIC;
-        .sCh1GainL          (syzygy_d_n_5),         //  OUT STD_LOGIC;
-        .sCh2GainH          (syzygy_d_p_3),         //  OUT STD_LOGIC;
-        .sCh2GainL          (syzygy_d_n_3),         //  OUT STD_LOGIC;
-        .sRelayComH         (syzygy_d_p_7),         //  OUT STD_LOGIC;
-        .sRelayComL         (syzygy_d_n_7)          //  OUT STD_LOGIC
+        .SysClk             ( sys_clock             ),             // IN STD_LOGIC;
+        .ADC_InClk          ( adc_clock             ),             // IN STD_LOGIC;
+        .sRst_n             ( locked                ),             // IN STD_LOGIC;
+        .sInitDone_n        ( adc_init_done         ),             // OUT STD_LOGIC;
+        .FIFO_EMPTY_CHA     ( adc_fifo_empty_cha    ),             // OUT STD_LOGIC;
+        .FIFO_EMPTY_CHB     ( adc_fifo_empty_chb    ),             // OUT STD_LOGIC;
+        .sCh1Out            ( adc_data_ch1          ),             // OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+        .sCh2Out            ( adc_data_ch2          ),             // OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+        .sTestMode          ( adc_test_mode         ),             // IN STD_LOGIC;
+        .adcClkIn_p         ( o_syzygy_a_c2p_clk_p  ),             // OUT STD_LOGIC;
+        .adcClkIn_n         ( o_syzygy_a_c2p_clk_n  ),             // OUT STD_LOGIC;
+        .adcSync            ( o_syzygy_a_s_27       ),             // OUT STD_LOGIC;
+        .DcoClk             ( i_syzygy_a_p2c_clk_p  ),             // IN STD_LOGIC;
+        .dADC_Data          ( adc_data              ),             // IN STD_LOGIC_VECTOR(13 DOWNTO 0);
+        .sADC_SDIO          ( io_syzygy_a_d_p_2     ),             // INOUT STD_LOGIC;
+        .sADC_CS            ( o_syzygy_a_s_26       ),             // OUT STD_LOGIC;
+        .sADC_Sclk          ( o_syzygy_a_d_n_2      ),             // OUT STD_LOGIC;
+        .sCh1CouplingH      ( o_syzygy_a_d_p_0      ),             // OUT STD_LOGIC;
+        .sCh1CouplingL      ( o_syzygy_a_d_n_0      ),             // OUT STD_LOGIC;
+        .sCh2CouplingH      ( o_syzygy_a_d_p_1      ),             // OUT STD_LOGIC;
+        .sCh2CouplingL      ( o_syzygy_a_d_n_1      ),             // OUT STD_LOGIC;
+        .sCh1GainH          ( o_syzygy_a_d_p_5      ),             // OUT STD_LOGIC;
+        .sCh1GainL          ( o_syzygy_a_d_n_5      ),             // OUT STD_LOGIC;
+        .sCh2GainH          ( o_syzygy_a_d_p_3      ),             // OUT STD_LOGIC;
+        .sCh2GainL          ( o_syzygy_a_d_n_3      ),             // OUT STD_LOGIC;
+        .sRelayComH         ( o_syzygy_a_d_p_7      ),             // OUT STD_LOGIC;
+        .sRelayComL         ( o_syzygy_a_d_n_7      )              // OUT STD_LOGIC
     );
-    /* ###################################### */
-
+    
+    /* ########################################################### */
+    /* UART TX ################################################### */
+    
+    localparam  UART_DATA_SIZE      = 8;
+    localparam  UART_CLOCK_COUNT    = 2000000;
+    
+    reg     [ UART_DATA_SIZE - 1 : 0 ]  uart_txdata_l;
+    reg     [ UART_DATA_SIZE - 1 : 0 ]  uart_txdata_h;
+    reg                                 uart_send;
+    wire                                uart_ready;
+    integer                             uart_send_counter;
+    
+    always@( posedge sys_clock ) begin
+    
+        if( ~locked ) begin
+            uart_send           <= 1'b0;    
+            uart_send_counter   <= 0;
+        end
+        else begin
+            if( uart_send_counter == UART_CLOCK_COUNT ) begin
+                uart_send           <= uart_ready ? 1'b1 : 1'b0;
+                uart_txdata_l       <= adc_data_ch1[ 7  : 0 ];
+                uart_txdata_h       <= adc_data_ch1[ 15 : 8 ];
+                uart_send_counter   <= 0;
+            end
+            else begin
+                uart_send           <= 1'b0;
+                uart_send_counter   <= uart_send_counter + 1;
+            end   
+        end
+    end
+    
+    uart #
+    (
+        .UART_DATA_SIZE ( UART_DATA_SIZE    )
+    )
+    u_uart
+    (
+        .i_clock        ( sys_clock         ),
+        .i_reset        ( ~locked           ),
+        .i_data_l       ( uart_txdata_l     ),
+        .i_data_h       ( uart_txdata_h     ),
+        .i_send         ( uart_send         ),
+        .o_ready        ( uart_ready        ),
+        .o_tx           ( o_tx              )
+    );
+    
+    /* ########################################################### */
+    /* LED'S ##################################################### */
+    
+    localparam  LED_CLOCK_COUNT = 50;
+    
+    reg         led_pwm;
+    integer     led_pwm_counter;
+    
+    always@( posedge sys_clock ) begin
+        
+        if( ~locked )
+            led_pwm_counter <= 0;
+        else begin
+            if( led_pwm_counter == LED_CLOCK_COUNT ) begin
+                led_pwm         <= 1'b1;
+                led_pwm_counter <= 0;
+            end
+            else begin
+                led_pwm         <= 1'b0;
+                led_pwm_counter <= led_pwm_counter + 1;
+            end   
+        end
+    end 
+    
+    assign  o_led0_g    = adc_init_done ? 1'b0      : led_pwm;
+    assign  o_led0_r    = adc_init_done ? led_pwm   : 1'b0;
+    
 endmodule

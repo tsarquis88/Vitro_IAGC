@@ -1,29 +1,25 @@
-/**
- *  Sends one 16-bit value as two 8-bit values.
-*/
-
 `timescale 1ns / 1ps
 
-module serial #
+module uart #
 (
-    parameter   SERIAL_DATA_SIZE    =   8
+    parameter   UART_DATA_SIZE    =   8
 )
 (
-    input                                   i_clock,
-    input                                   i_reset,
-    input   [ SERIAL_DATA_SIZE - 1 : 0 ]    i_data_l,
-    input   [ SERIAL_DATA_SIZE - 1 : 0 ]    i_data_h,
-    input                                   i_send,
-    output                                  o_ready,
-    output                                  o_tx
+    input                               i_clock,
+    input                               i_reset,
+    input   [ UART_DATA_SIZE - 1 : 0 ]  i_data_l,
+    input   [ UART_DATA_SIZE - 1 : 0 ]  i_data_h,
+    input                               i_send,
+    output                              o_ready,
+    output                              o_tx
 );
 
     localparam  UART_PRESCALE       =   16'b0000010100010110;   /* 9600 BR 8-bit    */
     localparam  UART_PRESCALE_SIZE  =   16;
     localparam  UART_DATA_CANT      =   5;
     
-    reg     [ SERIAL_DATA_SIZE - 1 : 0 ]    tx_data_in [ UART_DATA_CANT - 1 : 0 ];
-    reg     [ SERIAL_DATA_SIZE - 1 : 0 ]    tx_data;
+    reg     [ UART_DATA_SIZE     - 1 : 0 ]  tx_data_in [ UART_DATA_CANT - 1 : 0 ];
+    reg     [ UART_DATA_SIZE     - 1 : 0 ]  tx_data;
     reg     [ UART_PRESCALE_SIZE - 1 : 0 ]  tx_prescale;
     wire                                    tx_ready;
     wire                                    tx_busy;
@@ -92,7 +88,7 @@ module serial #
     /* ###################################### */
     uart_tx #
     (
-        .DATA_WIDTH     (SERIAL_DATA_SIZE)
+        .DATA_WIDTH     (UART_DATA_SIZE)
     )
     u_uart_tx
     (
