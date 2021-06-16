@@ -11,38 +11,39 @@ module top
     output  o_led0_g,
     output  o_led0_r,
     
-    output  o_syzygy_a_c2p_clk_n,
-    output  o_syzygy_a_c2p_clk_p,
-    output  o_syzygy_a_d_n_0,
-    output  o_syzygy_a_d_p_0,
-    output  o_syzygy_a_d_n_1,
-    output  o_syzygy_a_d_p_1,
-    output  o_syzygy_a_d_n_2,
-    inout   io_syzygy_a_d_p_2,
-    output  o_syzygy_a_d_n_3,
-    output  o_syzygy_a_d_p_3,
-    input   i_syzygy_a_d_n_4,
-    input   i_syzygy_a_d_p_4,
-    output  o_syzygy_a_d_n_5,
-    output  o_syzygy_a_d_p_5,
-    input   i_syzygy_a_d_n_6,
-    input   i_syzygy_a_d_p_6,
-    output  o_syzygy_a_d_n_7,
-    output  o_syzygy_a_d_p_7,
-    output  o_syzygy_a_p2c_clk_n,
-    input   i_syzygy_a_p2c_clk_p,
-    input   i_syzygy_a_s_16,
-    input   i_syzygy_a_s_17,
-    input   i_syzygy_a_s_18,
-    input   i_syzygy_a_s_19,
-    input   i_syzygy_a_s_20,
-    input   i_syzygy_a_s_21,
-    input   i_syzygy_a_s_22,
-    input   i_syzygy_a_s_23,
-    input   i_syzygy_a_s_24,
-    input   i_syzygy_a_s_25,
-    output  o_syzygy_a_s_26,
-    output  o_syzygy_a_s_27
+    
+    input   i_adc_data_0,
+    input   i_adc_data_1,
+    input   i_adc_data_2,
+    input   i_adc_data_3,
+    input   i_adc_data_4,
+    input   i_adc_data_5,
+    input   i_adc_data_6,
+    input   i_adc_data_7,
+    input   i_adc_data_8,
+    input   i_adc_data_9,
+    input   i_adc_data_10,
+    input   i_adc_data_11,
+    input   i_adc_data_12,
+    input   i_adc_data_13,
+    inout   io_adc_sdio,
+    input   i_adc_dco_clock_p,
+    output  o_adc_dco_clock_n,
+    output  o_adc_sclk,
+    output  o_adc_clock_in_n,
+    output  o_adc_clock_in_p,
+    output  o_ch1_coupling_h,
+    output  o_ch1_coupling_l,
+    output  o_ch2_coupling_h,
+    output  o_ch2_coupling_l,
+    output  o_ch2_gain_h,
+    output  o_ch2_gain_l,
+    output  o_ch1_gain_l,
+    output  o_ch1_gain_h,
+    output  o_adc_relay_com_l,
+    output  o_adc_relay_com_h,
+    output  o_adc_cs,
+    output  o_adc_sync
        
 );
     
@@ -78,56 +79,56 @@ module top
     reg                                 adc_test_mode;
     
     always@( * ) begin
-        adc_data[ 0  ]          = i_syzygy_a_s_24;
-        adc_data[ 1  ]          = i_syzygy_a_s_22;
-        adc_data[ 2  ]          = i_syzygy_a_d_n_4;
-        adc_data[ 3  ]          = i_syzygy_a_d_p_6;
-        adc_data[ 4  ]          = i_syzygy_a_d_n_6;
-        adc_data[ 5  ]          = i_syzygy_a_s_16;
-        adc_data[ 6  ]          = i_syzygy_a_s_18;
-        adc_data[ 7  ]          = i_syzygy_a_s_20;
-        adc_data[ 8  ]          = i_syzygy_a_s_17;
-        adc_data[ 9  ]          = i_syzygy_a_d_p_4;
-        adc_data[ 10 ]          = i_syzygy_a_s_19;
-        adc_data[ 11 ]          = i_syzygy_a_s_21;
-        adc_data[ 12 ]          = i_syzygy_a_s_23;
-        adc_data[ 13 ]          = i_syzygy_a_s_25;
+        adc_data[ 0  ]          = i_adc_data_0;
+        adc_data[ 1  ]          = i_adc_data_1;
+        adc_data[ 2  ]          = i_adc_data_2;
+        adc_data[ 3  ]          = i_adc_data_3;
+        adc_data[ 4  ]          = i_adc_data_4;
+        adc_data[ 5  ]          = i_adc_data_5;
+        adc_data[ 6  ]          = i_adc_data_6;
+        adc_data[ 7  ]          = i_adc_data_7;
+        adc_data[ 8  ]          = i_adc_data_8;
+        adc_data[ 9  ]          = i_adc_data_9;
+        adc_data[ 10 ]          = i_adc_data_10;
+        adc_data[ 11 ]          = i_adc_data_11;
+        adc_data[ 12 ]          = i_adc_data_12;
+        adc_data[ 13 ]          = i_adc_data_13;
         
         adc_test_mode           = 1'b0;
     end
     
-    assign  o_syzygy_a_p2c_clk_n    = 1'b0;
+    assign  o_adc_dco_clock_n    = 1'b0;
     
     ZmodADC1410_Controller_0
     u_ZmodADC1410_Controller_0
     (
-        .SysClk             ( sys_clock             ),             // IN STD_LOGIC;
-        .ADC_InClk          ( adc_clock             ),             // IN STD_LOGIC;
-        .sRst_n             ( locked                ),             // IN STD_LOGIC;
-        .sInitDone_n        ( adc_init_done         ),             // OUT STD_LOGIC;
-        .FIFO_EMPTY_CHA     ( adc_fifo_empty_cha    ),             // OUT STD_LOGIC;
-        .FIFO_EMPTY_CHB     ( adc_fifo_empty_chb    ),             // OUT STD_LOGIC;
-        .sCh1Out            ( adc_data_ch1          ),             // OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-        .sCh2Out            ( adc_data_ch2          ),             // OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-        .sTestMode          ( adc_test_mode         ),             // IN STD_LOGIC;
-        .adcClkIn_p         ( o_syzygy_a_c2p_clk_p  ),             // OUT STD_LOGIC;
-        .adcClkIn_n         ( o_syzygy_a_c2p_clk_n  ),             // OUT STD_LOGIC;
-        .adcSync            ( o_syzygy_a_s_27       ),             // OUT STD_LOGIC;
-        .DcoClk             ( i_syzygy_a_p2c_clk_p  ),             // IN STD_LOGIC;
-        .dADC_Data          ( adc_data              ),             // IN STD_LOGIC_VECTOR(13 DOWNTO 0);
-        .sADC_SDIO          ( io_syzygy_a_d_p_2     ),             // INOUT STD_LOGIC;
-        .sADC_CS            ( o_syzygy_a_s_26       ),             // OUT STD_LOGIC;
-        .sADC_Sclk          ( o_syzygy_a_d_n_2      ),             // OUT STD_LOGIC;
-        .sCh1CouplingH      ( o_syzygy_a_d_p_0      ),             // OUT STD_LOGIC;
-        .sCh1CouplingL      ( o_syzygy_a_d_n_0      ),             // OUT STD_LOGIC;
-        .sCh2CouplingH      ( o_syzygy_a_d_p_1      ),             // OUT STD_LOGIC;
-        .sCh2CouplingL      ( o_syzygy_a_d_n_1      ),             // OUT STD_LOGIC;
-        .sCh1GainH          ( o_syzygy_a_d_p_5      ),             // OUT STD_LOGIC;
-        .sCh1GainL          ( o_syzygy_a_d_n_5      ),             // OUT STD_LOGIC;
-        .sCh2GainH          ( o_syzygy_a_d_p_3      ),             // OUT STD_LOGIC;
-        .sCh2GainL          ( o_syzygy_a_d_n_3      ),             // OUT STD_LOGIC;
-        .sRelayComH         ( o_syzygy_a_d_p_7      ),             // OUT STD_LOGIC;
-        .sRelayComL         ( o_syzygy_a_d_n_7      )              // OUT STD_LOGIC
+        .SysClk             ( sys_clock             ),
+        .ADC_InClk          ( adc_clock             ),
+        .sRst_n             ( locked                ),
+        .sInitDone_n        ( adc_init_done         ),
+        .FIFO_EMPTY_CHA     ( adc_fifo_empty_cha    ),
+        .FIFO_EMPTY_CHB     ( adc_fifo_empty_chb    ),
+        .sCh1Out            ( adc_data_ch1          ),
+        .sCh2Out            ( adc_data_ch2          ),
+        .sTestMode          ( adc_test_mode         ),
+        .adcClkIn_p         ( o_adc_clock_in_p      ),
+        .adcClkIn_n         ( o_adc_clock_in_n      ),
+        .adcSync            ( o_adc_sync            ),
+        .DcoClk             ( i_adc_dco_clock_p     ),
+        .dADC_Data          ( adc_data              ),
+        .sADC_SDIO          ( io_adc_sdio           ),
+        .sADC_CS            ( o_adc_cs              ),
+        .sADC_Sclk          ( o_adc_sclk            ),
+        .sCh1CouplingH      ( o_ch1_coupling_h      ),
+        .sCh1CouplingL      ( o_ch1_coupling_l      ),
+        .sCh2CouplingH      ( o_ch2_coupling_h      ),
+        .sCh2CouplingL      ( o_ch2_coupling_l      ),
+        .sCh1GainH          ( o_ch1_gain_h          ),
+        .sCh1GainL          ( o_ch1_gain_l          ),
+        .sCh2GainH          ( o_ch2_gain_h          ),
+        .sCh2GainL          ( o_ch2_gain_l          ),
+        .sRelayComH         ( o_adc_relay_com_h     ),
+        .sRelayComL         ( o_adc_relay_com_l     )
     );
     
     /* ########################################################### */
