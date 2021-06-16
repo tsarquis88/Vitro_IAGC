@@ -1,20 +1,18 @@
 `timescale 1ns / 1ps
 
-module memory_reader #
+module monopulse_simulator #
 (
-    parameter DATA_SIZE     =   10,
+    parameter DATA_SIZE     =   16,
     parameter DATA_DEPTH    =   7514,
     parameter ADDR_MODULE   =   13
 )
 (
     input i_clock,
     input i_reset,
-    input i_next,
     output [ DATA_SIZE - 1 : 0 ]    o_reference,
     output [ DATA_SIZE - 1 : 0 ]    o_error
 );
     
-    reg                             last_next;
     reg                             ena;
     reg                             wea;
     reg     [ ADDR_MODULE - 1 : 0 ] addra;
@@ -26,18 +24,11 @@ module memory_reader #
             dina        <=  { ADDR_MODULE { 1'b0 } };
             ena         <=  1'b1;
             wea         <=  1'b0;
-            last_next   <=  1'b0;
         end
         else begin
-            if( last_next == 1'b0 && i_next == 1'b1 ) begin
-                addra   <=  addra + 1'b1;
-                
-                if( addra   >=  DATA_DEPTH ) begin
-                    addra   <=  { ADDR_MODULE { 1'b0 } };
-                end
-            end
-            
-            last_next   <=  i_next;
+            addra   <=  addra + 1'b1;
+            if( addra   >=  DATA_DEPTH )
+                addra   <=  { ADDR_MODULE { 1'b0 } };
         end
     end
     
