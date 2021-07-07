@@ -9,7 +9,6 @@ module top
     output  o_led0_g,
     output  o_led0_r,
     
-    input   i_rx,
     output  o_tx,
     
     
@@ -83,7 +82,6 @@ module top
     
     assign adc_test_mode        = 1'b0;
     assign adc_calib            = adc_calib_reg;
-    
     assign adc_data_in[ 0  ]    = i_adc_data_0;
     assign adc_data_in[ 1  ]    = i_adc_data_1;
     assign adc_data_in[ 2  ]    = i_adc_data_2;
@@ -98,8 +96,7 @@ module top
     assign adc_data_in[ 11 ]    = i_adc_data_11;
     assign adc_data_in[ 12 ]    = i_adc_data_12;
     assign adc_data_in[ 13 ]    = i_adc_data_13;
-    
-    assign  o_adc_dco_clock_n   = 1'b0;
+    assign o_adc_dco_clock_n    = 1'b0;
     
     ZmodADC1410_Controller_0
     u_ZmodADC1410_Controller_0
@@ -134,7 +131,7 @@ module top
     );
     
     /* ########################################################### */
-    /* LED'S ##################################################### */
+    /* ONBOARD INIT LED'S ######################################## */
     
     localparam  LED_CLOCK_COUNT = 50;
     
@@ -163,7 +160,7 @@ module top
     /* ########################################################### */
     /* UART TX ################################################### */
     
-    localparam  UART_DATA_SIZE    =   8;
+    localparam  UART_DATA_SIZE  =   8;
     localparam  PRESCALE_SIZE   =   16;
     
     wire    [ UART_DATA_SIZE - 1 : 0 ]  tx_data;
