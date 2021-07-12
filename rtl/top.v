@@ -55,6 +55,12 @@ module top
     wire    adc_clock;
     wire    locked;
     
+    /*
+               <--- IP Configuration --->
+        clk_in1     =   125 MHz
+        clk_out1    =   100 MHz
+        clk_out2    =   400 MHz
+    */
     clk_wiz_0
     u_clk_wiz_0
     (
@@ -100,6 +106,21 @@ module top
     assign adc_data_in[ 13 ]    = i_adc_data_13;
     assign o_adc_dco_clock_n    = 1'b0;
     
+    /*
+               <--- IP Configuration --->
+        Ch1CouplingStatic   =   0
+        Ch2CouplingStatic   =   1
+        Ch1GainStatic       =   1
+        Ch2GainStatic       =   1
+        Ch1HgAddCoefStatic  =   000000000000000000
+        Ch2HgAddCoefStatic  =   000000000000000000
+        Ch1LgAddCoefStatic  =   000000000000000000
+        Ch2LgAddCoefStatic  =   000000000000000000
+        Ch1HgMultCoefStatic =   010000000000000000
+        Ch2HgMultCoefStatic =   010000000000000000
+        Ch1LgMultCoefStatic =   010000000000000000
+        Ch2LgMultCoefStatic =   010000000000000000   
+    */
     ZmodADC1410_Controller_0
     u_ZmodADC1410_Controller_0
     (
@@ -154,7 +175,7 @@ module top
     
     wire    [ PRESCALE_SIZE - 1 : 0 ]   uart_prescale;
     
-    assign  tx_data         = adc_data_out_ch1[15:8];
+    assign  tx_data         = adc_data_out_ch2[15:8];
     assign  uart_prescale   = 16'b0000010100010110;   /* 9600 BR 8-bit    */
     
     always@( posedge sys_clock ) begin
