@@ -8,9 +8,11 @@ module top
         
     output  o_led0_g,
     output  o_led0_r,
+    output  o_led0_b,
     
     output  o_tx,
     
+    input   i_calib,
     
     input   i_adc_data_0,
     input   i_adc_data_1,
@@ -68,7 +70,7 @@ module top
     
     localparam  ADC_CHDATA_SIZE = 16;
     localparam  ADC_DATA_SIZE   = 14;
-    localparam  ADC_CALIB_SIZE  = 8;
+    localparam  ADC_CALIB_SIZE  = 18;
     
     wire    [ ADC_CHDATA_SIZE - 1 : 0 ] adc_data_out_ch1;
     wire    [ ADC_CHDATA_SIZE - 1 : 0 ] adc_data_out_ch2;
@@ -127,35 +129,17 @@ module top
         .sCh2GainH          ( o_ch2_gain_h          ),
         .sCh2GainL          ( o_ch2_gain_l          ),
         .sRelayComH         ( o_adc_relay_com_h     ),
-        .sRelayComL         ( o_adc_relay_com_l     )
-    );
-    
-    /* ########################################################### */
-    /* ONBOARD INIT LED'S ######################################## */
-    
-    localparam  LED_CLOCK_COUNT = 50;
-    
-    reg         led_pwm;
-    integer     led_pwm_counter;
-    
-    always@( posedge sys_clock ) begin
+        .sRelayComL         ( o_adc_relay_com_l     ),
         
-        if( ~locked )
-            led_pwm_counter <= 0;
-        else begin
-            if( led_pwm_counter == LED_CLOCK_COUNT ) begin
-                led_pwm         <= 1'b1;
-                led_pwm_counter <= 0;
-            end
-            else begin
-                led_pwm         <= 1'b0;
-                led_pwm_counter <= led_pwm_counter + 1;
-            end   
-        end
-    end 
-    
-    assign  o_led0_g    = adc_init_done ? 1'b0      : led_pwm;
-    assign  o_led0_r    = adc_init_done ? led_pwm   : 1'b0;
+        .sExtCh1LgMultCoef  (18'b010000000000000000),
+        .sExtCh1LgAddCoef   (adc_calib),
+        .sExtCh1HgMultCoef  (18'b010000000000000000),
+        .sExtCh1HgAddCoef   (adc_calib),
+        .sExtCh2LgMultCoef  (18'b010000000000000000),
+        .sExtCh2LgAddCoef   (adc_calib),
+        .sExtCh2HgMultCoef  (18'b010000000000000000),
+        .sExtCh2HgAddCoef   (adc_calib)
+    );
    
     /* ########################################################### */
     /* UART TX ################################################### */
@@ -173,7 +157,7 @@ module top
     assign  tx_data         = adc_data_out_ch1[15:8];
     assign  uart_prescale   = 16'b0000010100010110;   /* 9600 BR 8-bit    */
     
-    always@( sys_clock ) begin
+    always@( posedge sys_clock ) begin
         if( ~locked )
             tx_valid    <= 1'b0;
         else begin
@@ -199,5 +183,93 @@ module top
         .busy               (tx_busy),
         .prescale           (uart_prescale)
     );
+    
+    /* ########################################################### */
+    /* ADC CALIBRATION ########################################### */
+    
+    localparam  CALIB_CLOCK_COUNT = 10000;
+    
+    integer             calib_counter;
+    reg                 calib_enabled;
+    reg                 last_i_calib;
+    
+    always@( posedge sys_clock ) begin
+        if( ~locked ) begin
+            calib_counter   <= 0;
+            adc_calib_reg   <= 18'b000000001111111111;
+            last_i_calib    <= 1'b0;
+            calib_enabled   <= 1'b0;
+        end
+        else begin                
+            if( ~adc_init_done ) begin
+                if( calib_enabled ) begin
+                    calib_counter   <= calib_counter + 1;
+                    
+                    if( calib_counter == CALIB_CLOCK_COUNT ) begin
+                        calib_counter   <= 0;
+                        adc_calib_reg   <= adc_calib_reg + 1'b1; 
+                    end
+                end
+                
+                if( i_calib && ~last_i_calib )
+                    calib_enabled   <= ~calib_enabled;
+                else
+                    calib_enabled   <= calib_enabled;
+                
+                last_i_calib    <=   i_calib;
+            end
+        end
+    end
+        
+    /* ########################################################### */
+    /* LED'S ##################################################### */
+    
+    localparam  LED_CLOCK_COUNT = 50;
+    
+    reg         led_pwm;
+    integer     led_pwm_counter;
+    reg         led0_g;
+    reg         led0_b;
+    reg         led0_r;
+    
+    always@( posedge sys_clock ) begin
+        
+        if( ~locked )
+            led_pwm_counter <= 0;
+        else begin
+            if( led_pwm_counter == LED_CLOCK_COUNT ) begin
+                led_pwm         <= 1'b1;
+                led_pwm_counter <= 0;
+            end
+            else begin
+                led_pwm         <= 1'b0;
+                led_pwm_counter <= led_pwm_counter + 1;
+            end   
+        end
+    end 
+    
+    always@( adc_init_done or calib_enabled or led_pwm ) begin
+        if( adc_init_done ) begin
+            led0_g  =   1'b0;
+            led0_r  =   led_pwm;
+            led0_b  =   1'b0;
+        end
+        else begin
+            if( calib_enabled ) begin
+                led0_g  =   1'b0;
+                led0_r  =   1'b0;
+                led0_b  =   led_pwm;
+            end
+            else begin
+                led0_g  =   led_pwm;
+                led0_r  =   1'b0;
+                led0_b  =   1'b0;
+            end
+        end
+    end
+    
+    assign  o_led0_g    = led0_g;
+    assign  o_led0_r    = led0_r;
+    assign  o_led0_b    = led0_b;
         
 endmodule

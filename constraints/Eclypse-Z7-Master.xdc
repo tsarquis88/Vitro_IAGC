@@ -9,10 +9,10 @@ create_clock -add -name sys_clk_pin -period 8.00 -waveform {0 4} [get_ports { i_
 
 ## Buttons
 set_property -dict { PACKAGE_PIN C17   IOSTANDARD LVCMOS33 } [get_ports { i_reset }]; #IO_L11P_T1_SRCC Sch=btn[0]
-#set_property -dict { PACKAGE_PIN C18   IOSTANDARD LVCMOS33 } [get_ports { btn[1] }]; #IO_L11N_T1_SRCC Sch=btn[1]
+set_property -dict { PACKAGE_PIN C18   IOSTANDARD LVCMOS33 } [get_ports { i_calib }]; #IO_L11N_T1_SRCC Sch=btn[1]
 
 ## RGB LEDs
-#set_property -dict { PACKAGE_PIN A17   IOSTANDARD LVCMOS33 } [get_ports { led0_b }]; #IO_L9N_T1_DQS_AD3N Sch=led0_b
+set_property -dict { PACKAGE_PIN A17   IOSTANDARD LVCMOS33 } [get_ports { o_led0_b }]; #IO_L9N_T1_DQS_AD3N Sch=led0_b
 set_property -dict { PACKAGE_PIN B16   IOSTANDARD LVCMOS33 } [get_ports { o_led0_g }]; #IO_L8P_T1_AD10P Sch=led0_g
 set_property -dict { PACKAGE_PIN B17   IOSTANDARD LVCMOS33 } [get_ports { o_led0_r }]; #IO_L8N_T1_AD10N Sch=led0_r
 #set_property -dict { PACKAGE_PIN A16   IOSTANDARD LVCMOS33 } [get_ports { led1_b }]; #IO_L9P_T1_DQS_AD3P Sch=led1_b
@@ -85,7 +85,7 @@ create_clock -period 10.000 -name i_adc_dco_clock_p -waveform {0.000 5.000} [get
 #create_generated_clock -name o_adc_clock_in_p -source [get_pins design_1_i/u_ZmodADC1410_Controller_0/U0/InstADC_ClkODDR/C] -divide_by 1 [get_ports o_adc_clock_in_p]
 #create_generated_clock -name o_adc_clock_in_p -source [get_pins u_ZmodADC1410_Controller_0/U0/InstADC_ClkOBUFDS/O] -divide_by 1 [get_ports o_adc_clock_in_p]
 #create_generated_clock -name o_adc_clock_in_p -source [get_pins -filter {name=~ *InstADC_ClkODDR/C}] -divide_by 1 [get_ports o_adc_clock_in_p]
-create_generated_clock -name o_adc_clock_in_p -source [get_pins -hier InstADC_ClkODDR/C] -divide_by 1 [get_ports o_adc_clock_in_p]
+#create_generated_clock -name o_adc_clock_in_p -source [get_pins -hier InstADC_ClkODDR/C] -divide_by 1 [get_ports o_adc_clock_in_p]
 
 set_input_delay -clock [get_clocks i_adc_dco_clock_p] -clock_fall -min -add_delay 3.240 [get_ports {i_adc_data_*}]
 set_input_delay -clock [get_clocks i_adc_dco_clock_p] -clock_fall -max -add_delay 5.440 [get_ports {i_adc_data_*}]
