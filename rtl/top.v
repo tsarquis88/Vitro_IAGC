@@ -59,7 +59,7 @@ module top
                <--- IP Configuration --->
         clk_in1     =   125 MHz
         clk_out1    =   100 MHz
-        clk_out2    =   400 MHz
+        clk_out1    =   400 MHz
     */
     clk_wiz_0
     u_clk_wiz_0
@@ -74,92 +74,62 @@ module top
     /* ########################################################### */
     /* ADC1410 ################################################### */
     
-    localparam  ADC_CHDATA_SIZE = 16;
-    localparam  ADC_DATA_SIZE   = 14;
-    localparam  ADC_CALIB_SIZE  = 18;
+    localparam  ADC_CHDATA_SIZE =   16;
+    localparam  ADC_DATA_SIZE   =   14;
+    localparam  ADC_CALIB_SIZE  =   18;
     
-    wire    [ ADC_CHDATA_SIZE - 1 : 0 ] adc_data_out_ch1;
-    wire    [ ADC_CHDATA_SIZE - 1 : 0 ] adc_data_out_ch2;
-    wire    [ ADC_DATA_SIZE   - 1 : 0 ] adc_data_in;
+    wire    [ ADC_CHDATA_SIZE - 1 : 0 ] adc_out_ch1;
+    wire    [ ADC_CHDATA_SIZE - 1 : 0 ] adc_out_ch2;
     wire                                adc_init_done;
-    wire                                adc_fifo_empty_cha;
-    wire                                adc_fifo_empty_chb;
-    wire                                adc_test_mode;
     wire    [ ADC_CALIB_SIZE  - 1 : 0 ] adc_calib;
-    reg     [ ADC_CALIB_SIZE  - 1 : 0 ] adc_calib_reg;
     
-    assign adc_test_mode        = 1'b0;
-    assign adc_calib            = adc_calib_reg;
-    assign adc_data_in[ 0  ]    = i_adc_data_0;
-    assign adc_data_in[ 1  ]    = i_adc_data_1;
-    assign adc_data_in[ 2  ]    = i_adc_data_2;
-    assign adc_data_in[ 3  ]    = i_adc_data_3;
-    assign adc_data_in[ 4  ]    = i_adc_data_4;
-    assign adc_data_in[ 5  ]    = i_adc_data_5;
-    assign adc_data_in[ 6  ]    = i_adc_data_6;
-    assign adc_data_in[ 7  ]    = i_adc_data_7;
-    assign adc_data_in[ 8  ]    = i_adc_data_8;
-    assign adc_data_in[ 9  ]    = i_adc_data_9;
-    assign adc_data_in[ 10 ]    = i_adc_data_10;
-    assign adc_data_in[ 11 ]    = i_adc_data_11;
-    assign adc_data_in[ 12 ]    = i_adc_data_12;
-    assign adc_data_in[ 13 ]    = i_adc_data_13;
-    assign o_adc_dco_clock_n    = 1'b0;
-    
-    /*
-               <--- IP Configuration --->
-        Ch1CouplingStatic   =   0
-        Ch2CouplingStatic   =   1
-        Ch1GainStatic       =   1
-        Ch2GainStatic       =   1
-        Ch1HgAddCoefStatic  =   000000000000000000
-        Ch2HgAddCoefStatic  =   000000000000000000
-        Ch1LgAddCoefStatic  =   000000000000000000
-        Ch2LgAddCoefStatic  =   000000000000000000
-        Ch1HgMultCoefStatic =   010000000000000000
-        Ch2HgMultCoefStatic =   010000000000000000
-        Ch1LgMultCoefStatic =   010000000000000000
-        Ch2LgMultCoefStatic =   010000000000000000   
-    */
-    ZmodADC1410_Controller_0
-    u_ZmodADC1410_Controller_0
+    adc #
     (
-        .SysClk             ( sys_clock             ),
-        .ADC_InClk          ( adc_clock             ),
-        .sRst_n             ( locked                ),
-        .sInitDone_n        ( adc_init_done         ),
-        .FIFO_EMPTY_CHA     ( adc_fifo_empty_cha    ),
-        .FIFO_EMPTY_CHB     ( adc_fifo_empty_chb    ),
-        .sCh1Out            ( adc_data_out_ch1      ),
-        .sCh2Out            ( adc_data_out_ch2      ),
-        .sTestMode          ( adc_test_mode         ),
-        .adcClkIn_p         ( o_adc_clock_in_p      ),
-        .adcClkIn_n         ( o_adc_clock_in_n      ),
-        .adcSync            ( o_adc_sync            ),
-        .DcoClk             ( i_adc_dco_clock_p     ),
-        .dADC_Data          ( adc_data_in           ),
-        .sADC_SDIO          ( io_adc_sdio           ),
-        .sADC_CS            ( o_adc_cs              ),
-        .sADC_Sclk          ( o_adc_sclk            ),
-        .sCh1CouplingH      ( o_ch1_coupling_h      ),
-        .sCh1CouplingL      ( o_ch1_coupling_l      ),
-        .sCh2CouplingH      ( o_ch2_coupling_h      ),
-        .sCh2CouplingL      ( o_ch2_coupling_l      ),
-        .sCh1GainH          ( o_ch1_gain_h          ),
-        .sCh1GainL          ( o_ch1_gain_l          ),
-        .sCh2GainH          ( o_ch2_gain_h          ),
-        .sCh2GainL          ( o_ch2_gain_l          ),
-        .sRelayComH         ( o_adc_relay_com_h     ),
-        .sRelayComL         ( o_adc_relay_com_l     ),
-        
-        .sExtCh1LgMultCoef  (18'b010000000000000000),
-        .sExtCh1LgAddCoef   (adc_calib),
-        .sExtCh1HgMultCoef  (18'b010000000000000000),
-        .sExtCh1HgAddCoef   (adc_calib),
-        .sExtCh2LgMultCoef  (18'b010000000000000000),
-        .sExtCh2LgAddCoef   (adc_calib),
-        .sExtCh2HgMultCoef  (18'b010000000000000000),
-        .sExtCh2HgAddCoef   (adc_calib)
+        .ADC_CHDATA_SIZE    (ADC_CHDATA_SIZE),
+        .ADC_DATA_SIZE      (ADC_DATA_SIZE),
+        .ADC_CALIB_SIZE     (ADC_CALIB_SIZE)
+    )
+    u_adc
+    (
+        .i_sys_clock        (sys_clock),
+        .i_adc_clock        (adc_clock),
+        .i_reset            (locked),
+        .i_calib_value      (adc_calib),
+        .i_adc_data_0       (i_adc_data_0),
+        .i_adc_data_1       (i_adc_data_1),
+        .i_adc_data_2       (i_adc_data_2),
+        .i_adc_data_3       (i_adc_data_3),
+        .i_adc_data_4       (i_adc_data_4),
+        .i_adc_data_5       (i_adc_data_5),
+        .i_adc_data_6       (i_adc_data_6),
+        .i_adc_data_7       (i_adc_data_7),
+        .i_adc_data_8       (i_adc_data_8),
+        .i_adc_data_9       (i_adc_data_9),
+        .i_adc_data_10      (i_adc_data_10),
+        .i_adc_data_11      (i_adc_data_11),
+        .i_adc_data_12      (i_adc_data_12),
+        .i_adc_data_13      (i_adc_data_13),
+        .io_adc_sdio        (io_adc_sdio),
+        .i_adc_dco_clock_p  (i_adc_dco_clock_p),
+        .o_adc_dco_clock_n  (o_adc_dco_clock_n),
+        .o_adc_sclk         (o_adc_sclk),
+        .o_adc_clock_in_n   (o_adc_clock_in_n),
+        .o_adc_clock_in_p   (o_adc_clock_in_p),
+        .o_ch1_coupling_h   (o_ch1_coupling_h),
+        .o_ch1_coupling_l   (o_ch1_coupling_l),
+        .o_ch2_coupling_h   (o_ch2_coupling_h),
+        .o_ch2_coupling_l   (o_ch2_coupling_l),
+        .o_ch2_gain_h       (o_ch2_gain_h),
+        .o_ch2_gain_l       (o_ch2_gain_l),
+        .o_ch1_gain_l       (o_ch1_gain_l),
+        .o_ch1_gain_h       (o_ch1_gain_h),
+        .o_adc_relay_com_l  (o_adc_relay_com_l),
+        .o_adc_relay_com_h  (o_adc_relay_com_h),
+        .o_adc_cs           (o_adc_cs),
+        .o_adc_sync         (o_adc_sync),
+        .o_data_out_ch1     (adc_out_ch1),
+        .o_data_out_ch2     (adc_out_ch2),
+        .o_init_done        (adc_init_done) 
     );
    
     /* ########################################################### */
@@ -175,7 +145,7 @@ module top
     
     wire    [ PRESCALE_SIZE - 1 : 0 ]   uart_prescale;
     
-    assign  tx_data         = adc_data_out_ch2[15:8];
+    assign  tx_data         = adc_out_ch2[15:8];
     assign  uart_prescale   = 16'b0000010100010110;   /* 9600 BR 8-bit    */
     
     always@( posedge sys_clock ) begin
@@ -208,89 +178,42 @@ module top
     /* ########################################################### */
     /* ADC CALIBRATION ########################################### */
     
-    localparam  CALIB_CLOCK_COUNT = 10000;
+    localparam  ADC_CALIB_TICKS =   7500;
     
-    integer             calib_counter;
-    reg                 calib_enabled;
-    reg                 last_i_calib;
+    wire                calib_enabled;
     
-    always@( posedge sys_clock ) begin
-        if( ~locked ) begin
-            calib_counter   <= 0;
-            adc_calib_reg   <= 18'b000000001111111111;
-            last_i_calib    <= 1'b0;
-            calib_enabled   <= 1'b0;
-        end
-        else begin                
-            if( ~adc_init_done ) begin
-                if( calib_enabled ) begin
-                    calib_counter   <= calib_counter + 1;
-                    
-                    if( calib_counter == CALIB_CLOCK_COUNT ) begin
-                        calib_counter   <= 0;
-                        adc_calib_reg   <= adc_calib_reg + 1'b1; 
-                    end
-                end
-                
-                if( i_calib && ~last_i_calib )
-                    calib_enabled   <= ~calib_enabled;
-                else
-                    calib_enabled   <= calib_enabled;
-                
-                last_i_calib    <=   i_calib;
-            end
-        end
-    end
+    adc_calibrator #
+    (
+        .CALIB_SIZE     (ADC_CALIB_SIZE),
+        .CALIB_TICKS    (ADC_CALIB_TICKS)
+    )
+    u_adc_calibrator
+    (
+        .i_clock            (sys_clock),
+        .i_reset            (~locked),   
+        .i_toggle           (i_calib),
+        .o_calib_enabled    (calib_enabled),
+        .o_calib_value      (adc_calib)
+    );    
         
     /* ########################################################### */
-    /* LED'S ##################################################### */
+    /* ONBOARD LED'S ############################################# */
     
-    localparam  LED_CLOCK_COUNT = 50;
+    localparam  LED_PWM_TICKS   = 50;
     
-    reg         led_pwm;
-    integer     led_pwm_counter;
-    reg         led0_g;
-    reg         led0_b;
-    reg         led0_r;
-    
-    always@( posedge sys_clock ) begin
-        
-        if( ~locked )
-            led_pwm_counter <= 0;
-        else begin
-            if( led_pwm_counter == LED_CLOCK_COUNT ) begin
-                led_pwm         <= 1'b1;
-                led_pwm_counter <= 0;
-            end
-            else begin
-                led_pwm         <= 1'b0;
-                led_pwm_counter <= led_pwm_counter + 1;
-            end   
-        end
-    end 
-    
-    always@( adc_init_done or calib_enabled or led_pwm ) begin
-        if( adc_init_done ) begin
-            led0_g  =   1'b0;
-            led0_r  =   led_pwm;
-            led0_b  =   1'b0;
-        end
-        else begin
-            if( calib_enabled ) begin
-                led0_g  =   1'b0;
-                led0_r  =   1'b0;
-                led0_b  =   led_pwm;
-            end
-            else begin
-                led0_g  =   led_pwm;
-                led0_r  =   1'b0;
-                led0_b  =   1'b0;
-            end
-        end
-    end
-    
-    assign  o_led0_g    = led0_g;
-    assign  o_led0_r    = led0_r;
-    assign  o_led0_b    = led0_b;
+    led_unit #
+    (
+        .LED_PWM_TICKS      (LED_PWM_TICKS)
+    )
+    u_led_unit
+    (
+        .i_clock            (sys_clock),
+        .i_reset            (~locked),
+        .i_calib_enabled    (calib_enabled),
+        .i_adc_init_done    (adc_init_done),
+        .o_led_r            (o_led0_r),
+        .o_led_g            (o_led0_g),
+        .o_led_b            (o_led0_b)
+    );
         
 endmodule
