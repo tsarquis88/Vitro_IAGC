@@ -10,7 +10,8 @@ module top
     output  o_led0_r,
     output  o_led0_b,
     
-    output  o_tx,
+    output  o_tx_0,
+    output  o_tx_1,
     
     input   i_calib,
     
@@ -131,49 +132,54 @@ module top
         .o_data_out_ch2     (adc_out_ch2),
         .o_init_done        (adc_init_done) 
     );
+    
+    /* ########################################################### */
+    /* PROCESSOR ################################################# */
+    
+    localparam  PROCESSOR_DATA_SIZE         =   8;
+    localparam  PROCESSOR_REMAINDER_SIZE    =   8;
+    
+    wire    [ PROCESSOR_DATA_SIZE - 1 : 0 ] processor_quotient;
+    wire    [ PROCESSOR_DATA_SIZE - 1 : 0 ] processor_remainder;
+    wire                                    processor_valid;
+    
+    processor #
+    (
+        .DATA_SIZE          (PROCESSOR_DATA_SIZE),
+        .REMAINDER_SIZE     (PROCESSOR_REMAINDER_SIZE)
+    )
+    u_processor
+    (
+        .i_clock        (sys_clock),
+        .i_reset        (~locked),
+        .i_reference    (adc_out_ch1[15:8]),
+        .i_error        (adc_out_ch2[15:8]),
+        .i_start        (1'b1),
+        .o_quotient     (processor_quotient),
+        .o_remainder    (processor_remainder),
+        .o_valid        (processor_valid)
+    );
    
     /* ########################################################### */
-    /* UART TX ################################################### */
+    /* TX UNIT ################################################### */
     
-    localparam  UART_DATA_SIZE  =   8;
-    localparam  PRESCALE_SIZE   =   16;
+    localparam  TX_DATA_SIZE  =   8;
     
-    wire    [ UART_DATA_SIZE - 1 : 0 ]  tx_data;
-    reg                                 tx_valid;
-    wire                                tx_ready;
-    wire                                tx_busy;
-    
-    wire    [ PRESCALE_SIZE - 1 : 0 ]   uart_prescale;
-    
-    assign  tx_data         = adc_out_ch2[15:8];
-    assign  uart_prescale   = 16'b0000010100010110;   /* 9600 BR 8-bit    */
-    
-    always@( posedge sys_clock ) begin
-        if( ~locked )
-            tx_valid    <= 1'b0;
-        else begin
-            if( tx_ready && ~tx_busy )
-                tx_valid    <= 1'b1;
-            else
-                tx_valid    <= 1'b0;
-        end
-    end
-    
-    uart_tx #
+    tx_unit #
     (
-        .DATA_WIDTH         (UART_DATA_SIZE)
+        .TX_DATA_SIZE        (TX_DATA_SIZE)
     )
-    u_uart_tx
+    u_tx_unit
     (
-        .clk                (sys_clock),
-        .rst                (~locked),   
-        .s_axis_tdata       (tx_data),
-        .s_axis_tvalid      (tx_valid),
-        .s_axis_tready      (tx_ready),
-        .txd                (o_tx),
-        .busy               (tx_busy),
-        .prescale           (uart_prescale)
-    );
+        .i_clock            (sys_clock),
+        .i_reset            (~locked),
+        .i_txdata_0         (adc_out_ch1[15:8]),
+        .i_txdata_1         (adc_out_ch2[15:8]),
+        //.i_txdata_0         (processor_quotient),
+        //.i_txdata_1         (processor_remainder),
+        .o_tx_0             (o_tx_0),
+        .o_tx_1             (o_tx_1)
+    );   
     
     /* ########################################################### */
     /* ADC CALIBRATION ########################################### */
@@ -194,7 +200,7 @@ module top
         .i_toggle           (i_calib),
         .o_calib_enabled    (calib_enabled),
         .o_calib_value      (adc_calib)
-    );    
+    );   
         
     /* ########################################################### */
     /* ONBOARD LED'S ############################################# */

@@ -3,52 +3,50 @@
 module processor #
 (
     parameter DATA_SIZE         =   10,
-    parameter FRACTIONAL_SIZE   =   8
+    parameter REMAINDER_SIZE    =   8
 )
 (
-    input   i_reset,
-    input   i_clock,
-    input   [ DATA_SIZE - 1 : 0 ]       i_reference,
-    input   [ DATA_SIZE - 1 : 0 ]       i_error,
-    input                               i_start,
-    output  [ DATA_SIZE * 2 - 1 : 0 ]   o_result,
-    output                              o_valid
+    input                           i_reset,
+    input                           i_clock,
+    input   [ DATA_SIZE - 1 : 0 ]   i_reference,
+    input   [ DATA_SIZE - 1 : 0 ]   i_error,
+    input                           i_start,
+    output  [ DATA_SIZE - 1 : 0 ]   o_quotient,
+    output  [ DATA_SIZE - 1 : 0 ]   o_remainder,
+    output                          o_valid
 );
 
-    reg [ DATA_SIZE - 1 : 0 ]       abs_reference;
-    reg [ DATA_SIZE - 1 : 0 ]       abs_error;
-    reg [ DATA_SIZE - 1 : 0 ]       quotient;
-    reg [ FRACTIONAL_SIZE - 1 : 0 ] fractional;
+    wire    [ DATA_SIZE * 2 - 1 : 0 ]   result;
+    reg     [ DATA_SIZE - 1 : 0 ]       quotient;
+    reg     [ REMAINDER_SIZE - 1 : 0 ]  remainder;
     
-    always@( i_reference ) begin
-        if( i_reference[ DATA_SIZE - 1 ] == 1'b1 )
-            abs_reference   =  -i_reference;
-        else
-            abs_reference   =  i_reference;
+    always@( result ) begin
+        quotient    =   result[ DATA_SIZE + REMAINDER_SIZE - 1 : REMAINDER_SIZE ];
+        remainder   =   result[ REMAINDER_SIZE - 1 : 0 ];
     end
     
-    always@( i_error ) begin
-        if( i_error[ DATA_SIZE - 1 ] == 1'b1 )
-            abs_error   =  -i_error;
-        else
-            abs_error   =  i_error;
-    end
+    assign  o_quotient  =   quotient;
+    assign  o_remainder =   remainder;
     
-    always@( o_result ) begin
-        quotient    =   o_result[ DATA_SIZE + FRACTIONAL_SIZE - 1 : FRACTIONAL_SIZE ];
-        fractional  =   o_result[ FRACTIONAL_SIZE - 1 : 0 ];
-    end
-    
+     /*
+               <--- IP Configuration --->
+        Algorithm type  =   Radix2
+        Operand sign    =   Signed
+        Divider width   =   8
+        Divisor width   =   8
+        Raminder width  =   8
+        Remainder type  =   Fractional    
+    */
     div_gen_0
     u_div_gen_0
     (
         .aclk                       (i_clock),
         .s_axis_dividend_tvalid     (i_start),
-        .s_axis_dividend_tdata      (abs_error),
+        .s_axis_dividend_tdata      (i_error),
         .s_axis_divisor_tvalid      (i_start),
-        .s_axis_divisor_tdata       (abs_reference),
+        .s_axis_divisor_tdata       (i_reference),
         .m_axis_dout_tvalid         (o_valid),
-        .m_axis_dout_tdata          (o_result)
+        .m_axis_dout_tdata          (result)
     );
 
 endmodule
