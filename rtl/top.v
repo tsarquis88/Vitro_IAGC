@@ -159,7 +159,33 @@ module top
         .o_remainder    (processor_remainder),
         .o_valid        (processor_valid)
     );
-   
+    
+    /* ########################################################### */
+    /* DATA CONVERSOR ############################################ */
+    
+    localparam  CONVERTED_DATA_SIZE =   8;
+    
+    reg [ CONVERTED_DATA_SIZE - 1 : 0 ] data_ch1_converted;
+    reg [ CONVERTED_DATA_SIZE - 1 : 0 ] data_ch2_converted;
+    
+    always@( adc_out_ch1 ) begin
+        if( adc_out_ch1[15:8] < 256 && adc_out_ch1[15:8] > 128 ) begin
+            data_ch1_converted = adc_out_ch1[15:8] - 128;
+        end
+        else begin
+            data_ch1_converted = adc_out_ch1[15:8] + 128;
+        end
+    end
+    
+    always@( adc_out_ch2 ) begin
+        if( adc_out_ch2[15:8] < 256 && adc_out_ch2[15:8] > 128 ) begin
+            data_ch2_converted = adc_out_ch2[15:8] - 128;
+        end
+        else begin
+            data_ch2_converted = adc_out_ch2[15:8] + 128;
+        end
+    end
+    
     /* ########################################################### */
     /* TX UNIT ################################################### */
     
@@ -173,10 +199,8 @@ module top
     (
         .i_clock            (sys_clock),
         .i_reset            (~locked),
-        .i_txdata_0         (adc_out_ch1[15:8]),
-        .i_txdata_1         (adc_out_ch2[15:8]),
-        //.i_txdata_0         (processor_quotient),
-        //.i_txdata_1         (processor_remainder),
+        .i_txdata_0         (data_ch1_converted),
+        .i_txdata_1         (data_ch2_converted),
         .o_tx_0             (o_tx_0),
         .o_tx_1             (o_tx_1)
     );   
@@ -223,3 +247,24 @@ module top
     );
         
 endmodule
+
+/*
+    Lecturas con fuente (8 MSB)
+     
+    Polo positivo
+    0 [V] -> 0x00 = 0 
+    1 [V] -> 0x7F = 127
+    
+    Polo negativo
+    0 [V] -> 0xFF = 255
+    1 [V] -> 0x81 = 129
+    
+    
+*/
+
+
+
+
+
+
+
