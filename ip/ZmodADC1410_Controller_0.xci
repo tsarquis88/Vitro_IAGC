@@ -70,7 +70,7 @@
         <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.IPCONTEXT">IP_Flow</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.IPREVISION">136</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.MANAGED">TRUE</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.OUTPUTDIR">../../../../project_1.gen/sources_1/ip/ZmodADC1410_Controller_0</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.OUTPUTDIR">../../../../project_2.gen/sources_1/ip/ZmodADC1410_Controller_0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.SELECTEDSIMMODEL"/>
         <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.SHAREDDIR">.</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.SWVERSION">2020.2</spirit:configurableElementValue>
@@ -79,11 +79,9 @@
       <spirit:vendorExtensions>
         <xilinx:componentInstanceExtensions>
           <xilinx:configElementInfos>
-            <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.kCh1CouplingStatic" xilinx:valueSource="user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.kCh1GainStatic" xilinx:valueSource="user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.kCh2CouplingStatic" xilinx:valueSource="user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.kCh2GainStatic" xilinx:valueSource="user"/>
-            <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.kExtCalibEn" xilinx:valueSource="user"/>
           </xilinx:configElementInfos>
           <xilinx:boundaryDescriptionInfo>
             <xilinx:boundaryDescription xilinx:boundaryDescriptionJSON="{&quot;ip_boundary&quot;:{&quot;ports&quot;:{&quot;SysClk&quot;:{&quot;direction&quot;:&quot;in&quot;,&quot;physical_left&quot;:&quot;0&quot;,&quot;physical_right&quot;:&quot;0&quot;},&quot;ADC_InClk&quot;:{&quot;direction&quot;:&quot;in&quot;,&quot;physical_left&quot;:&quot;0&quot;,&quot;physical_right&quot;:&quot;0&quot;},&quot;sRst_n&quot;:{&quot;direction&quot;:&quot;in&quot;,&quot;physical_left&quot;:&quot;0&quot;,&quot;physical_right&quot;:&quot;0&quot;},&quot;sInitDone_n&quot;:{&quot;direction&quot;:&quot;out&quot;,&quot;physical_left&quot;:&quot;0&quot;,&quot;physical_right&quot;:&quot;0&quot;},&quot;FIFO_EMPTY_CHA&quot;:{&quot;direction&quot;:&quot;out&quot;,&quot;physical_left&quot;:&quot;0&quot;,&quot;physical_right&quot;:&quot;0&quot;},&quot;FIFO_EMPTY_CHB&quot;:{&quot;direction&quot;:&quot;out&quot;,&quot;physical_left&quot;:&quot;0&quot;,&quot;physical_right&quot;:&quot;0&quot;},&quot;sCh1Out&quot;:{&quot;direction&quot;:&quot;out&quot;,&quot;physical_left&quot;:&quot;15&quot;,&quot;physical_right&quot;:&quot;0&quot;},&quot;sCh2Out&quot;:{&quot;direction&quot;:&quot;out&quot;,&quot;physical_left&quot;:&quot;15&quot;,&quot;physical_right&quot;:&quot;0&quot;},&quot;sExtCh1LgMultCoef&quot;:{&quot;direction&quot;:&quot;in&quot;,&quot;physical_left&quot;:&quot;17&quot;,&quot;physical_right&quot;:&quot;0&quot;},&quot;sExtCh1LgAddCoef&quot;:{&quot;direction&quot;:&quot;in&quot;,&quot;physical_left&quot;:&quot;17&quot;,&quot;physical_right&quot;:&quot;0&quot;},&quot;sExtCh1HgMultCoef&quot;:{&quot;direction&quot;:&quot;in&quot;,&quot;physical_left&quot;:&quot;17&quot;,&quot;physical_right&quot;:&quot;0&quot;},&quot;sExtCh1HgAddCoef&quot;:{&quot;direction&quot;:&quot;in&quot;,&quot;physical_left&quot;:&quot;17&quot;,&quot;physical_right&quot;:&quot;0&quot;},&quot;sExtCh2LgMultCoef&quot;:{&quot;direction&quot;:&quot;in&quot;,&quot;physical_left&quot;:&quot;17&quot;,&quot;physica

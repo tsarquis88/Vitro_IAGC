@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module adc_calibrator #
+module calibrator #
 (
     parameter   CALIB_SIZE  =   18,
     parameter   CALIB_TICKS =   7500

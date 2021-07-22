@@ -3,21 +3,22 @@
 module processor #
 (
     parameter DATA_SIZE         =   10,
-    parameter REMAINDER_SIZE    =   8
+    parameter REMAINDER_SIZE    =   8,
+    parameter RESULT_SIZE       =   24
 )
 (
-    input                           i_reset,
-    input                           i_clock,
-    input   [ DATA_SIZE - 1 : 0 ]   i_reference,
-    input   [ DATA_SIZE - 1 : 0 ]   i_error,
-    input                           i_start,
-    output  [ DATA_SIZE - 1 : 0 ]   o_quotient,
-    output  [ DATA_SIZE - 1 : 0 ]   o_remainder,
-    output                          o_valid
+    input                               i_reset,
+    input                               i_clock,
+    input   [ DATA_SIZE      - 1 : 0 ]  i_reference,
+    input   [ DATA_SIZE      - 1 : 0 ]  i_error,
+    input                               i_start,
+    output  [ DATA_SIZE      - 1 : 0 ]  o_quotient,
+    output  [ REMAINDER_SIZE - 1 : 0 ]  o_remainder,
+    output                              o_valid
 );
 
-    wire    [ DATA_SIZE * 2 - 1 : 0 ]   result;
-    reg     [ DATA_SIZE - 1 : 0 ]       quotient;
+    wire    [ RESULT_SIZE    - 1 : 0 ]  result;
+    reg     [ DATA_SIZE      - 1 : 0 ]  quotient;
     reg     [ REMAINDER_SIZE - 1 : 0 ]  remainder;
     
     always@( result ) begin

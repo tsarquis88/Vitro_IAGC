@@ -50,26 +50,22 @@ module top
 );
     
     /* ########################################################### */
-    /* CLOCK WIZARD ############################################## */
+    /* CLOCK GENERATOR ########################################### */
     
     wire    sys_clock;
+    wire    sys_reset;
     wire    adc_clock;
-    wire    locked;
     
-    /*
-               <--- IP Configuration --->
-        clk_in1     =   125 MHz
-        clk_out1    =   100 MHz
-        clk_out1    =   400 MHz
-    */
-    clk_wiz_0
-    u_clk_wiz_0
+    clock_unit #
     (
-        .clk_out1           ( sys_clock ),
-        .clk_out2           ( adc_clock ),
-        .reset              ( i_reset   ),
-        .locked             ( locked    ),
-        .clk_in1            ( i_clock   )
+    )
+    u_clock_unit
+    (
+        .i_clock        (i_clock),
+        .i_reset        (i_reset),
+        .o_adc_clock    (adc_clock),
+        .o_sys_clock    (sys_clock),
+        .o_valid        (sys_reset)
     );
     
     /* ########################################################### */
@@ -84,13 +80,13 @@ module top
     wire                                adc_init_done;
     wire    [ ADC_CALIB_SIZE  - 1 : 0 ] adc_calib;
     
-    adc #
+    adc1410 #
     (
         .ADC_CHDATA_SIZE    (ADC_CHDATA_SIZE),
         .ADC_DATA_SIZE      (ADC_DATA_SIZE),
         .ADC_CALIB_SIZE     (ADC_CALIB_SIZE)
     )
-    u_adc
+    u_adc1410
     (
         .i_sys_clock        (sys_clock),
         .i_adc_clock        (adc_clock),
@@ -134,14 +130,42 @@ module top
     );
     
     /* ########################################################### */
+    /* DATA CONVERSORS ############################################ */
+    
+    localparam  CONVERSOR_DATA_SIZE =   14;
+    
+    wire    [ CONVERSOR_DATA_SIZE - 1 : 0 ] data_ch1_converted;
+    wire    [ CONVERSOR_DATA_SIZE - 1 : 0 ] data_ch2_converted;
+    
+    data_conversor #
+    (
+        .CONVERSOR_DATA_SIZE    (CONVERSOR_DATA_SIZE)
+    )
+    u_data_conversor_ch1
+    (
+        .i_data                 (adc_out_ch1[15:2]),
+        .o_data                 (data_ch1_converted)
+    );
+    
+    data_conversor #
+    (
+        .CONVERSOR_DATA_SIZE    (CONVERSOR_DATA_SIZE)
+    )
+    u_data_conversor_ch2
+    (
+        .i_data                 (adc_out_ch2[15:2]),
+        .o_data                 (data_ch2_converted)
+    );
+    
+    /* ########################################################### */
     /* PROCESSOR ################################################# */
     
-    localparam  PROCESSOR_DATA_SIZE         =   8;
+    localparam  PROCESSOR_DATA_SIZE         =   14;
     localparam  PROCESSOR_REMAINDER_SIZE    =   8;
     
-    wire    [ PROCESSOR_DATA_SIZE - 1 : 0 ] processor_quotient;
-    wire    [ PROCESSOR_DATA_SIZE - 1 : 0 ] processor_remainder;
-    wire                                    processor_valid;
+    wire    [ PROCESSOR_DATA_SIZE      - 1 : 0 ]    processor_quotient;
+    wire    [ PROCESSOR_REMAINDER_SIZE - 1 : 0 ]    processor_remainder;
+    wire                                            processor_valid;
     
     processor #
     (
@@ -152,39 +176,13 @@ module top
     (
         .i_clock        (sys_clock),
         .i_reset        (~locked),
-        .i_reference    (adc_out_ch1[15:8]),
-        .i_error        (adc_out_ch2[15:8]),
+        .i_reference    (data_ch1_converted),
+        .i_error        (data_ch2_converted),
         .i_start        (1'b1),
         .o_quotient     (processor_quotient),
         .o_remainder    (processor_remainder),
         .o_valid        (processor_valid)
     );
-    
-    /* ########################################################### */
-    /* DATA CONVERSOR ############################################ */
-    
-    localparam  CONVERTED_DATA_SIZE =   8;
-    
-    reg [ CONVERTED_DATA_SIZE - 1 : 0 ] data_ch1_converted;
-    reg [ CONVERTED_DATA_SIZE - 1 : 0 ] data_ch2_converted;
-    
-    always@( adc_out_ch1 ) begin
-        if( adc_out_ch1[15:8] < 256 && adc_out_ch1[15:8] > 128 ) begin
-            data_ch1_converted = adc_out_ch1[15:8] - 128;
-        end
-        else begin
-            data_ch1_converted = adc_out_ch1[15:8] + 128;
-        end
-    end
-    
-    always@( adc_out_ch2 ) begin
-        if( adc_out_ch2[15:8] < 256 && adc_out_ch2[15:8] > 128 ) begin
-            data_ch2_converted = adc_out_ch2[15:8] - 128;
-        end
-        else begin
-            data_ch2_converted = adc_out_ch2[15:8] + 128;
-        end
-    end
     
     /* ########################################################### */
     /* TX UNIT ################################################### */
@@ -199,25 +197,25 @@ module top
     (
         .i_clock            (sys_clock),
         .i_reset            (~locked),
-        .i_txdata_0         (data_ch1_converted),
-        .i_txdata_1         (data_ch2_converted),
+        .i_txdata_0         (processor_quotient[7:0]),
+        .i_txdata_1         (processor_remainder),
         .o_tx_0             (o_tx_0),
         .o_tx_1             (o_tx_1)
     );   
     
     /* ########################################################### */
-    /* ADC CALIBRATION ########################################### */
+    /* CALIBRATION ############################################### */
     
     localparam  ADC_CALIB_TICKS =   7500;
     
     wire                calib_enabled;
     
-    adc_calibrator #
+    calibrator #
     (
         .CALIB_SIZE     (ADC_CALIB_SIZE),
         .CALIB_TICKS    (ADC_CALIB_TICKS)
     )
-    u_adc_calibrator
+    u_calibrator
     (
         .i_clock            (sys_clock),
         .i_reset            (~locked),   
@@ -249,17 +247,8 @@ module top
 endmodule
 
 /*
-    Lecturas con fuente (8 MSB)
-     
-    Polo positivo
-    0 [V] -> 0x00 = 0 
-    1 [V] -> 0x7F = 127
-    
-    Polo negativo
-    0 [V] -> 0xFF = 255
-    1 [V] -> 0x81 = 129
-    
-    
+    volt        =   conv_dig * 64 * resol - 1 
+    conv_dig    =   (vol + 1) / (64 * resol) 
 */
 
 

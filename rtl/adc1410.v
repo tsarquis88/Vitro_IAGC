@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module adc #
+module adc1410 #
 (
     parameter   ADC_CHDATA_SIZE = 16,
     parameter   ADC_DATA_SIZE   = 14,
