@@ -21,7 +21,7 @@ module calibrator #
     always@( posedge i_clock ) begin
         if( i_reset ) begin
             calib_counter   <= 0;
-            calib_value     <= 18'b000000001111111111;
+            calib_value     <= 18'b000000000000000000;
             last_i_toggle   <= 1'b0;
             calib_enabled   <= 1'b0;
         end

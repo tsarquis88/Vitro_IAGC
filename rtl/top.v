@@ -15,6 +15,8 @@ module top
     
     input   i_calib,
     
+    input   i_gate,   
+    
     input   i_adc_data_0,
     input   i_adc_data_1,
     input   i_adc_data_2,
@@ -90,7 +92,7 @@ module top
     (
         .i_sys_clock        (sys_clock),
         .i_adc_clock        (adc_clock),
-        .i_reset            (locked),
+        .i_reset            (~sys_reset),
         .i_calib_value      (adc_calib),
         .i_adc_data_0       (i_adc_data_0),
         .i_adc_data_1       (i_adc_data_1),
@@ -128,6 +130,27 @@ module top
         .o_data_out_ch2     (adc_out_ch2),
         .o_init_done        (adc_init_done) 
     );
+    
+    /* ########################################################### */
+    /* CALIBRATION ############################################### */
+    
+    localparam  ADC_CALIB_TICKS =   7500;
+    
+    wire                calib_enabled;
+    
+    calibrator #
+    (
+        .CALIB_SIZE     (ADC_CALIB_SIZE),
+        .CALIB_TICKS    (ADC_CALIB_TICKS)
+    )
+    u_calibrator
+    (
+        .i_clock            (sys_clock),
+        .i_reset            (sys_reset),   
+        .i_toggle           (i_calib),
+        .o_calib_enabled    (calib_enabled),
+        .o_calib_value      (adc_calib)
+    );   
     
     /* ########################################################### */
     /* DATA CONVERSORS ############################################ */
@@ -175,13 +198,41 @@ module top
     u_processor
     (
         .i_clock        (sys_clock),
-        .i_reset        (~locked),
+        .i_reset        (sys_reset),
         .i_reference    (data_ch1_converted),
         .i_error        (data_ch2_converted),
         .i_start        (1'b1),
         .o_quotient     (processor_quotient),
         .o_remainder    (processor_remainder),
         .o_valid        (processor_valid)
+    );
+    
+    /* ########################################################### */
+    /* GATE BUFFER ############################################### */
+    
+    wire    [ PROCESSOR_DATA_SIZE - 1 : 0 ] gatered_data_ch1;
+    wire    [ PROCESSOR_DATA_SIZE - 1 : 0 ] gatered_data_ch2;
+    
+    gate_buffer #
+    (
+        .DATA_SIZE      (PROCESSOR_DATA_SIZE)
+    )
+    u_gate_buffer_ch1
+    (
+        .i_data         (data_ch1_converted),
+        .i_gate         (i_gate),
+        .o_data         (gatered_data_ch1)
+    );
+    
+    gate_buffer #
+    (
+        .DATA_SIZE      (PROCESSOR_DATA_SIZE)
+    )
+    u_gate_buffer_ch2
+    (
+        .i_data         (data_ch2_converted),
+        .i_gate         (i_gate),
+        .o_data         (gatered_data_ch2)
     );
     
     /* ########################################################### */
@@ -196,36 +247,15 @@ module top
     u_tx_unit
     (
         .i_clock            (sys_clock),
-        .i_reset            (~locked),
-        .i_txdata_0         (processor_quotient[7:0]),
-        .i_txdata_1         (processor_remainder),
+        .i_reset            (sys_reset),
+        .i_txdata_0         (gatered_data_ch1[13:6]),
+        .i_txdata_1         (gatered_data_ch2[13:6]),
         .o_tx_0             (o_tx_0),
         .o_tx_1             (o_tx_1)
-    );   
-    
-    /* ########################################################### */
-    /* CALIBRATION ############################################### */
-    
-    localparam  ADC_CALIB_TICKS =   7500;
-    
-    wire                calib_enabled;
-    
-    calibrator #
-    (
-        .CALIB_SIZE     (ADC_CALIB_SIZE),
-        .CALIB_TICKS    (ADC_CALIB_TICKS)
-    )
-    u_calibrator
-    (
-        .i_clock            (sys_clock),
-        .i_reset            (~locked),   
-        .i_toggle           (i_calib),
-        .o_calib_enabled    (calib_enabled),
-        .o_calib_value      (adc_calib)
-    );   
+    );
         
     /* ########################################################### */
-    /* ONBOARD LED'S ############################################# */
+    /* LED UNIT ################################################## */
     
     localparam  LED_PWM_TICKS   = 50;
     
@@ -236,7 +266,7 @@ module top
     u_led_unit
     (
         .i_clock            (sys_clock),
-        .i_reset            (~locked),
+        .i_reset            (sys_reset),
         .i_calib_enabled    (calib_enabled),
         .i_adc_init_done    (adc_init_done),
         .o_led_r            (o_led0_r),
