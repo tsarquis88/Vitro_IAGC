@@ -72,8 +72,8 @@ module adc1410 #
     
     /*
                <--- IP Configuration --->
-        Ch1CouplingStatic   =   0
-        Ch2CouplingStatic   =   1
+        Ch1CouplingStatic   =   1
+        Ch2CouplingStatic   =   0
         Ch1GainStatic       =   1
         Ch2GainStatic       =   1
         Ch1HgAddCoefStatic  =   000000000000000000

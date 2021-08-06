@@ -7,71 +7,43 @@ module tx_unit #
 (
     input                               i_clock,
     input                               i_reset,
-    input   [ TX_DATA_SIZE - 1 : 0 ]    i_txdata_0,
-    input   [ TX_DATA_SIZE - 1 : 0 ]    i_txdata_1,
-    output                              o_tx_0,
-    output                              o_tx_1
+    input   [ TX_DATA_SIZE - 1 : 0 ]    i_txdata,
+    input                               i_send,
+    output                              o_txready,
+    output                              o_tx
 );
 
-    reg     tx_valid_0;
-    reg     tx_valid_1;
-    wire    tx_ready_0;
-    wire    tx_ready_1;
-    wire    tx_busy_0;
-    wire    tx_busy_1;
+    reg     tx_valid;
+    wire    tx_ready;
+    wire    tx_busy;
 
     always@( posedge i_clock ) begin
-        if( i_reset )
-            tx_valid_0  <= 1'b0;
+        if( i_reset || ~i_send )
+            tx_valid    <= 1'b0;
         else begin
-            if( tx_ready_0 && ~tx_busy_0 )
-                tx_valid_0  <= 1'b1;
+            if( tx_ready && ~tx_busy )
+                tx_valid    <= 1'b1;
             else
-                tx_valid_0  <= 1'b0;
+                tx_valid    <= 1'b0;
         end
     end
     
-    always@( posedge i_clock ) begin
-        if( i_reset )
-            tx_valid_1  <= 1'b0;
-        else begin
-            if( tx_ready_1 && ~tx_busy_1 )
-                tx_valid_1  <= 1'b1;
-            else
-                tx_valid_1  <= 1'b0;
-        end
-    end
+    assign  o_txready   =   tx_ready;
     
     uart_tx #
     (
-        .DATA_WIDTH         (TX_DATA_SIZE)
+        .DATA_WIDTH         ( TX_DATA_SIZE          )
     )
-    u_uart_tx_0
+    u_uart_tx
     (
-        .clk                (i_clock),
-        .rst                (i_reset),   
-        .s_axis_tdata       (i_txdata_0),
-        .s_axis_tvalid      (tx_valid_0),
-        .s_axis_tready      (tx_ready_0),
-        .txd                (o_tx_0),
-        .busy               (tx_busy_0),
-        .prescale           (16'b0000010100010110)
-    );
-    
-    uart_tx #
-    (
-        .DATA_WIDTH         (TX_DATA_SIZE)
-    )
-    u_uart_tx_1
-    (
-        .clk                (i_clock),
-        .rst                (i_reset),   
-        .s_axis_tdata       (i_txdata_1),
-        .s_axis_tvalid      (tx_valid_1),
-        .s_axis_tready      (tx_ready_1),
-        .txd                (o_tx_1),
-        .busy               (tx_busy_1),
-        .prescale           (16'b0000010100010110)
+        .clk                ( i_clock               ),
+        .rst                ( i_reset               ),   
+        .s_axis_tdata       ( i_txdata              ),
+        .s_axis_tvalid      ( tx_valid              ),
+        .s_axis_tready      ( tx_ready              ),
+        .txd                ( o_tx                  ),
+        .busy               ( tx_busy               ),
+        .prescale           ( 16'b0000010100010110  )
     );
     
 endmodule
