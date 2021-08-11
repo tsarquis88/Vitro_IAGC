@@ -6,7 +6,7 @@ pkg load control;
 
 %% constants
 fs        = 10e9;               % sample frequency
-fsu       = 5.2e6;              % undersample frequency
+fsu       = 23e6;              % undersample frequency
 t1        = 1.562400e-3;
 t2        = 1.563100e-3;
 s_amp     = 1;                  % signal amplitude
@@ -16,7 +16,7 @@ p_fre     = 640;                % pulse frequency
 p_dut     = 0.032;              % pulse duty: Ton = 0.5 us
 
 %% dependent constants
-T         = ( 1 / pul_fre ) * 2; 
+T         = ( 1 / p_fre ) * 2; 
 dT        = 1 / fs;
 dTu       = 1 / fsu;
 t         = ( t1 : dT : t2 );
