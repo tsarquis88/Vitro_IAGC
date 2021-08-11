@@ -14,9 +14,9 @@ title_font = { 'weight': 'light', 'size': 36, }
 axis_font  = { 'weight': 'bold', 'size': 10, }
 
 # Y axis step
+#step = ( ref.max() / 2 ) / 30
 step = 5
 
-# Configuras el tamaño
 plt.figure( figsize = ( 16, 8 ) )
 plt.plot( ref, 'b', label = 'Reference signal' )
 plt.plot( err, 'r', label = 'Error signal' )
@@ -25,7 +25,7 @@ plt.ylabel( ylabel, axis_font )
 plt.legend()
 plt.title( title, fontdict = title_font )
 plt.grid( 'black' )
-plt.xlim( 0, len( err ) )
+plt.xlim( 0, len( ref ) )
 ax = plt.gca()
 ax.set_facecolor( 'tab:gray' )
 

@@ -7,4 +7,4 @@ if [ "$#" -ne 2 ]; then
 	exit
 fi
 
-bash -c "cat /dev/ttyUSB$1 | od -v -t$21 -w$BYTES --address-radix=n"
+bash -c "cat /dev/ttyUSB$1 | od -v -t$2 -w$BYTES --address-radix=n"
