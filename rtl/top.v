@@ -10,8 +10,8 @@ module top
     output  o_led0_r,
     output  o_led0_b,
     
-    output  o_tx_ch1,
-    output  o_tx_ch2,
+    output  o_tx_ch1_l,
+    output  o_tx_ch1_h,
     
     input   i_calib,
     
@@ -183,77 +183,77 @@ module top
     /* ########################################################### */
     /* GATE BUFFER ############################################### */
     
-    wire    [ CONVERSOR_DATA_SIZE - 1 : 0 ] gatered_data_ch1;
-    wire    [ CONVERSOR_DATA_SIZE - 1 : 0 ] gatered_data_ch2;
-    wire                                    valid_ch1;
-    wire                                    valid_ch2;
+    localparam  TX_DATA_SIZE  =   8;
+
+    wire    [ TX_DATA_SIZE - 1 : 0 ]    gatered_data_ch1_l;
+    wire    [ TX_DATA_SIZE - 1 : 0 ]    gatered_data_ch1_h;
+    wire                                valid_ch1_l;
+    wire                                valid_ch1_h;
     
     gate_buffer #
     (
-        .DATA_SIZE      ( CONVERSOR_DATA_SIZE   )
+        .DATA_SIZE      ( TX_DATA_SIZE                  )
     )
-    u_gate_buffer_ch1
+    u_gate_buffer_ch1_l
     (
-        .i_clock        ( sys_clock             ),
-        .i_reset        ( sys_reset             ),
-        .i_next         ( tx_ready_ch1          ),
-        .i_data         ( data_converted_ch1    ),
-        .i_gate         ( i_gate                ),
-        .i_adc_init     ( adc_init_done         ),
-        .o_data         ( gatered_data_ch1      ),
-        .o_valid        ( valid_ch1             )
+        .i_clock        ( sys_clock                     ),
+        .i_reset        ( sys_reset                     ),
+        .i_next         ( tx_ready_ch1_l                ),
+        .i_data         ( data_converted_ch1[ 7 : 0 ]   ),
+        .i_gate         ( i_gate                        ),
+        .i_adc_init     ( adc_init_done                 ),
+        .o_data         ( gatered_data_ch1_l            ),
+        .o_valid        ( valid_ch1_l                   )
     );
     
     gate_buffer #
     (
-        .DATA_SIZE      ( CONVERSOR_DATA_SIZE   )
+        .DATA_SIZE      ( TX_DATA_SIZE                  )
     )
-    u_gate_buffer_ch2
+    u_gate_buffer_ch1_h
     (
-        .i_clock        ( sys_clock             ),
-        .i_reset        ( sys_reset             ),
-        .i_next         ( tx_ready_ch2          ),
-        .i_data         ( data_converted_ch2    ),
-        .i_gate         ( i_gate                ),
-        .i_adc_init     ( adc_init_done         ),
-        .o_data         ( gatered_data_ch2      ),
-        .o_valid        ( valid_ch2             )
+        .i_clock        ( sys_clock                     ),
+        .i_reset        ( sys_reset                     ),
+        .i_next         ( tx_ready_ch1_h                ),
+        .i_data         ( data_converted_ch1[ 13 : 8 ]  ),
+        .i_gate         ( i_gate                        ),
+        .i_adc_init     ( adc_init_done                 ),
+        .o_data         ( gatered_data_ch1_h            ),
+        .o_valid        ( valid_ch1_h                   )
     );
    
     /* ########################################################### */
     /* TX UNIT ################################################### */
-    
-    localparam  TX_DATA_SIZE  =   8;
-    
-    wire    tx_ready_ch1;
-    wire    tx_ready_ch2;
+        
+    wire    tx_ready_ch1_l;
+    wire    tx_ready_ch1_h;
     
     tx_unit #
     (
-        .TX_DATA_SIZE       ( TX_DATA_SIZE  )
+        .TX_DATA_SIZE       ( TX_DATA_SIZE          )
     )
-    u_tx_unit_ch1
+    u_tx_unit_ch1_l
     (
-        .i_clock            ( sys_clock                 ),
-        .i_reset            ( sys_reset                 ),
-        .i_send             ( valid_ch1                 ),
-        .i_txdata           ( gatered_data_ch1[13 : 6 ] ),
-        .o_txready          ( tx_ready_ch1              ),
-        .o_tx               ( o_tx_ch1                  )
+        .i_clock            ( sys_clock             ),
+        .i_reset            ( sys_reset             ),
+        .i_send             ( valid_ch1_l           ),
+        .i_txdata           ( gatered_data_ch1_l    ),
+        .o_txready          ( tx_ready_ch1_l        ),
+        .o_tx               ( o_tx_ch1_l            )
     );
     
     tx_unit #
     (
-        .TX_DATA_SIZE       ( TX_DATA_SIZE  )
+        .TX_DATA_SIZE       ( TX_DATA_SIZE          )
     )
-    u_tx_unit_ch2
+    u_tx_unit_ch1_h
     (
-        .i_clock            ( sys_clock                 ),
-        .i_reset            ( sys_reset                 ),
-        .i_send             ( valid_ch2                 ),
-        .i_txdata           ( gatered_data_ch2[13 : 6 ] ),
-        .o_txready          ( tx_ready_ch2              ),
-        .o_tx               ( o_tx_ch2                  )
+        .i_clock            ( sys_clock             ),
+        .i_reset            ( sys_reset             ),
+        .i_send             ( valid_ch1_h           ),
+        .i_txdata           ( gatered_data_ch1_h    ),
+        .o_txready          ( tx_ready_ch1_h        ),
+        .o_tx               ( o_tx_ch1_h            )
     );
         
     /* ########################################################### */

@@ -2,7 +2,7 @@
 
 module gate_buffer # 
 (
-    parameter   DATA_SIZE   =   14
+    parameter   DATA_SIZE   =   8
 )
 (
     input                           i_clock,

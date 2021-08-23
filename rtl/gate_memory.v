@@ -4,8 +4,7 @@ module gate_memory #
 (
     parameter   DATA_SIZE   =   14,
     parameter   ADDR_SIZE   =   19,
-    parameter   MEMORY_SIZE =   10
-    
+    parameter   MEMORY_SIZE =   10    
 )
 (
     input                           i_clock,
@@ -25,9 +24,9 @@ module gate_memory #
             data    <=  { DATA_SIZE { 1'b0 } };
         end
         else begin
-            if( i_read && ~i_write )
+            if( i_read )
                 data                <=  memory[ i_addr ];
-            else if( ~i_read && i_write )   
+            else if( i_write )   
                 memory[ i_addr ]    <=  i_data;
         end
     end    

@@ -20,10 +20,10 @@ set_property -dict { PACKAGE_PIN B17   IOSTANDARD LVCMOS33 } [get_ports { o_led0
 #set_property -dict { PACKAGE_PIN A19   IOSTANDARD LVCMOS33 } [get_ports { led1_r }]; #IO_L10N_T1_AD11N Sch=led1_r
 
 ## Pmod Header JA
-set_property -dict { PACKAGE_PIN B15   IOSTANDARD LVCMOS33 } [get_ports { o_tx_ch1 }]; #IO_0 Sch=ja1_fpga
+set_property -dict { PACKAGE_PIN B15   IOSTANDARD LVCMOS33 } [get_ports { o_tx_ch1_l }]; #IO_0 Sch=ja1_fpga
 #set_property -dict { PACKAGE_PIN C15   IOSTANDARD LVCMOS33 } [get_ports { o_adc_led_1 }]; #IO_25 Sch=ja2_fpga
 #set_property -dict { PACKAGE_PIN D15   IOSTANDARD LVCMOS33 } [get_ports { o_adc_led_2 }]; #IO_L1N_T0_AD0N Sch=ja3_fpga
-set_property -dict { PACKAGE_PIN E16   IOSTANDARD LVCMOS33 } [get_ports { o_tx_ch2 }]; #IO_L1P_T0_AD0P Sch=ja4_fpga
+set_property -dict { PACKAGE_PIN E16   IOSTANDARD LVCMOS33 } [get_ports { o_tx_ch1_h }]; #IO_L1P_T0_AD0P Sch=ja4_fpga
 #set_property -dict { PACKAGE_PIN E15   IOSTANDARD LVCMOS33 } [get_ports { o_tx_1 }]; #IO_L2N_T0_AD8N Sch=ja7_fpga
 #set_property -dict { PACKAGE_PIN F17   IOSTANDARD LVCMOS33 } [get_ports { o_tx_1 }]; #IO_L2P_T0_AD8P Sch=ja8_fpga
 #set_property -dict { PACKAGE_PIN F16   IOSTANDARD LVCMOS33 } [get_ports { o_tx_ch1 }]; #IO_L3N_T0_DQS_AD1N Sch=ja9_fpga
@@ -92,7 +92,7 @@ set_input_delay -clock [get_clocks i_adc_dco_clock_p] -clock_fall -max -add_dela
 set_input_delay -clock [get_clocks i_adc_dco_clock_p] -min -add_delay 3.240 [get_ports {i_adc_data_*}]
 set_input_delay -clock [get_clocks i_adc_dco_clock_p] -max -add_delay 5.440 [get_ports {i_adc_data_*}]
 
-set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets i_gate_IBUF]
+# set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets i_gate_IBUF]
 
 ## Syzygy Port B
 #set_property -dict { PACKAGE_PIN Y16  } [get_ports { syzygy_b_c2p_clk_n }]; #IO_L14N_T2_SRCC Sch=syzygy_b_c2p_clk_n
