@@ -3,10 +3,18 @@ import matplotlib.pyplot as plt
 
 ref_l = np.loadtxt( 'ref_l.txt' )
 ref_h = np.loadtxt( 'ref_h.txt' )
-ref   = np.zeros( len( ref_l ) - 1 )
+
+if( len( ref_l ) < len( ref_h ) ):
+	ref_len = len( ref_l )
+else:
+	ref_len = len( ref_h )
+
+ref   = np.zeros( ref_len )
+
+print( "Muestras: " + str( ref_len ) )
 
 i = 0
-while i < len( ref_l ) - 1:
+while i < ref_len - 1:
     ref[ i ] = ref_l[ i ] + ref_h[ i ] * 256
     i += 1
 
