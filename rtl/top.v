@@ -162,6 +162,8 @@ module top
     wire    [ TX_DATA_SIZE - 1 : 0 ]    gatered_data_ch1_h;
     wire                                valid_ch1_l;
     wire                                valid_ch1_h;
+    wire                                tx_ready_ch1_l;
+    wire                                tx_ready_ch1_h;
     
     gate_buffer #
     (
@@ -197,9 +199,6 @@ module top
    
     /* ########################################################### */
     /* TX UNIT ################################################### */
-        
-    wire    tx_ready_ch1_l;
-    wire    tx_ready_ch1_h;
     
     tx_unit #
     (
