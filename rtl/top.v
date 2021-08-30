@@ -52,7 +52,7 @@ module top
 );
     
     /* ########################################################### */
-    /* CLOCK GENERATOR ########################################### */
+    /* CLOCK UNIT ################################################ */
     
     wire    sys_clock;
     wire    sys_reset;
@@ -63,121 +63,94 @@ module top
     )
     u_clock_unit
     (
-        .i_clock        (i_clock),
-        .i_reset        (i_reset),
-        .o_adc_clock    (adc_clock),
-        .o_sys_clock    (sys_clock),
-        .o_valid        (sys_reset)
+        .i_clock        ( i_clock   ),
+        .i_reset        ( i_reset   ),
+        .o_adc_clock    ( adc_clock ),
+        .o_sys_clock    ( sys_clock ),
+        .o_valid        ( sys_reset )
     );
     
     /* ########################################################### */
     /* ADC1410 ################################################### */
     
-    localparam  ADC_CHDATA_SIZE =   16;
-    localparam  ADC_DATA_SIZE   =   14;
-    localparam  ADC_CALIB_SIZE  =   18;
+    localparam  ADC_OUT_DATA_SIZE   =   16;
     
-    wire    [ ADC_CHDATA_SIZE - 1 : 0 ] adc_out_ch1;
-    wire    [ ADC_CHDATA_SIZE - 1 : 0 ] adc_out_ch2;
-    wire                                adc_init_done;
-    wire    [ ADC_CALIB_SIZE  - 1 : 0 ] adc_calib;
+    wire    [ ADC_OUT_DATA_SIZE - 1 : 0 ]   adc_out_ch1;
+    wire    [ ADC_OUT_DATA_SIZE - 1 : 0 ]   adc_out_ch2;
+    wire                                    adc_init_done;
     
     adc1410 #
     (
-        .ADC_CHDATA_SIZE    (ADC_CHDATA_SIZE),
-        .ADC_DATA_SIZE      (ADC_DATA_SIZE),
-        .ADC_CALIB_SIZE     (ADC_CALIB_SIZE)
+        .ADC_OUT_DATA_SIZE  ( ADC_OUT_DATA_SIZE )
     )
     u_adc1410
     (
-        .i_sys_clock        (sys_clock),
-        .i_adc_clock        (adc_clock),
-        .i_reset            (~sys_reset),
-        .i_calib_value      (adc_calib),
-        .i_adc_data_0       (i_adc_data_0),
-        .i_adc_data_1       (i_adc_data_1),
-        .i_adc_data_2       (i_adc_data_2),
-        .i_adc_data_3       (i_adc_data_3),
-        .i_adc_data_4       (i_adc_data_4),
-        .i_adc_data_5       (i_adc_data_5),
-        .i_adc_data_6       (i_adc_data_6),
-        .i_adc_data_7       (i_adc_data_7),
-        .i_adc_data_8       (i_adc_data_8),
-        .i_adc_data_9       (i_adc_data_9),
-        .i_adc_data_10      (i_adc_data_10),
-        .i_adc_data_11      (i_adc_data_11),
-        .i_adc_data_12      (i_adc_data_12),
-        .i_adc_data_13      (i_adc_data_13),
-        .io_adc_sdio        (io_adc_sdio),
-        .i_adc_dco_clock_p  (i_adc_dco_clock_p),
-        .o_adc_dco_clock_n  (o_adc_dco_clock_n),
-        .o_adc_sclk         (o_adc_sclk),
-        .o_adc_clock_in_n   (o_adc_clock_in_n),
-        .o_adc_clock_in_p   (o_adc_clock_in_p),
-        .o_ch1_coupling_h   (o_ch1_coupling_h),
-        .o_ch1_coupling_l   (o_ch1_coupling_l),
-        .o_ch2_coupling_h   (o_ch2_coupling_h),
-        .o_ch2_coupling_l   (o_ch2_coupling_l),
-        .o_ch2_gain_h       (o_ch2_gain_h),
-        .o_ch2_gain_l       (o_ch2_gain_l),
-        .o_ch1_gain_l       (o_ch1_gain_l),
-        .o_ch1_gain_h       (o_ch1_gain_h),
-        .o_adc_relay_com_l  (o_adc_relay_com_l),
-        .o_adc_relay_com_h  (o_adc_relay_com_h),
-        .o_adc_cs           (o_adc_cs),
-        .o_adc_sync         (o_adc_sync),
-        .o_data_out_ch1     (adc_out_ch1),
-        .o_data_out_ch2     (adc_out_ch2),
-        .o_init_done        (adc_init_done) 
+        .i_sys_clock        ( sys_clock         ),
+        .i_adc_clock        ( adc_clock         ),
+        .i_reset            ( ~sys_reset        ),
+        .i_adc_data_0       ( i_adc_data_0      ),
+        .i_adc_data_1       ( i_adc_data_1      ),
+        .i_adc_data_2       ( i_adc_data_2      ),
+        .i_adc_data_3       ( i_adc_data_3      ),
+        .i_adc_data_4       ( i_adc_data_4      ),
+        .i_adc_data_5       ( i_adc_data_5      ),
+        .i_adc_data_6       ( i_adc_data_6      ),
+        .i_adc_data_7       ( i_adc_data_7      ),
+        .i_adc_data_8       ( i_adc_data_8      ),
+        .i_adc_data_9       ( i_adc_data_9      ),
+        .i_adc_data_10      ( i_adc_data_10     ),
+        .i_adc_data_11      ( i_adc_data_11     ),
+        .i_adc_data_12      ( i_adc_data_12     ),
+        .i_adc_data_13      ( i_adc_data_13     ),
+        .io_adc_sdio        ( io_adc_sdio       ),
+        .i_adc_dco_clock_p  ( i_adc_dco_clock_p ),
+        .o_adc_dco_clock_n  ( o_adc_dco_clock_n ),
+        .o_adc_sclk         ( o_adc_sclk        ),
+        .o_adc_clock_in_n   ( o_adc_clock_in_n  ),
+        .o_adc_clock_in_p   ( o_adc_clock_in_p  ),
+        .o_ch1_coupling_h   ( o_ch1_coupling_h  ),
+        .o_ch1_coupling_l   ( o_ch1_coupling_l  ),
+        .o_ch2_coupling_h   ( o_ch2_coupling_h  ),
+        .o_ch2_coupling_l   ( o_ch2_coupling_l  ),
+        .o_ch2_gain_h       ( o_ch2_gain_h      ),
+        .o_ch2_gain_l       ( o_ch2_gain_l      ),
+        .o_ch1_gain_l       ( o_ch1_gain_l      ),
+        .o_ch1_gain_h       ( o_ch1_gain_h      ),
+        .o_adc_relay_com_l  ( o_adc_relay_com_l ),
+        .o_adc_relay_com_h  ( o_adc_relay_com_h ),
+        .o_adc_cs           ( o_adc_cs          ),
+        .o_adc_sync         ( o_adc_sync        ),
+        .o_data_out_ch1     ( adc_out_ch1       ),
+        .o_data_out_ch2     ( adc_out_ch2       ),
+        .o_init_done        ( adc_init_done     ) 
     );
     
     /* ########################################################### */
-    /* CALIBRATION ############################################### */
+    /* DATA CONVERSORS ########################################### */
     
-    localparam  ADC_CALIB_TICKS =   7500;
+    localparam  CONVERTED_DATA_SIZE =   14;
     
-    wire                calib_enabled;
-    
-    calibrator #
-    (
-        .CALIB_SIZE     (ADC_CALIB_SIZE),
-        .CALIB_TICKS    (ADC_CALIB_TICKS)
-    )
-    u_calibrator
-    (
-        .i_clock            (sys_clock),
-        .i_reset            (sys_reset),   
-        .i_toggle           (i_calib),
-        .o_calib_enabled    (calib_enabled),
-        .o_calib_value      (adc_calib)
-    );   
-    
-    /* ########################################################### */
-    /* DATA CONVERSORS ############################################ */
-    
-    localparam  CONVERSOR_DATA_SIZE =   14;
-    
-    wire    [ CONVERSOR_DATA_SIZE - 1 : 0 ] data_converted_ch1;
-    wire    [ CONVERSOR_DATA_SIZE - 1 : 0 ] data_converted_ch2;
+    wire    [ CONVERTED_DATA_SIZE - 1 : 0 ] data_converted_ch1;
+    wire    [ CONVERTED_DATA_SIZE - 1 : 0 ] data_converted_ch2;
     
     data_conversor #
     (
-        .CONVERSOR_DATA_SIZE    (CONVERSOR_DATA_SIZE)
+        .CONVERSOR_DATA_SIZE    ( CONVERTED_DATA_SIZE   )
     )
     u_data_conversor_ch1
     (
-        .i_data                 (adc_out_ch1[15:2]),
-        .o_data                 (data_converted_ch1)
+        .i_data                 ( adc_out_ch1[15:2]     ),
+        .o_data                 ( data_converted_ch1    )
     );
     
     data_conversor #
     (
-        .CONVERSOR_DATA_SIZE    (CONVERSOR_DATA_SIZE)
+        .CONVERSOR_DATA_SIZE    ( CONVERTED_DATA_SIZE   )
     )
     u_data_conversor_ch2
     (
-        .i_data                 (adc_out_ch2[15:2]),
-        .o_data                 (data_converted_ch2)
+        .i_data                 ( adc_out_ch2[15:2]     ),
+        .o_data                 ( data_converted_ch2    )
     );
     
     /* ########################################################### */

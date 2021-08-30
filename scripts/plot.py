@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+limit = 1500
+
 ref_l = np.loadtxt( 'ref_l.txt' )
 ref_h = np.loadtxt( 'ref_h.txt' )
 
@@ -9,19 +11,20 @@ if( len( ref_l ) < len( ref_h ) ):
 else:
 	ref_len = len( ref_h )
 
+if( ref_len > limit ):
+	ref_len = limit;
+
 ref   = np.zeros( ref_len )
 
-print( "Muestras: " + str( ref_len ) )
-
 i = 0
-while i < ref_len - 1:
+while i < ref_len:
     ref[ i ] = ref_l[ i ] + ref_h[ i ] * 256
     i += 1
 
 # labels
 title   = 'ADC1410 IF samples'
 xlabel  = 'Sample'
-ylabel  = 'Amplitude [1/255]'
+ylabel  = 'Amplitude'
 
 # fonts
 title_font = { 'weight': 'light', 'size': 36, }

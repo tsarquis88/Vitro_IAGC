@@ -15,17 +15,19 @@ module gate_buffer #
     output                          o_valid
 );
 
-    localparam  MEM_SIZE    =   1000;
+    localparam  MEM_SIZE    =   1024;
     localparam  ADDR_SIZE   =   19;
+    localparam  STATUS_SIZE =   2;
     
     localparam  STATUS_WAIT     =   0;
     localparam  STATUS_WRITE    =   1;
     localparam  STATUS_READ     =   2;
     localparam  STATUS_HALT     =   3;
     
-    reg     [ 2 - 1 : 0 ]           status;
-    reg     [ 2 - 1 : 0 ]           next_status;
-    wire    [ DATA_SIZE - 1 : 0 ]   data;
+    reg     [ STATUS_SIZE - 1 : 0 ] status;
+    reg     [ STATUS_SIZE - 1 : 0 ] next_status;
+    reg     [ DATA_SIZE   - 1 : 0 ] data_in;
+    wire    [ DATA_SIZE   - 1 : 0 ] data_out;
     wire                            write;
     wire                            read;
     reg     [ ADDR_SIZE - 1 : 0 ]   addr;
@@ -34,13 +36,14 @@ module gate_buffer #
     always@( posedge i_clock ) begin
     
         if( i_reset || ~i_adc_init ) begin
-            status      <=  STATUS_WAIT;
-            addr        <=  { ADDR_SIZE { 1'b0 } };
-            last_i_next <=  1'b0;
+            status      <= STATUS_WAIT;
+            addr        <= { ADDR_SIZE { 1'b0 } };
+            last_i_next <= 1'b0;
+            data_in     <= { DATA_SIZE { 1'b0 } };
         end
         else begin
-            status      <=  next_status;
-            last_i_next <=  i_next;
+            status      <= next_status;
+            last_i_next <= i_next;
             
             case( status )
                 
@@ -50,6 +53,7 @@ module gate_buffer #
                 
                 STATUS_WRITE: begin
                     addr    <=  addr + 1'b1;
+                    data_in <=  i_data;
                     
                     if( addr == MEM_SIZE - 1 )
                         addr    <=  { ADDR_SIZE { 1'b0 } };
@@ -118,7 +122,7 @@ module gate_buffer #
     assign  write   =   status == STATUS_WRITE ? 1'b1 : 1'b0;
     assign  read    =   status == STATUS_READ  ? 1'b1 : 1'b0; 
     
-    assign  o_data  =   data;
+    assign  o_data  =   data_out;
     assign  o_valid =   read;
     
     gate_memory #                      
@@ -134,8 +138,8 @@ module gate_buffer #
         .i_addr         ( addr      ),
         .i_read         ( read      ),
         .i_write        ( write     ),
-        .i_data         ( i_data    ),
-        .o_data         ( data      )
+        .i_data         ( data_in   ),
+        .o_data         ( data_out  )
     );         
     
 endmodule

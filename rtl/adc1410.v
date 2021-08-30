@@ -2,55 +2,54 @@
 
 module adc1410 #
 (
-    parameter   ADC_CHDATA_SIZE = 16,
-    parameter   ADC_DATA_SIZE   = 14,
-    parameter   ADC_CALIB_SIZE  = 18
+    parameter   ADC_OUT_DATA_SIZE = 16
 )
 (
-    input                               i_sys_clock,
-    input                               i_adc_clock,
-    input                               i_reset,
-    input   [ ADC_CALIB_SIZE - 1 : 0 ]  i_calib_value,
-    input                               i_adc_data_0,
-    input                               i_adc_data_1,
-    input                               i_adc_data_2,
-    input                               i_adc_data_3,
-    input                               i_adc_data_4,
-    input                               i_adc_data_5,
-    input                               i_adc_data_6,
-    input                               i_adc_data_7,
-    input                               i_adc_data_8,
-    input                               i_adc_data_9,
-    input                               i_adc_data_10,
-    input                               i_adc_data_11,
-    input                               i_adc_data_12,
-    input                               i_adc_data_13,
-    inout                               io_adc_sdio,
-    input                               i_adc_dco_clock_p,
-    output                              o_adc_dco_clock_n,
-    output                              o_adc_sclk,
-    output                              o_adc_clock_in_n,
-    output                              o_adc_clock_in_p,
-    output                              o_ch1_coupling_h,
-    output                              o_ch1_coupling_l,
-    output                              o_ch2_coupling_h,
-    output                              o_ch2_coupling_l,
-    output                              o_ch2_gain_h,
-    output                              o_ch2_gain_l,
-    output                              o_ch1_gain_l,
-    output                              o_ch1_gain_h,
-    output                              o_adc_relay_com_l,
-    output                              o_adc_relay_com_h,
-    output                              o_adc_cs,
-    output                              o_adc_sync,
-    output  [ ADC_CHDATA_SIZE - 1 : 0 ] o_data_out_ch1,
-    output  [ ADC_CHDATA_SIZE - 1 : 0 ] o_data_out_ch2,
-    output                              o_init_done
+    input                                   i_sys_clock,
+    input                                   i_adc_clock,
+    input                                   i_reset,
+    input                                   i_adc_data_0,
+    input                                   i_adc_data_1,
+    input                                   i_adc_data_2,
+    input                                   i_adc_data_3,
+    input                                   i_adc_data_4,
+    input                                   i_adc_data_5,
+    input                                   i_adc_data_6,
+    input                                   i_adc_data_7,
+    input                                   i_adc_data_8,
+    input                                   i_adc_data_9,
+    input                                   i_adc_data_10,
+    input                                   i_adc_data_11,
+    input                                   i_adc_data_12,
+    input                                   i_adc_data_13,
+    inout                                   io_adc_sdio,
+    input                                   i_adc_dco_clock_p,
+    output                                  o_adc_dco_clock_n,
+    output                                  o_adc_sclk,
+    output                                  o_adc_clock_in_n,
+    output                                  o_adc_clock_in_p,
+    output                                  o_ch1_coupling_h,
+    output                                  o_ch1_coupling_l,
+    output                                  o_ch2_coupling_h,
+    output                                  o_ch2_coupling_l,
+    output                                  o_ch2_gain_h,
+    output                                  o_ch2_gain_l,
+    output                                  o_ch1_gain_l,
+    output                                  o_ch1_gain_h,
+    output                                  o_adc_relay_com_l,
+    output                                  o_adc_relay_com_h,
+    output                                  o_adc_cs,
+    output                                  o_adc_sync,
+    output  [ ADC_OUT_DATA_SIZE - 1 : 0 ]   o_data_out_ch1,
+    output  [ ADC_OUT_DATA_SIZE - 1 : 0 ]   o_data_out_ch2,
+    output                                  o_init_done
 );
     
-    wire    [ ADC_DATA_SIZE   - 1 : 0 ] data_in;
-    wire                                test_mode;
-    wire                                init_done;
+    localparam  ADC_IN_DATA_SIZE    =   14;
+    
+    wire    [ ADC_IN_DATA_SIZE - 1 : 0 ]    data_in;
+    wire                                    test_mode;
+    wire                                    init_done;
     
     assign test_mode            = 1'b0;
     assign data_in[ 0  ]        = i_adc_data_0;
@@ -114,16 +113,7 @@ module adc1410 #
         .sCh2GainH          ( o_ch2_gain_h          ),
         .sCh2GainL          ( o_ch2_gain_l          ),
         .sRelayComH         ( o_adc_relay_com_h     ),
-        .sRelayComL         ( o_adc_relay_com_l     ),
-        
-        .sExtCh1LgMultCoef  (18'b010000000000000000),
-        .sExtCh1LgAddCoef   (i_calib_value),
-        .sExtCh1HgMultCoef  (18'b010000000000000000),
-        .sExtCh1HgAddCoef   (i_calib_value),
-        .sExtCh2LgMultCoef  (18'b010000000000000000),
-        .sExtCh2LgAddCoef   (i_calib_value),
-        .sExtCh2HgMultCoef  (18'b010000000000000000),
-        .sExtCh2HgAddCoef   (i_calib_value)
+        .sRelayComL         ( o_adc_relay_com_l     )
     );
     
 endmodule

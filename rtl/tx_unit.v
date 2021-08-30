@@ -13,18 +13,25 @@ module tx_unit #
     output                              o_tx
 );
 
-    reg     tx_valid;
-    wire    tx_ready;
-    wire    tx_busy;
+    reg                                 tx_valid;
+    wire                                tx_ready;
+    wire                                tx_busy;
+    reg     [ TX_DATA_SIZE - 1 : 0 ]    tx_data;
 
     always@( posedge i_clock ) begin
-        if( i_reset || ~i_send )
+        if( i_reset || ~i_send ) begin
             tx_valid    <= 1'b0;
+            tx_data     <= { TX_DATA_SIZE { 1'b0 } };
+        end
         else begin
-            if( tx_ready && ~tx_busy )
+            if( tx_ready && ~tx_busy ) begin
                 tx_valid    <= 1'b1;
-            else
+                tx_data     <= i_txdata;
+            end
+            else begin
                 tx_valid    <= 1'b0;
+                tx_data     <= tx_data;
+            end
         end
     end
     
@@ -38,7 +45,7 @@ module tx_unit #
     (
         .clk                ( i_clock               ),
         .rst                ( i_reset               ),   
-        .s_axis_tdata       ( i_txdata              ),
+        .s_axis_tdata       ( tx_data               ),
         .s_axis_tvalid      ( tx_valid              ),
         .s_axis_tready      ( tx_ready              ),
         .txd                ( o_tx                  ),
