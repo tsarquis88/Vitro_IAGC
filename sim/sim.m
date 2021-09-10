@@ -6,7 +6,7 @@ pkg load control;
 
 %% constants
 fs        = 10e9;               % sample frequency
-fsu       = 23e6;              % undersample frequency
+fsu       = 100e6 / 1;              % undersample frequency
 t1        = 1.562400e-3;
 t2        = 1.563100e-3;
 s_amp     = 1;                  % signal amplitude
@@ -75,3 +75,5 @@ xlabel( 'Frequency' );
 ylabel( 'Amplitude' );
 axis( [ -50e6, 50e6, -10, 25 ] );
 title( 'Frequency domain' );
+
+s = axes( 'visible', 'off', 'title', sprintf( 'Undersampling at %d GHz\n', fsu / 1e6 ) );
