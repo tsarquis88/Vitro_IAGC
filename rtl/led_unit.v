@@ -5,7 +5,8 @@ module led_unit
 (
     input  wire i_clock,
     input  wire i_reset,
-    input  wire i_adc_init_done,
+    input  wire i_idle,
+    input  wire i_init_done,
     output wire o_led_r,
     output wire o_led_g,
     output wire o_led_b
@@ -21,8 +22,9 @@ module led_unit
     
     always@( posedge i_clock ) begin
         
-        if( i_reset )
+        if( i_reset ) begin
             led_pwm_counter <= 0;
+        end
         else begin
             if( led_pwm_counter == LED_PWM_TICKS ) begin
                 led_pwm         <= 1'b1;
@@ -35,10 +37,17 @@ module led_unit
         end
     end 
     
-    always@( i_adc_init_done or led_pwm ) begin
-        led_g  =   i_adc_init_done ? led_pwm : 1'b0;
-        led_r  =   i_adc_init_done ? 1'b0    : led_pwm;
-        led_b  =   1'b0;
+    always@( i_init_done or i_idle or led_pwm ) begin
+        if( i_init_done ) begin
+            led_g  =   i_idle ? led_pwm : 1'b0;
+            led_r  =   1'b0;
+            led_b  =   i_idle ? 1'b0    : led_pwm;
+        end
+        else begin
+            led_g  =   1'b0;
+            led_r  =   led_pwm;
+            led_b  =   1'b0;
+        end
     end
     
     assign  o_led_r    = led_r;

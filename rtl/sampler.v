@@ -1,65 +1,74 @@
 `timescale 1ns / 1ps
+`default_nettype none
 
 module sampler # 
 (
     parameter   DATA_SIZE   =   8
 )
 (
-    input                           i_clock,
-    input                           i_reset,
-    input                           i_next,
-    input   [ DATA_SIZE - 1 : 0 ]   i_data,
-    input                           i_gate,
-    input                           i_adc_init,
-    output  [ DATA_SIZE - 1 : 0 ]   o_data,
-    output                          o_valid
+    input  wire                         i_clock,
+    input  wire                         i_reset,
+    input  wire                         i_next,
+    input  wire [ DATA_SIZE - 1 : 0 ]   i_data,
+    input  wire                         i_gate,
+    input  wire                         i_sample,
+    input  wire                         i_adc_init,
+    output wire [ DATA_SIZE - 1 : 0 ]   o_data,
+    output wire                         o_valid,
+    output wire                         o_idle
 );
 
     localparam  MEM_SIZE    =   1024;
     localparam  ADDR_SIZE   =   12;
     localparam  STATUS_SIZE =   3;
     
-    localparam  STATUS_WAIT     =   0;
-    localparam  STATUS_WRITE    =   1;
-    localparam  STATUS_READ     =   2;
-    localparam  STATUS_HOLD     =   3;
-    localparam  STATUS_HALT     =   4;
+    localparam  STATUS_INIT     =   0;
+    localparam  STATUS_WAIT     =   1;
+    localparam  STATUS_WRITE    =   2;
+    localparam  STATUS_READ     =   3;
+    localparam  STATUS_HOLD     =   4;
     
     reg     [ STATUS_SIZE - 1 : 0 ] status;
     reg     [ STATUS_SIZE - 1 : 0 ] next_status;
     reg     [ DATA_SIZE   - 1 : 0 ] data_in;
-    wire    [ DATA_SIZE   - 1 : 0 ] data_out;
     wire                            write;
     wire                            read;
     reg     [ ADDR_SIZE - 1 : 0 ]   addr;
-    reg                             last_i_next;
-    reg                             valid;
+    
     reg                             first_read;
+    
+    reg                             last_i_next;
+    reg                             last_i_sample;
+    wire                            posedge_i_next;
+    wire                            posedge_i_sample;
     
     always@( posedge i_clock ) begin
     
         if( i_reset || ~i_adc_init ) begin
-            status      <= STATUS_WAIT;
-            addr        <= { ADDR_SIZE { 1'b0 } };
-            last_i_next <= 1'b0;
-            data_in     <= { DATA_SIZE { 1'b0 } };
-            first_read  <= 1'b1;
+            status          <= STATUS_INIT;
+            last_i_next     <= 1'b0;
+            last_i_sample   <= 1'b0;
         end
         else begin
-            status      <= next_status;
-            last_i_next <= i_next;
+            status          <= next_status;
+            last_i_next     <= i_next;
+            last_i_sample   <= i_sample;
             
             case( status )
                 
+                STATUS_INIT: begin
+                    addr        <= { ADDR_SIZE { 1'b0 } };
+                    data_in     <= { DATA_SIZE { 1'b0 } };
+                    first_read  <= 1'b1;
+                end
+                
                 STATUS_WAIT: begin
                     addr    <=  addr;
-                    valid   <= 1'b0;
                 end
                 
                 STATUS_WRITE: begin
                     addr    <=  addr + 1'b1;
                     data_in <=  i_data;
-                    valid   <= 1'b0;
                     
                     if( addr == MEM_SIZE - 1 )
                         addr    <=  { ADDR_SIZE { 1'b0 } };
@@ -68,21 +77,13 @@ module sampler #
                 STATUS_READ: begin
                     addr        <= first_read ? { ADDR_SIZE { 1'b0 } } : addr + 1'b1;
                     first_read  <= 1'b0;
-                    valid       <= 1'b0;
                 end
                 
                 STATUS_HOLD: begin
-                    valid   <= 1'b1;
-                end
-                
-                STATUS_HALT: begin
-                    addr    <=  { ADDR_SIZE { 1'b0 } };
-                    valid   <= 1'b0;
                 end
                 
                 default: begin
                     addr    <=  { ADDR_SIZE { 1'b0 } };
-                    valid   <= 1'b0;
                 end
                 
             endcase 
@@ -92,6 +93,10 @@ module sampler #
     always@( * ) begin
         case( status )
         
+            STATUS_INIT: begin
+                next_status = i_sample ? STATUS_WAIT : STATUS_INIT;
+            end
+        
             STATUS_WAIT: begin
                 if( i_gate )
                     next_status =   STATUS_WRITE;
@@ -100,15 +105,10 @@ module sampler #
             end
             
             STATUS_WRITE: begin
-                if( addr == MEM_SIZE - 1 ) begin
-                    next_status =   STATUS_READ;
-                end
-                else begin
-                    if( i_gate )
-                        next_status =   STATUS_WRITE;
-                    else
-                        next_status =   STATUS_WAIT;
-                end
+                if( addr == MEM_SIZE - 1 )
+                    next_status = STATUS_READ;
+                else
+                    next_status = i_gate ? STATUS_WRITE : STATUS_WAIT;
             end
             
             STATUS_READ: begin
@@ -117,26 +117,23 @@ module sampler #
             
              STATUS_HOLD: begin
                 if( addr == MEM_SIZE - 1 )
-                    next_status = STATUS_HALT;
+                    next_status = STATUS_INIT;
                 else
                     next_status = i_next && ~last_i_next ? STATUS_READ : STATUS_HOLD;    
             end
             
-            STATUS_HALT: begin
-                next_status =   STATUS_HALT;
-            end
-            
             default: begin
-                next_status =   STATUS_WAIT;
+                next_status =   STATUS_INIT;
             end
         endcase
     end
     
-    assign  write   =   status == STATUS_WRITE ? 1'b1 : 1'b0;
-    assign  read    =   status == STATUS_READ  ? 1'b1 : 1'b0; 
-    
-    assign  o_data  =   data_out;
-    assign  o_valid =   valid;
+    assign  write               = status == STATUS_WRITE ? 1'b1 : 1'b0;
+    assign  read                = status == STATUS_READ  ? 1'b1 : 1'b0;
+    assign  posedge_i_next      = i_next && ~last_i_next ? 1'b1 : 1'b0;
+    assign  posedge_i_sample    = i_sample && ~last_i_sample ? 1'b1 : 1'b0;
+    assign  o_idle              = status == STATUS_INIT ? 1'b1 : 1'b0;
+    assign  o_valid             = status == STATUS_HOLD ? 1'b1 : 1'b0;
     
     memory #                      
     (
@@ -152,7 +149,9 @@ module sampler #
         .i_read         ( read      ),
         .i_write        ( write     ),
         .i_data         ( data_in   ),
-        .o_data         ( data_out  )
+        .o_data         ( o_data    )
     );         
     
 endmodule
+
+`default_nettype wire

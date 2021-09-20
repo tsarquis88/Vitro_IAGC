@@ -15,6 +15,7 @@ module sampler_tb
     wire                            valid;
     wire    [ DATA_SIZE - 1 : 0 ]   sampler_data;
     wire                            tx;
+    reg                             sample;
     
     initial begin
         clock       =   1'b0;
@@ -22,6 +23,7 @@ module sampler_tb
         adc_init    =   1'b0;
         gate        =   1'b0;
         data        =   { DATA_SIZE { 1'b0 } };
+        sample      =   1'b0;
         
         #10
         reset       =   1'b0;
@@ -29,6 +31,11 @@ module sampler_tb
         #20
         
         adc_init    =   1'b1;
+        
+        #1000
+        sample      =   1'b1;
+        #10
+        sample      =   1'b0;
     end
     
     always begin
@@ -57,22 +64,28 @@ module sampler_tb
         .i_data         ( data              ),
         .i_adc_init     ( adc_init          ),
         .i_gate         ( gate              ),
+        .i_sample       ( sample            ),
         .o_data         ( sampler_data      ),
         .o_valid        ( valid             )
     );
     
-    tx_unit #
+    localparam UART_TX_DATA_SIZE    = 8;
+    localparam UART_TX_PRESCALE     = 16'b0000010100010110;
+    
+    uart_tx #
     (
-        .TX_DATA_SIZE       ( DATA_SIZE     )
+        .DATA_WIDTH         ( UART_TX_DATA_SIZE     )
     )
-    u_tx_unit_ch1
+    u_uart_tx
     (
-        .i_clock            ( clock         ),
-        .i_reset            ( reset         ),
-        .i_send             ( valid         ),
-        .i_txdata           ( sampler_data  ),
-        .o_txready          ( next          ),
-        .o_tx               ( tx            )
+        .clk                ( clock                 ),
+        .rst                ( reset                 ),   
+        .s_axis_tdata       ( sampler_data          ),
+        .s_axis_tvalid      ( valid                 ),
+        .s_axis_tready      ( next                  ),
+        .txd                ( tx                    ),
+        .busy               ( busy                  ),
+        .prescale           ( UART_TX_PRESCALE      )
     );
   
 endmodule

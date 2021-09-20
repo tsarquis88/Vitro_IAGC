@@ -14,7 +14,7 @@ module top
     output wire o_tx_ch1_l,
     output wire o_tx_ch1_h,
     
-    input  wire i_calib,
+    input  wire i_sample,
     
     input  wire i_gate,   
     
@@ -163,6 +163,8 @@ module top
     wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampler_ch1_h;
     wire                                    sampler_valid_ch1_l;
     wire                                    sampler_valid_ch1_h;
+    wire                                    sampler_idle_ch1_l;
+    wire                                    sampler_idle_ch1_h;
     
     sampler #
     (
@@ -175,9 +177,11 @@ module top
         .i_next         ( uart_tx_ready_ch1_l           ),
         .i_data         ( conversor_ch1[ 7 : 0 ]        ),
         .i_gate         ( i_gate                        ),
+        .i_sample       ( i_sample                      ),
         .i_adc_init     ( adc1410_init_done             ),
         .o_data         ( sampler_ch1_l                 ),
-        .o_valid        ( sampler_valid_ch1_l           )
+        .o_valid        ( sampler_valid_ch1_l           ),
+        .o_idle         ( sampler_idle_ch1_l            )
     );
     
     sampler #
@@ -191,9 +195,11 @@ module top
         .i_next         ( uart_tx_ready_ch1_h           ),
         .i_data         ( conversor_ch1[ 13 : 8 ]       ),
         .i_gate         ( i_gate                        ),
+        .i_sample       ( i_sample                      ),
         .i_adc_init     ( adc1410_init_done             ),
         .o_data         ( sampler_ch1_h                 ),
-        .o_valid        ( sampler_valid_ch1_h           )
+        .o_valid        ( sampler_valid_ch1_h           ),
+        .o_idle         ( sampler_idle_ch1_h            )
     );
    
     /* ########################################################### */
@@ -245,12 +251,13 @@ module top
     led_unit
     u_led_unit
     (
-        .i_clock            ( sys_clock         ),
-        .i_reset            ( sys_reset         ),
-        .i_adc_init_done    ( adc1410_init_done ),
-        .o_led_r            ( o_led0_r          ),
-        .o_led_g            ( o_led0_g          ),
-        .o_led_b            ( o_led0_b          )
+        .i_clock            ( sys_clock             ),
+        .i_reset            ( sys_reset             ),
+        .i_init_done        ( adc1410_init_done     ),
+        .i_idle             ( sampler_idle_ch1_l    ),
+        .o_led_r            ( o_led0_r              ),
+        .o_led_g            ( o_led0_g              ),
+        .o_led_b            ( o_led0_b              )
     );
         
 endmodule
