@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-limit = 1500
+limit = 10000
 
 ref_l = np.loadtxt( 'ref_l.txt' )
 ref_h = np.loadtxt( 'ref_h.txt' )

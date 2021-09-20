@@ -206,7 +206,10 @@ module top
     /* TX UARTS ################################################## */
     
     localparam UART_TX_DATA_SIZE    = 8;
-    localparam UART_TX_PRESCALE     = 16'b0000010100010110;
+    localparam UART_TX_PRESCALE     = 16'b0000000101000101; /* 38400 */
+    // localparam UART_TX_PRESCALE     = 16'b0000001010001011; /* 19200 */
+    // localparam UART_TX_PRESCALE     = 16'b0000010100010110; /* 9600 */
+    // localparam UART_TX_PRESCALE     = 16'b0000101000101100; /* 4800 */
     
     wire    uart_tx_ready_ch1_l;
     wire    uart_tx_ready_ch1_h;
