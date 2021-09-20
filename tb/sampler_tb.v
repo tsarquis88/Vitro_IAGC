@@ -1,6 +1,6 @@
 `timescale 1ns / 1ns
 
-module gate_buffer_tb
+module sampler_tb
 (
 );
    
@@ -13,7 +13,7 @@ module gate_buffer_tb
     reg     [ DATA_SIZE - 1 : 0 ]   data;
     reg                             adc_init;
     wire                            valid;
-    wire    [ DATA_SIZE - 1 : 0 ]   gatered_data;
+    wire    [ DATA_SIZE - 1 : 0 ]   sampler_data;
     wire                            tx;
     
     initial begin
@@ -37,7 +37,7 @@ module gate_buffer_tb
     end
     
     always begin
-        #100
+        #10000
         gate    =   ~gate;
     end
     
@@ -45,11 +45,11 @@ module gate_buffer_tb
         data    <=  data + 1'b1;
     end
    
-    gate_buffer #
+    sampler #
     (
         .DATA_SIZE      ( DATA_SIZE         )
     )
-    u_gate_buffer
+    u_sampler
     (
         .i_clock        ( clock             ),
         .i_reset        ( reset             ),
@@ -57,7 +57,7 @@ module gate_buffer_tb
         .i_data         ( data              ),
         .i_adc_init     ( adc_init          ),
         .i_gate         ( gate              ),
-        .o_data         ( gatered_data      ),
+        .o_data         ( sampler_data      ),
         .o_valid        ( valid             )
     );
     
@@ -70,7 +70,7 @@ module gate_buffer_tb
         .i_clock            ( clock         ),
         .i_reset            ( reset         ),
         .i_send             ( valid         ),
-        .i_txdata           ( gatered_data  ),
+        .i_txdata           ( sampler_data  ),
         .o_txready          ( next          ),
         .o_tx               ( tx            )
     );

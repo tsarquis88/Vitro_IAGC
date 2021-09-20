@@ -163,8 +163,6 @@ module top
     wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampler_ch1_h;
     wire                                    sampler_valid_ch1_l;
     wire                                    sampler_valid_ch1_h;
-    wire                                    tx_ready_ch1_l;
-    wire                                    tx_ready_ch1_h;
     
     sampler #
     (
@@ -174,7 +172,7 @@ module top
     (
         .i_clock        ( sys_clock                     ),
         .i_reset        ( sys_reset                     ),
-        .i_next         ( tx_ready_ch1_l                ),
+        .i_next         ( uart_tx_ready_ch1_l           ),
         .i_data         ( conversor_ch1[ 7 : 0 ]        ),
         .i_gate         ( i_gate                        ),
         .i_adc_init     ( adc1410_init_done             ),
@@ -190,7 +188,7 @@ module top
     (
         .i_clock        ( sys_clock                     ),
         .i_reset        ( sys_reset                     ),
-        .i_next         ( tx_ready_ch1_h                ),
+        .i_next         ( uart_tx_ready_ch1_h           ),
         .i_data         ( conversor_ch1[ 13 : 8 ]       ),
         .i_gate         ( i_gate                        ),
         .i_adc_init     ( adc1410_init_done             ),
@@ -199,34 +197,46 @@ module top
     );
    
     /* ########################################################### */
-    /* TX UNIT ################################################### */
+    /* TX UARTS ################################################## */
     
-    tx_unit #
+    localparam UART_TX_DATA_SIZE    = 8;
+    localparam UART_TX_PRESCALE     = 16'b0000010100010110;
+    
+    wire    uart_tx_ready_ch1_l;
+    wire    uart_tx_ready_ch1_h;
+    wire    uart_tx_busy_ch1_l;
+    wire    uart_tx_busy_ch1_h;
+    
+    uart_tx #
     (
-        .TX_DATA_SIZE       ( SAMPLER_DATA_SIZE     )
+        .DATA_WIDTH         ( UART_TX_DATA_SIZE     )
     )
-    u_tx_unit_ch1_l
+    u_uart_tx_ch1_l
     (
-        .i_clock            ( sys_clock             ),
-        .i_reset            ( sys_reset             ),
-        .i_send             ( sampler_valid_ch1_l   ),
-        .i_txdata           ( sampler_ch1_l         ),
-        .o_txready          ( tx_ready_ch1_l        ),
-        .o_tx               ( o_tx_ch1_l            )
+        .clk                ( sys_clock             ),
+        .rst                ( sys_reset             ),   
+        .s_axis_tdata       ( sampler_ch1_l         ),
+        .s_axis_tvalid      ( sampler_valid_ch1_l   ),
+        .s_axis_tready      ( uart_tx_ready_ch1_l   ),
+        .txd                ( o_tx_ch1_l            ),
+        .busy               ( uart_tx_busy_ch1_l    ),
+        .prescale           ( UART_TX_PRESCALE      )
     );
     
-    tx_unit #
+    uart_tx #
     (
-        .TX_DATA_SIZE       ( SAMPLER_DATA_SIZE     )
+        .DATA_WIDTH         ( UART_TX_DATA_SIZE     )
     )
-    u_tx_unit_ch1_h
+    u_uart_tx_ch1_h
     (
-        .i_clock            ( sys_clock             ),
-        .i_reset            ( sys_reset             ),
-        .i_send             ( sampler_valid_ch1_h   ),
-        .i_txdata           ( sampler_ch1_h         ),
-        .o_txready          ( tx_ready_ch1_h        ),
-        .o_tx               ( o_tx_ch1_h            )
+        .clk                ( sys_clock             ),
+        .rst                ( sys_reset             ),   
+        .s_axis_tdata       ( sampler_ch1_h         ),
+        .s_axis_tvalid      ( sampler_valid_ch1_h   ),
+        .s_axis_tready      ( uart_tx_ready_ch1_h   ),
+        .txd                ( o_tx_ch1_h            ),
+        .busy               ( uart_tx_busy_ch1_h    ),
+        .prescale           ( UART_TX_PRESCALE      )
     );
         
     /* ########################################################### */

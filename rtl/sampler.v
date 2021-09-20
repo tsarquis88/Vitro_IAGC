@@ -16,13 +16,14 @@ module sampler #
 );
 
     localparam  MEM_SIZE    =   1024;
-    localparam  ADDR_SIZE   =   19;
-    localparam  STATUS_SIZE =   2;
+    localparam  ADDR_SIZE   =   12;
+    localparam  STATUS_SIZE =   3;
     
     localparam  STATUS_WAIT     =   0;
     localparam  STATUS_WRITE    =   1;
     localparam  STATUS_READ     =   2;
-    localparam  STATUS_HALT     =   3;
+    localparam  STATUS_HOLD     =   3;
+    localparam  STATUS_HALT     =   4;
     
     reg     [ STATUS_SIZE - 1 : 0 ] status;
     reg     [ STATUS_SIZE - 1 : 0 ] next_status;
@@ -32,6 +33,8 @@ module sampler #
     wire                            read;
     reg     [ ADDR_SIZE - 1 : 0 ]   addr;
     reg                             last_i_next;
+    reg                             valid;
+    reg                             first_read;
     
     always@( posedge i_clock ) begin
     
@@ -40,6 +43,7 @@ module sampler #
             addr        <= { ADDR_SIZE { 1'b0 } };
             last_i_next <= 1'b0;
             data_in     <= { DATA_SIZE { 1'b0 } };
+            first_read  <= 1'b1;
         end
         else begin
             status      <= next_status;
@@ -49,31 +53,36 @@ module sampler #
                 
                 STATUS_WAIT: begin
                     addr    <=  addr;
+                    valid   <= 1'b0;
                 end
                 
                 STATUS_WRITE: begin
                     addr    <=  addr + 1'b1;
                     data_in <=  i_data;
+                    valid   <= 1'b0;
                     
                     if( addr == MEM_SIZE - 1 )
                         addr    <=  { ADDR_SIZE { 1'b0 } };
                 end
                 
-                STATUS_READ: begin                    
-                    if( i_next && ~last_i_next ) begin
-                        addr    <=  addr + 1'b1;
-                    end
-                    
-                    if( addr == MEM_SIZE - 1 )
-                        addr    <=  { ADDR_SIZE { 1'b0 } };
+                STATUS_READ: begin
+                    addr        <= first_read ? { ADDR_SIZE { 1'b0 } } : addr + 1'b1;
+                    first_read  <= 1'b0;
+                    valid       <= 1'b0;
+                end
+                
+                STATUS_HOLD: begin
+                    valid   <= 1'b1;
                 end
                 
                 STATUS_HALT: begin
                     addr    <=  { ADDR_SIZE { 1'b0 } };
+                    valid   <= 1'b0;
                 end
                 
                 default: begin
                     addr    <=  { ADDR_SIZE { 1'b0 } };
+                    valid   <= 1'b0;
                 end
                 
             endcase 
@@ -103,10 +112,14 @@ module sampler #
             end
             
             STATUS_READ: begin
+                next_status = STATUS_HOLD;
+            end
+            
+             STATUS_HOLD: begin
                 if( addr == MEM_SIZE - 1 )
-                    next_status =   STATUS_HALT;
+                    next_status = STATUS_HALT;
                 else
-                    next_status =   STATUS_READ;
+                    next_status = i_next && ~last_i_next ? STATUS_READ : STATUS_HOLD;    
             end
             
             STATUS_HALT: begin
@@ -123,7 +136,7 @@ module sampler #
     assign  read    =   status == STATUS_READ  ? 1'b1 : 1'b0; 
     
     assign  o_data  =   data_out;
-    assign  o_valid =   read;
+    assign  o_valid =   valid;
     
     memory #                      
     (
