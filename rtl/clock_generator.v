@@ -1,12 +1,13 @@
 `timescale 1ns / 1ps
+`default_nettype none
 
 module clock_unit
 (
-    input   i_clock,
-    input   i_reset,
-    output  o_adc_clock,
-    output  o_sys_clock,
-    output  o_valid
+    input  wire i_clock,
+    input  wire i_reset,
+    output wire o_adc_clock,
+    output wire o_sys_clock,
+    output wire o_valid
 );
     
     wire        locked;
@@ -30,3 +31,5 @@ module clock_unit
     );
     
 endmodule
+
+`default_nettype wire

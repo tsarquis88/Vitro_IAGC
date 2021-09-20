@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module gate_memory #                      
+module memory #                      
 (
     parameter   DATA_SIZE   =   14,
     parameter   ADDR_SIZE   =   19,

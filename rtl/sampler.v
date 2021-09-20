@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module gate_buffer # 
+module sampler # 
 (
     parameter   DATA_SIZE   =   8
 )
@@ -125,13 +125,13 @@ module gate_buffer #
     assign  o_data  =   data_out;
     assign  o_valid =   read;
     
-    gate_memory #                      
+    memory #                      
     (
         .DATA_SIZE      ( DATA_SIZE ),
         .ADDR_SIZE      ( ADDR_SIZE ),
         .MEMORY_SIZE    ( MEM_SIZE  )
     )
-    u_gate_memory
+    u_memory
     (
         .i_clock        ( i_clock   ),
         .i_reset        ( i_reset   ),

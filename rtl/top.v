@@ -1,54 +1,55 @@
 `timescale 1ns / 1ps
+`default_nettype none
 
 module top
 (
-    input   i_clock,
+    input  wire i_clock,
     
-    input   i_reset,
+    input  wire i_reset,
         
-    output  o_led0_g,
-    output  o_led0_r,
-    output  o_led0_b,
+    output wire o_led0_g,
+    output wire o_led0_r,
+    output wire o_led0_b,
     
-    output  o_tx_ch1_l,
-    output  o_tx_ch1_h,
+    output wire o_tx_ch1_l,
+    output wire o_tx_ch1_h,
     
-    input   i_calib,
+    input  wire i_calib,
     
-    input   i_gate,   
+    input  wire i_gate,   
     
-    input   i_adc_data_0,
-    input   i_adc_data_1,
-    input   i_adc_data_2,
-    input   i_adc_data_3,
-    input   i_adc_data_4,
-    input   i_adc_data_5,
-    input   i_adc_data_6,
-    input   i_adc_data_7,
-    input   i_adc_data_8,
-    input   i_adc_data_9,
-    input   i_adc_data_10,
-    input   i_adc_data_11,
-    input   i_adc_data_12,
-    input   i_adc_data_13,
-    inout   io_adc_sdio,
-    input   i_adc_dco_clock_p,
-    output  o_adc_dco_clock_n,
-    output  o_adc_sclk,
-    output  o_adc_clock_in_n,
-    output  o_adc_clock_in_p,
-    output  o_ch1_coupling_h,
-    output  o_ch1_coupling_l,
-    output  o_ch2_coupling_h,
-    output  o_ch2_coupling_l,
-    output  o_ch2_gain_h,
-    output  o_ch2_gain_l,
-    output  o_ch1_gain_l,
-    output  o_ch1_gain_h,
-    output  o_adc_relay_com_l,
-    output  o_adc_relay_com_h,
-    output  o_adc_cs,
-    output  o_adc_sync       
+    input  wire i_adc_data_0,
+    input  wire i_adc_data_1,
+    input  wire i_adc_data_2,
+    input  wire i_adc_data_3,
+    input  wire i_adc_data_4,
+    input  wire i_adc_data_5,
+    input  wire i_adc_data_6,
+    input  wire i_adc_data_7,
+    input  wire i_adc_data_8,
+    input  wire i_adc_data_9,
+    input  wire i_adc_data_10,
+    input  wire i_adc_data_11,
+    input  wire i_adc_data_12,
+    input  wire i_adc_data_13,
+    inout  wire io_adc_sdio,
+    input  wire i_adc_dco_clock_p,
+    output wire o_adc_dco_clock_n,
+    output wire o_adc_sclk,
+    output wire o_adc_clock_in_n,
+    output wire o_adc_clock_in_p,
+    output wire o_ch1_coupling_h,
+    output wire o_ch1_coupling_l,
+    output wire o_ch2_coupling_h,
+    output wire o_ch2_coupling_l,
+    output wire o_ch2_gain_h,
+    output wire o_ch2_gain_l,
+    output wire o_ch1_gain_l,
+    output wire o_ch1_gain_h,
+    output wire o_adc_relay_com_l,
+    output wire o_adc_relay_com_h,
+    output wire o_adc_cs,
+    output wire o_adc_sync       
 );
     
     /* ########################################################### */
@@ -73,15 +74,15 @@ module top
     /* ########################################################### */
     /* ADC1410 ################################################### */
     
-    localparam  ADC_OUT_DATA_SIZE   =   16;
+    localparam  ADC1410_DATA_SIZE   =   16;
     
-    wire    [ ADC_OUT_DATA_SIZE - 1 : 0 ]   adc_out_ch1;
-    wire    [ ADC_OUT_DATA_SIZE - 1 : 0 ]   adc_out_ch2;
-    wire                                    adc_init_done;
+    wire    [ ADC1410_DATA_SIZE - 1 : 0 ]   adc1410_ch1;
+    wire    [ ADC1410_DATA_SIZE - 1 : 0 ]   adc1410_ch2;
+    wire                                    adc1410_init_done;
     
     adc1410 #
     (
-        .ADC_OUT_DATA_SIZE  ( ADC_OUT_DATA_SIZE )
+        .DATA_SIZE          ( ADC1410_DATA_SIZE )
     )
     u_adc1410
     (
@@ -120,81 +121,81 @@ module top
         .o_adc_relay_com_h  ( o_adc_relay_com_h ),
         .o_adc_cs           ( o_adc_cs          ),
         .o_adc_sync         ( o_adc_sync        ),
-        .o_data_out_ch1     ( adc_out_ch1       ),
-        .o_data_out_ch2     ( adc_out_ch2       ),
-        .o_init_done        ( adc_init_done     ) 
+        .o_data_out_ch1     ( adc1410_ch1       ),
+        .o_data_out_ch2     ( adc1410_ch2       ),
+        .o_init_done        ( adc1410_init_done ) 
     );
     
     /* ########################################################### */
     /* DATA CONVERSORS ########################################### */
     
-    localparam  CONVERTED_DATA_SIZE =   14;
+    localparam  CONVERSOR_DATA_SIZE =   14;
     
-    wire    [ CONVERTED_DATA_SIZE - 1 : 0 ] data_converted_ch1;
-    wire    [ CONVERTED_DATA_SIZE - 1 : 0 ] data_converted_ch2;
+    wire    [ CONVERSOR_DATA_SIZE - 1 : 0 ] conversor_ch1;
+    wire    [ CONVERSOR_DATA_SIZE - 1 : 0 ] conversor_ch2;
     
     data_conversor #
     (
-        .CONVERSOR_DATA_SIZE    ( CONVERTED_DATA_SIZE   )
+        .CONVERSOR_DATA_SIZE    ( CONVERSOR_DATA_SIZE)
     )
     u_data_conversor_ch1
     (
-        .i_data                 ( adc_out_ch1[15:2]     ),
-        .o_data                 ( data_converted_ch1    )
+        .i_data                 ( adc1410_ch1[15:2]     ),
+        .o_data                 ( conversor_ch1    )
     );
     
     data_conversor #
     (
-        .CONVERSOR_DATA_SIZE    ( CONVERTED_DATA_SIZE   )
+        .CONVERSOR_DATA_SIZE    ( CONVERSOR_DATA_SIZE   )
     )
     u_data_conversor_ch2
     (
-        .i_data                 ( adc_out_ch2[15:2]     ),
-        .o_data                 ( data_converted_ch2    )
+        .i_data                 ( adc1410_ch2[15:2]     ),
+        .o_data                 ( conversor_ch2    )
     );
     
     /* ########################################################### */
-    /* GATE BUFFER ############################################### */
+    /* SAMPLERS ################################################## */
     
-    localparam  TX_DATA_SIZE  =   8;
+    localparam  SAMPLER_DATA_SIZE  =   8;
 
-    wire    [ TX_DATA_SIZE - 1 : 0 ]    gatered_data_ch1_l;
-    wire    [ TX_DATA_SIZE - 1 : 0 ]    gatered_data_ch1_h;
-    wire                                valid_ch1_l;
-    wire                                valid_ch1_h;
-    wire                                tx_ready_ch1_l;
-    wire                                tx_ready_ch1_h;
+    wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampler_ch1_l;
+    wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampler_ch1_h;
+    wire                                    sampler_valid_ch1_l;
+    wire                                    sampler_valid_ch1_h;
+    wire                                    tx_ready_ch1_l;
+    wire                                    tx_ready_ch1_h;
     
-    gate_buffer #
+    sampler #
     (
-        .DATA_SIZE      ( TX_DATA_SIZE                  )
+        .DATA_SIZE      ( SAMPLER_DATA_SIZE             )
     )
-    u_gate_buffer_ch1_l
+    u_sampler_ch1_l
     (
         .i_clock        ( sys_clock                     ),
         .i_reset        ( sys_reset                     ),
         .i_next         ( tx_ready_ch1_l                ),
-        .i_data         ( data_converted_ch1[ 7 : 0 ]   ),
+        .i_data         ( conversor_ch1[ 7 : 0 ]        ),
         .i_gate         ( i_gate                        ),
-        .i_adc_init     ( adc_init_done                 ),
-        .o_data         ( gatered_data_ch1_l            ),
-        .o_valid        ( valid_ch1_l                   )
+        .i_adc_init     ( adc1410_init_done             ),
+        .o_data         ( sampler_ch1_l                 ),
+        .o_valid        ( sampler_valid_ch1_l           )
     );
     
-    gate_buffer #
+    sampler #
     (
-        .DATA_SIZE      ( TX_DATA_SIZE                  )
+        .DATA_SIZE      ( SAMPLER_DATA_SIZE             )
     )
-    u_gate_buffer_ch1_h
+    u_sampler_ch1_h
     (
         .i_clock        ( sys_clock                     ),
         .i_reset        ( sys_reset                     ),
         .i_next         ( tx_ready_ch1_h                ),
-        .i_data         ( data_converted_ch1[ 13 : 8 ]  ),
+        .i_data         ( conversor_ch1[ 13 : 8 ]       ),
         .i_gate         ( i_gate                        ),
-        .i_adc_init     ( adc_init_done                 ),
-        .o_data         ( gatered_data_ch1_h            ),
-        .o_valid        ( valid_ch1_h                   )
+        .i_adc_init     ( adc1410_init_done             ),
+        .o_data         ( sampler_ch1_h                 ),
+        .o_valid        ( sampler_valid_ch1_h           )
     );
    
     /* ########################################################### */
@@ -202,28 +203,28 @@ module top
     
     tx_unit #
     (
-        .TX_DATA_SIZE       ( TX_DATA_SIZE          )
+        .TX_DATA_SIZE       ( SAMPLER_DATA_SIZE     )
     )
     u_tx_unit_ch1_l
     (
         .i_clock            ( sys_clock             ),
         .i_reset            ( sys_reset             ),
-        .i_send             ( valid_ch1_l           ),
-        .i_txdata           ( gatered_data_ch1_l    ),
+        .i_send             ( sampler_valid_ch1_l   ),
+        .i_txdata           ( sampler_ch1_l         ),
         .o_txready          ( tx_ready_ch1_l        ),
         .o_tx               ( o_tx_ch1_l            )
     );
     
     tx_unit #
     (
-        .TX_DATA_SIZE       ( TX_DATA_SIZE          )
+        .TX_DATA_SIZE       ( SAMPLER_DATA_SIZE     )
     )
     u_tx_unit_ch1_h
     (
         .i_clock            ( sys_clock             ),
         .i_reset            ( sys_reset             ),
-        .i_send             ( valid_ch1_h           ),
-        .i_txdata           ( gatered_data_ch1_h    ),
+        .i_send             ( sampler_valid_ch1_h   ),
+        .i_txdata           ( sampler_ch1_h         ),
         .o_txready          ( tx_ready_ch1_h        ),
         .o_tx               ( o_tx_ch1_h            )
     );
@@ -231,21 +232,17 @@ module top
     /* ########################################################### */
     /* LED UNIT ################################################## */
     
-    localparam  LED_PWM_TICKS   = 50;
-    
-    led_unit #
-    (
-        .LED_PWM_TICKS      (LED_PWM_TICKS)
-    )
+    led_unit
     u_led_unit
     (
-        .i_clock            (sys_clock),
-        .i_reset            (sys_reset),
-        .i_calib_enabled    (calib_enabled),
-        .i_adc_init_done    (adc_init_done),
-        .o_led_r            (o_led0_r),
-        .o_led_g            (o_led0_g),
-        .o_led_b            (o_led0_b)
+        .i_clock            ( sys_clock         ),
+        .i_reset            ( sys_reset         ),
+        .i_adc_init_done    ( adc1410_init_done ),
+        .o_led_r            ( o_led0_r          ),
+        .o_led_g            ( o_led0_g          ),
+        .o_led_b            ( o_led0_b          )
     );
         
 endmodule
+
+`default_nettype wire
