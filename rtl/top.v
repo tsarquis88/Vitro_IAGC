@@ -136,12 +136,12 @@ module top
     
     data_conversor #
     (
-        .CONVERSOR_DATA_SIZE    ( CONVERSOR_DATA_SIZE)
+        .CONVERSOR_DATA_SIZE    ( CONVERSOR_DATA_SIZE   )
     )
     u_data_conversor_ch1
     (
         .i_data                 ( adc1410_ch1[15:2]     ),
-        .o_data                 ( conversor_ch1    )
+        .o_data                 ( conversor_ch1         )
     );
     
     data_conversor #
@@ -151,7 +151,7 @@ module top
     u_data_conversor_ch2
     (
         .i_data                 ( adc1410_ch2[15:2]     ),
-        .o_data                 ( conversor_ch2    )
+        .o_data                 ( conversor_ch2         )
     );
     
     /* ########################################################### */
