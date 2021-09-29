@@ -14,9 +14,13 @@ module top
     output wire o_tx_ch1_l,
     output wire o_tx_ch1_h,
     
+    input  wire i_rx,
+    
     input  wire i_sample,
     
-    input  wire i_gate,   
+    input  wire i_gate,
+    
+    output wire o_buzzer,   
     
     input  wire i_adc_data_0,
     input  wire i_adc_data_1,
@@ -76,9 +80,12 @@ module top
     
     localparam  ADC1410_DATA_SIZE   =   16;
     
+    wire                                    adc1410_reset;
     wire    [ ADC1410_DATA_SIZE - 1 : 0 ]   adc1410_ch1;
     wire    [ ADC1410_DATA_SIZE - 1 : 0 ]   adc1410_ch2;
     wire                                    adc1410_init_done;
+    
+    assign adc1410_reset = sys_reset || cmd_reset;
     
     adc1410 #
     (
@@ -88,7 +95,7 @@ module top
     (
         .i_sys_clock        ( sys_clock         ),
         .i_adc_clock        ( adc_clock         ),
-        .i_reset            ( ~sys_reset        ),
+        .i_reset            ( adc1410_reset     ),
         .i_adc_data_0       ( i_adc_data_0      ),
         .i_adc_data_1       ( i_adc_data_1      ),
         .i_adc_data_2       ( i_adc_data_2      ),
@@ -158,13 +165,16 @@ module top
     /* SAMPLERS ################################################## */
     
     localparam  SAMPLER_DATA_SIZE  =   8;
-
+    
+    wire                                    sample;
     wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampler_ch1_l;
     wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampler_ch1_h;
     wire                                    sampler_valid_ch1_l;
     wire                                    sampler_valid_ch1_h;
     wire                                    sampler_idle_ch1_l;
     wire                                    sampler_idle_ch1_h;
+    
+    assign sample = i_sample || cmd_sample;
     
     sampler #
     (
@@ -177,8 +187,10 @@ module top
         .i_next         ( uart_tx_ready_ch1_l           ),
         .i_data         ( conversor_ch1[ 7 : 0 ]        ),
         .i_gate         ( i_gate                        ),
-        .i_sample       ( i_sample                      ),
+        .i_sample       ( sample                        ),
         .i_adc_init     ( adc1410_init_done             ),
+        .i_cmd_decim    ( cmd_decim                     ),
+        .i_cmd_param    ( cmd_param                     ),
         .o_data         ( sampler_ch1_l                 ),
         .o_valid        ( sampler_valid_ch1_l           ),
         .o_idle         ( sampler_idle_ch1_l            )
@@ -195,8 +207,10 @@ module top
         .i_next         ( uart_tx_ready_ch1_h           ),
         .i_data         ( conversor_ch1[ 13 : 8 ]       ),
         .i_gate         ( i_gate                        ),
-        .i_sample       ( i_sample                      ),
+        .i_sample       ( sample                        ),
         .i_adc_init     ( adc1410_init_done             ),
+        .i_cmd_decim    ( cmd_decim                     ),
+        .i_cmd_param    ( cmd_param                     ),
         .o_data         ( sampler_ch1_h                 ),
         .o_valid        ( sampler_valid_ch1_h           ),
         .o_idle         ( sampler_idle_ch1_h            )
@@ -205,8 +219,8 @@ module top
     /* ########################################################### */
     /* TX UARTS ################################################## */
     
-    localparam UART_TX_DATA_SIZE    = 8;
-    localparam UART_TX_PRESCALE     = 16'b0000000101000101; /* 38400 */
+    localparam UART_DATA_SIZE    = 8;
+    localparam UART_PRESCALE     = 16'b0000000101000101; /* 38400 */
     // localparam UART_TX_PRESCALE     = 16'b0000001010001011; /* 19200 */
     // localparam UART_TX_PRESCALE     = 16'b0000010100010110; /* 9600 */
     // localparam UART_TX_PRESCALE     = 16'b0000101000101100; /* 4800 */
@@ -218,7 +232,7 @@ module top
     
     uart_tx #
     (
-        .DATA_WIDTH         ( UART_TX_DATA_SIZE     )
+        .DATA_WIDTH         ( UART_DATA_SIZE        )
     )
     u_uart_tx_ch1_l
     (
@@ -229,12 +243,12 @@ module top
         .s_axis_tready      ( uart_tx_ready_ch1_l   ),
         .txd                ( o_tx_ch1_l            ),
         .busy               ( uart_tx_busy_ch1_l    ),
-        .prescale           ( UART_TX_PRESCALE      )
+        .prescale           ( UART_PRESCALE         )
     );
     
     uart_tx #
     (
-        .DATA_WIDTH         ( UART_TX_DATA_SIZE     )
+        .DATA_WIDTH         ( UART_DATA_SIZE        )
     )
     u_uart_tx_ch1_h
     (
@@ -245,22 +259,50 @@ module top
         .s_axis_tready      ( uart_tx_ready_ch1_h   ),
         .txd                ( o_tx_ch1_h            ),
         .busy               ( uart_tx_busy_ch1_h    ),
-        .prescale           ( UART_TX_PRESCALE      )
+        .prescale           ( UART_PRESCALE         )
+    );
+    
+    /* ########################################################### */
+    /* COMMAND UNIT ############################################## */
+    
+    wire                                cmd_reset;
+    wire                                cmd_sample;
+    wire                                cmd_decim;
+    wire    [ UART_DATA_SIZE - 1 : 0 ]  cmd_param;
+    wire                                cmd_valid;
+    
+    command_unit #
+    (
+        .DATA_SIZE          ( UART_DATA_SIZE        )
+    )
+    u_command_unit
+    (
+        .i_clock            ( sys_clock             ),
+        .i_reset            ( sys_reset             ),
+        .i_rx               ( i_rx                  ),
+        .i_ready            ( sampler_idle_ch1_h    ),
+        .o_sample           ( cmd_sample            ),
+        .o_reset            ( cmd_reset             ),
+        .o_decim            ( cmd_decim             ),
+        .o_param            ( cmd_param             ),
+        .o_valid            ( cmd_valid             )
     );
         
     /* ########################################################### */
-    /* LED UNIT ################################################## */
+    /* PMOD UNIT ################################################# */
     
-    led_unit
-    u_led_unit
+    pmod_unit
+    u_pmod_unit
     (
         .i_clock            ( sys_clock             ),
         .i_reset            ( sys_reset             ),
         .i_init_done        ( adc1410_init_done     ),
         .i_idle             ( sampler_idle_ch1_l    ),
+        .i_cmd_valid        ( cmd_valid             ),
         .o_led_r            ( o_led0_r              ),
         .o_led_g            ( o_led0_g              ),
-        .o_led_b            ( o_led0_b              )
+        .o_led_b            ( o_led0_b              ),
+        .o_buzzer           ( o_buzzer              )
     );
         
 endmodule

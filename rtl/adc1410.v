@@ -50,6 +50,7 @@ module adc1410 #
     wire    [ ADC_IN_DATA_SIZE - 1 : 0 ]    data_in;
     wire                                    test_mode;
     wire                                    init_done;
+    wire                                    reset;
     
     assign test_mode            = 1'b0;
     assign data_in[ 0  ]        = i_adc_data_0;
@@ -89,7 +90,7 @@ module adc1410 #
     (
         .SysClk             ( i_sys_clock           ),
         .ADC_InClk          ( i_adc_clock           ),
-        .sRst_n             ( i_reset               ),
+        .sRst_n             ( ~i_reset              ),
         .sInitDone_n        ( init_done             ),
         .FIFO_EMPTY_CHA     (                       ),
         .FIFO_EMPTY_CHB     (                       ),

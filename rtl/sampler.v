@@ -13,6 +13,8 @@ module sampler #
     input  wire                         i_gate,
     input  wire                         i_sample,
     input  wire                         i_adc_init,
+    input  wire                         i_cmd_decim,
+    input  wire [ DATA_SIZE - 1 : 0 ]   i_cmd_param,  
     output wire [ DATA_SIZE - 1 : 0 ]   o_data,
     output wire                         o_valid,
     output wire                         o_idle
@@ -21,7 +23,6 @@ module sampler #
     localparam  MEM_SIZE        =   1024;
     localparam  ADDR_SIZE       =   12;
     localparam  STATUS_SIZE     =   3;
-    localparam  DECIMATE_ORDER  =   8;
     
     localparam  STATUS_INIT     =   0;
     localparam  STATUS_WAIT     =   1;
@@ -29,13 +30,14 @@ module sampler #
     localparam  STATUS_READ     =   3;
     localparam  STATUS_HOLD     =   4;
     
-    reg     [ STATUS_SIZE - 1 : 0 ] status;
-    reg     [ STATUS_SIZE - 1 : 0 ] next_status;
-    reg                             write;
-    wire                            read;
-    reg     [ ADDR_SIZE - 1 : 0 ]   addr;
-    reg                             valid;
-    wire    [ DATA_SIZE - 1 : 0 ]   data_mem;
+    reg     [ STATUS_SIZE   - 1 : 0 ]   status;
+    reg     [ STATUS_SIZE   - 1 : 0 ]   next_status;
+    reg                                 write;
+    wire                                read;
+    reg     [ ADDR_SIZE     - 1 : 0 ]   addr;
+    reg                                 valid;
+    wire    [ DATA_SIZE     - 1 : 0 ]   data_mem;
+    reg     [ DATA_SIZE     - 1 : 0 ]   decimate_order;
     
     integer                         samples_count;
     integer                         gates_count;
@@ -54,7 +56,8 @@ module sampler #
     
         if( i_reset || ~i_adc_init ) begin
             
-            status  <= STATUS_INIT;
+            status          <= STATUS_INIT;
+            decimate_order  <= { DATA_SIZE { 1'b0 } } + 1'b1;
             
         end
         else begin
@@ -75,6 +78,7 @@ module sampler #
                     gates_count     <= 0;
                     hold_count      <= 0;
                     valid           <= 1'b0;
+                    decimate_order  <= i_cmd_decim ? i_cmd_param : decimate_order;
                 end
                 
                 STATUS_WAIT: begin
@@ -86,21 +90,23 @@ module sampler #
                     gates_count     <= posedge_i_gate ? gates_count + 1 : gates_count;
                     hold_count      <= 0;
                     valid           <= 1'b0;
+                    decimate_order  <= decimate_order;
                 end
                 
                 STATUS_WRITE: begin
-                    if( samples_count == DECIMATE_ORDER - 1 )
+                    if( samples_count == decimate_order - 1 )
                         addr        <= first_write ? { ADDR_SIZE { 1'b0 } } : addr + 1'b1;
                     else
                         addr        <= addr;
                         
-                    first_write     <= samples_count == DECIMATE_ORDER - 1 ? 1'b0 : first_write; 
+                    first_write     <= samples_count == decimate_order - 1 ? 1'b0 : first_write; 
                     first_read      <= first_read;
-                    write           <= samples_count == DECIMATE_ORDER - 1 ? 1'b1 : 1'b0;
-                    samples_count   <= samples_count == DECIMATE_ORDER - 1 ? 0 : samples_count + 1;
+                    write           <= samples_count == decimate_order - 1 ? 1'b1 : 1'b0;
+                    samples_count   <= samples_count == decimate_order - 1 ? 0 : samples_count + 1;
                     gates_count     <= gates_count;
                     hold_count      <= 0;
                     valid           <= 1'b0;
+                    decimate_order  <= decimate_order;
                 end
                 
                 STATUS_READ: begin
@@ -112,6 +118,7 @@ module sampler #
                     gates_count     <= 0;
                     hold_count      <= 0;
                     valid           <= 1'b0;
+                    decimate_order  <= decimate_order;
                 end
                 
                 STATUS_HOLD: begin
@@ -123,6 +130,7 @@ module sampler #
                     samples_count   <= 0;
                     gates_count     <= 0;
                     hold_count      <= hold_count + 1;
+                    decimate_order  <= decimate_order;
                 end
                 
                 default: begin
@@ -133,6 +141,7 @@ module sampler #
                     samples_count   <= 0;
                     gates_count     <= 0;
                     hold_count      <= 0;
+                    decimate_order  <= decimate_order;
                 end
                 
             endcase 

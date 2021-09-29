@@ -1,18 +1,22 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-module led_unit
+module pmod_unit
 (
     input  wire i_clock,
     input  wire i_reset,
     input  wire i_idle,
     input  wire i_init_done,
+    input  wire i_cmd_valid,
     output wire o_led_r,
     output wire o_led_g,
-    output wire o_led_b
+    output wire o_led_b,
+    output wire o_buzzer
 );
 
-    localparam  LED_PWM_TICKS   =   50;
+    localparam  LED_PWM_TICKS       =   50;
+    localparam  BUZZER_TICKS_SHORT  =   2000000;
+    localparam  BUZZER_TICKS_LONG   =   30000000;
 
     reg         led_pwm;
     integer     led_pwm_counter;
@@ -20,8 +24,11 @@ module led_unit
     reg         led_b;
     reg         led_r;
     
+    integer     buzzer_counter;
+    reg         buzzer;
+    reg         last_i_cmd_valid;
+    
     always@( posedge i_clock ) begin
-        
         if( i_reset ) begin
             led_pwm_counter <= 0;
         end
@@ -36,6 +43,25 @@ module led_unit
             end   
         end
     end 
+    
+    always@( posedge i_clock ) begin
+        if( i_reset ) begin
+            buzzer_counter      <= 0;
+            buzzer              <= 1'b0;
+        end
+        else begin
+            if( buzzer ) begin
+                buzzer          <= buzzer_counter >= BUZZER_TICKS_SHORT ? 1'b0 : 1'b1;
+                buzzer_counter  <= buzzer_counter >= BUZZER_TICKS_SHORT ? 0    : buzzer_counter + 1;
+            end
+            else begin
+                buzzer          <= ~last_i_cmd_valid && i_cmd_valid ? 1'b1 : 1'b0;                
+                buzzer_counter  <= 0;
+            end 
+        end
+        
+        last_i_cmd_valid    <= 1'b0;
+    end
     
     always@( i_init_done or i_idle or led_pwm ) begin
         if( i_init_done ) begin
@@ -53,6 +79,7 @@ module led_unit
     assign  o_led_r    = led_r;
     assign  o_led_g    = led_g;
     assign  o_led_b    = led_b;
+    assign  o_buzzer   = buzzer;
     
 endmodule
 
