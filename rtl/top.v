@@ -162,17 +162,23 @@ module top
     );
     
     /* ########################################################### */
+    /* RAMP ###################################################### */
+    
+    reg [ CONVERSOR_DATA_SIZE - 1 : 0 ] ramp;
+    
+    always@( posedge sys_clock ) begin
+        ramp <=  ~i_gate ? { CONVERSOR_DATA_SIZE { 1'b0 } } : ramp + 4'b1000;
+    end
+    
+    /* ########################################################### */
     /* SAMPLERS ################################################## */
     
-    localparam  SAMPLER_DATA_SIZE  =   8;
+    localparam  SAMPLER_DATA_SIZE  =   16;
     
     wire                                    sample;
-    wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampler_ch1_l;
-    wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampler_ch1_h;
-    wire                                    sampler_valid_ch1_l;
-    wire                                    sampler_valid_ch1_h;
-    wire                                    sampler_idle_ch1_l;
-    wire                                    sampler_idle_ch1_h;
+    wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampler_ch1;
+    wire                                    sampler_valid_ch1;
+    wire                                    sampler_idle_ch1;
     
     assign sample = i_sample || cmd_sample;
     
@@ -180,40 +186,20 @@ module top
     (
         .DATA_SIZE      ( SAMPLER_DATA_SIZE             )
     )
-    u_sampler_ch1_l
+    u_sampler_ch1
     (
         .i_clock        ( sys_clock                     ),
         .i_reset        ( sys_reset                     ),
-        .i_next         ( uart_tx_ready_ch1_l           ),
-        .i_data         ( conversor_ch1[ 7 : 0 ]        ),
+        .i_next         ( uart_tx_ready_ch1             ),
+        .i_data         ( conversor_ch1                 ),
         .i_gate         ( i_gate                        ),
         .i_sample       ( sample                        ),
         .i_adc_init     ( adc1410_init_done             ),
         .i_cmd_decim    ( cmd_decim                     ),
         .i_cmd_param    ( cmd_param                     ),
-        .o_data         ( sampler_ch1_l                 ),
-        .o_valid        ( sampler_valid_ch1_l           ),
-        .o_idle         ( sampler_idle_ch1_l            )
-    );
-    
-    sampler #
-    (
-        .DATA_SIZE      ( SAMPLER_DATA_SIZE             )
-    )
-    u_sampler_ch1_h
-    (
-        .i_clock        ( sys_clock                     ),
-        .i_reset        ( sys_reset                     ),
-        .i_next         ( uart_tx_ready_ch1_h           ),
-        .i_data         ( conversor_ch1[ 13 : 8 ]       ),
-        .i_gate         ( i_gate                        ),
-        .i_sample       ( sample                        ),
-        .i_adc_init     ( adc1410_init_done             ),
-        .i_cmd_decim    ( cmd_decim                     ),
-        .i_cmd_param    ( cmd_param                     ),
-        .o_data         ( sampler_ch1_h                 ),
-        .o_valid        ( sampler_valid_ch1_h           ),
-        .o_idle         ( sampler_idle_ch1_h            )
+        .o_data         ( sampler_ch1                   ),
+        .o_valid        ( sampler_valid_ch1             ),
+        .o_idle         ( sampler_idle_ch1              )
     );
    
     /* ########################################################### */
@@ -225,10 +211,8 @@ module top
     // localparam UART_TX_PRESCALE     = 16'b0000010100010110; /* 9600 */
     // localparam UART_TX_PRESCALE     = 16'b0000101000101100; /* 4800 */
     
-    wire    uart_tx_ready_ch1_l;
-    wire    uart_tx_ready_ch1_h;
-    wire    uart_tx_busy_ch1_l;
-    wire    uart_tx_busy_ch1_h;
+    wire    uart_tx_ready_ch1;
+    wire    uart_tx_busy_ch1;
     
     uart_tx #
     (
@@ -238,11 +222,11 @@ module top
     (
         .clk                ( sys_clock             ),
         .rst                ( sys_reset             ),   
-        .s_axis_tdata       ( sampler_ch1_l         ),
-        .s_axis_tvalid      ( sampler_valid_ch1_l   ),
-        .s_axis_tready      ( uart_tx_ready_ch1_l   ),
+        .s_axis_tdata       ( sampler_ch1[ 7 : 0 ]  ),
+        .s_axis_tvalid      ( sampler_valid_ch1     ),
+        .s_axis_tready      ( uart_tx_ready_ch1     ),
         .txd                ( o_tx_ch1_l            ),
-        .busy               ( uart_tx_busy_ch1_l    ),
+        .busy               ( uart_tx_busy_ch1      ),
         .prescale           ( UART_PRESCALE         )
     );
     
@@ -254,11 +238,11 @@ module top
     (
         .clk                ( sys_clock             ),
         .rst                ( sys_reset             ),   
-        .s_axis_tdata       ( sampler_ch1_h         ),
-        .s_axis_tvalid      ( sampler_valid_ch1_h   ),
-        .s_axis_tready      ( uart_tx_ready_ch1_h   ),
+        .s_axis_tdata       ( sampler_ch1[ 13 : 8 ] ),
+        .s_axis_tvalid      ( sampler_valid_ch1     ),
+        .s_axis_tready      (                       ),
         .txd                ( o_tx_ch1_h            ),
-        .busy               ( uart_tx_busy_ch1_h    ),
+        .busy               (                       ),
         .prescale           ( UART_PRESCALE         )
     );
     
@@ -280,7 +264,7 @@ module top
         .i_clock            ( sys_clock             ),
         .i_reset            ( sys_reset             ),
         .i_rx               ( i_rx                  ),
-        .i_ready            ( sampler_idle_ch1_h    ),
+        .i_ready            ( sampler_idle_ch1      ),
         .o_sample           ( cmd_sample            ),
         .o_reset            ( cmd_reset             ),
         .o_decim            ( cmd_decim             ),
@@ -297,7 +281,7 @@ module top
         .i_clock            ( sys_clock             ),
         .i_reset            ( sys_reset             ),
         .i_init_done        ( adc1410_init_done     ),
-        .i_idle             ( sampler_idle_ch1_l    ),
+        .i_idle             ( sampler_idle_ch1      ),
         .i_cmd_valid        ( cmd_valid             ),
         .o_led_r            ( o_led0_r              ),
         .o_led_g            ( o_led0_g              ),
