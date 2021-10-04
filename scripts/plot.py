@@ -6,6 +6,9 @@ limit = 10000
 ref_l = np.loadtxt( 'ref_l.txt' )
 ref_h = np.loadtxt( 'ref_h.txt' )
 
+print( "Tamaño de ref_l: " + str( len( ref_l ) ) )
+print( "Tamaño de ref_h: " + str( len( ref_h ) ) )
+
 if( len( ref_l ) < len( ref_h ) ):
 	ref_len = len( ref_l )
 else:

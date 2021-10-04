@@ -167,7 +167,7 @@ module top
     reg [ CONVERSOR_DATA_SIZE - 1 : 0 ] ramp;
     
     always@( posedge sys_clock ) begin
-        ramp <=  ~i_gate ? { CONVERSOR_DATA_SIZE { 1'b0 } } : ramp + 4'b1000;
+        ramp <=  ~i_gate ? { CONVERSOR_DATA_SIZE { 1'b0 } } : ramp + 1'b1;
     end
     
     /* ########################################################### */
@@ -190,7 +190,7 @@ module top
     (
         .i_clock        ( sys_clock                     ),
         .i_reset        ( sys_reset                     ),
-        .i_next         ( uart_tx_ready_ch1             ),
+        .i_next         ( uart_tx_ready                 ),
         .i_data         ( conversor_ch1                 ),
         .i_gate         ( i_gate                        ),
         .i_sample       ( sample                        ),
@@ -209,10 +209,15 @@ module top
     localparam UART_PRESCALE     = 16'b0000000101000101; /* 38400 */
     // localparam UART_TX_PRESCALE     = 16'b0000001010001011; /* 19200 */
     // localparam UART_TX_PRESCALE     = 16'b0000010100010110; /* 9600 */
-    // localparam UART_TX_PRESCALE     = 16'b0000101000101100; /* 4800 */
+    // localparam UART_PRESCALE     = 16'b0000101000101100; /* 4800 */
     
-    wire    uart_tx_ready_ch1;
-    wire    uart_tx_busy_ch1;
+    wire    uart_tx_ready;
+    wire    uart_tx_ready_ch1_l;
+    wire    uart_tx_ready_ch1_h;
+    wire    uart_tx_busy_ch1_l;
+    wire    uart_tx_busy_ch1_h;
+    
+    assign  uart_tx_ready = uart_tx_ready_ch1_l && uart_tx_ready_ch1_h;
     
     uart_tx #
     (
@@ -224,9 +229,9 @@ module top
         .rst                ( sys_reset             ),   
         .s_axis_tdata       ( sampler_ch1[ 7 : 0 ]  ),
         .s_axis_tvalid      ( sampler_valid_ch1     ),
-        .s_axis_tready      ( uart_tx_ready_ch1     ),
+        .s_axis_tready      ( uart_tx_ready_ch1_l   ),
         .txd                ( o_tx_ch1_l            ),
-        .busy               ( uart_tx_busy_ch1      ),
+        .busy               ( uart_tx_busy_ch1_l    ),
         .prescale           ( UART_PRESCALE         )
     );
     
@@ -240,9 +245,9 @@ module top
         .rst                ( sys_reset             ),   
         .s_axis_tdata       ( sampler_ch1[ 13 : 8 ] ),
         .s_axis_tvalid      ( sampler_valid_ch1     ),
-        .s_axis_tready      (                       ),
+        .s_axis_tready      ( uart_tx_ready_ch1_h   ),
         .txd                ( o_tx_ch1_h            ),
-        .busy               (                       ),
+        .busy               ( uart_tx_busy_ch1_h    ),
         .prescale           ( UART_PRESCALE         )
     );
     

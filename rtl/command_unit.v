@@ -18,6 +18,7 @@ module command_unit #
 );
 
     localparam UART_PRESCALE     = 16'b0000000101000101; /* 38400 */
+    // localparam UART_PRESCALE    = 16'b0000101000101100; /* 4800 */
     
     wire    [ DATA_SIZE - 1 : 0 ]   rx_data;
     reg     [ DATA_SIZE - 1 : 0 ]   rx_param;
