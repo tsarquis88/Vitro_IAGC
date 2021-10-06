@@ -27,8 +27,9 @@ module sampler #
     localparam  STATUS_INIT     =   0;
     localparam  STATUS_WAIT     =   1;
     localparam  STATUS_WRITE    =   2;
-    localparam  STATUS_READ     =   3;
-    localparam  STATUS_HOLD     =   4;
+    localparam  STATUS_FETCH    =   3;
+    localparam  STATUS_READ     =   4;
+    localparam  STATUS_HOLD     =   5;
     
     reg     [ STATUS_SIZE   - 1 : 0 ]   status;
     reg     [ STATUS_SIZE   - 1 : 0 ]   next_status;
@@ -42,8 +43,9 @@ module sampler #
     integer                         samples_count;
     integer                         gates_count;
     integer                         hold_count;
+    integer                         read_count;
     
-    reg                             first_read;
+    reg                             first_fetch;
     reg                             first_write;
     
     reg                             last_i_next;
@@ -71,24 +73,26 @@ module sampler #
                 
                 STATUS_INIT: begin
                     addr            <= { ADDR_SIZE { 1'b0 } };
-                    first_read      <= 1'b1;
+                    first_fetch     <= 1'b1;
                     first_write     <= 1'b1;
                     write           <= 1'b0;
                     samples_count   <= 0;
                     gates_count     <= 0;
                     hold_count      <= 0;
+                    read_count      <= 0;
                     valid           <= 1'b0;
                     decimate_order  <= i_cmd_decim ? i_cmd_param : decimate_order;
                 end
                 
                 STATUS_WAIT: begin
                     addr            <= addr;
-                    first_read      <= first_read;
+                    first_fetch     <= 1'b1;
                     first_write     <= first_write;
                     write           <= 1'b0;
                     samples_count   <= 0;
                     gates_count     <= posedge_i_gate ? gates_count + 1 : gates_count;
                     hold_count      <= 0;
+                    read_count      <= 0;
                     valid           <= 1'b0;
                     decimate_order  <= decimate_order;
                 end
@@ -100,23 +104,38 @@ module sampler #
                         addr        <= addr;
                         
                     first_write     <= samples_count == decimate_order - 1 ? 1'b0 : first_write; 
-                    first_read      <= first_read;
+                    first_fetch     <= 1'b1;
                     write           <= samples_count == decimate_order - 1 ? 1'b1 : 1'b0;
                     samples_count   <= samples_count == decimate_order - 1 ? 0 : samples_count + 1;
                     gates_count     <= gates_count;
                     hold_count      <= 0;
+                    read_count      <= 0;
                     valid           <= 1'b0;
                     decimate_order  <= decimate_order;
                 end
                 
-                STATUS_READ: begin
-                    addr            <= first_read ? { ADDR_SIZE { 1'b0 } } : addr + 1'b1;
-                    first_read      <= 1'b0;                    
+                STATUS_FETCH: begin
+                    addr            <= first_fetch? { ADDR_SIZE { 1'b0 } } : addr + 1'b1;
+                    first_fetch     <= 1'b0;             
                     first_write     <= first_write;
                     write           <= 1'b0;
                     samples_count   <= 0;
                     gates_count     <= 0;
                     hold_count      <= 0;
+                    read_count      <= 0;
+                    valid           <= 1'b0;
+                    decimate_order  <= decimate_order;
+                end
+                
+                STATUS_READ: begin
+                    addr            <= addr;
+                    first_fetch     <= 1'b0;                    
+                    first_write     <= first_write;
+                    write           <= 1'b0;
+                    samples_count   <= 0;
+                    gates_count     <= 0;
+                    hold_count      <= 0;
+                    read_count      <= read_count + 1;
                     valid           <= 1'b0;
                     decimate_order  <= decimate_order;
                 end
@@ -124,23 +143,25 @@ module sampler #
                 STATUS_HOLD: begin
                     valid           <= hold_count > 0 && hold_count < 5 ? 1'b1 : 1'b0;
                     addr            <= addr;
-                    first_read      <= first_read;
+                    first_fetch     <= 1'b0;
                     first_write     <= first_write;
                     write           <= 1'b0;
                     samples_count   <= 0;
                     gates_count     <= 0;
+                    read_count      <= 0;
                     hold_count      <= hold_count + 1;
                     decimate_order  <= decimate_order;
                 end
                 
                 default: begin
                     addr            <= addr;
-                    first_read      <= first_read;
+                    first_fetch     <= 1'b0;
                     first_write     <= first_write;
                     write           <= 1'b0;
                     samples_count   <= 0;
                     gates_count     <= 0;
                     hold_count      <= 0;
+                    read_count      <= 0;
                     decimate_order  <= decimate_order;
                 end
                 
@@ -161,20 +182,24 @@ module sampler #
             
             STATUS_WRITE: begin
                 if( addr == MEM_SIZE - 1 )
-                    next_status = STATUS_READ;
+                    next_status = STATUS_FETCH;
                 else
                     next_status = i_gate ? STATUS_WRITE : STATUS_WAIT;
             end
             
+            STATUS_FETCH: begin
+                next_status = STATUS_READ;
+            end
+            
             STATUS_READ: begin
-                next_status = STATUS_HOLD;
+                next_status = read_count > 5 ? STATUS_HOLD : STATUS_READ;
             end
             
              STATUS_HOLD: begin
                 if( addr == MEM_SIZE - 1 )
                     next_status = STATUS_INIT;
                 else
-                    next_status = posedge_i_next ? STATUS_READ : STATUS_HOLD;    
+                    next_status = posedge_i_next ? STATUS_FETCH : STATUS_HOLD;    
             end
             
             default: begin

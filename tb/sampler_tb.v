@@ -16,8 +16,7 @@ module sampler_tb
     wire    [ DATA_SIZE - 1 : 0 ]   sampler_data;
     wire                            tx;
     reg                             sample;
-    reg     [ DATA_SIZE - 1 : 0 ]   rx_data;
-    reg                             rx_valid;
+    wire                            idle;
     
     initial begin
         clock       =   1'b0;
@@ -26,7 +25,6 @@ module sampler_tb
         gate        =   1'b0;
         data        =   { DATA_SIZE { 1'b0 } };
         sample      =   1'b0;
-        rx_valid    =   1'b0;
         
         #10
         reset       =   1'b0;
@@ -34,12 +32,6 @@ module sampler_tb
         #20
         
         adc_init    =   1'b1;
-        
-        #100
-        rx_data     =   8;
-        rx_valid    =   1;
-        #10
-        rx_valid    =   0;
         
         #1000
         sample      =   1'b1;
@@ -53,7 +45,7 @@ module sampler_tb
     end
     
     always begin
-        #10000
+        #100
         gate    =   ~gate;
     end
     
@@ -74,10 +66,11 @@ module sampler_tb
         .i_adc_init     ( adc_init          ),
         .i_gate         ( gate              ),
         .i_sample       ( sample            ),
-        .i_rx_data      ( rx_data           ),
-        .i_rx_valid     ( rx_valid          ),
+        .i_cmd_decim    ( 1'b0              ),
+        .i_cmd_param    ( 4'b0000           ),
         .o_data         ( sampler_data      ),
-        .o_valid        ( valid             )
+        .o_valid        ( valid             ),
+        .o_idle         ( idle              )
     );
     
     localparam UART_TX_DATA_SIZE    = 8;
