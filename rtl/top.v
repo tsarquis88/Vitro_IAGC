@@ -195,7 +195,7 @@ module top
         .i_gate         ( i_gate                        ),
         .i_sample       ( sample                        ),
         .i_adc_init     ( adc1410_init_done             ),
-        .i_cmd_decim    ( cmd_decim                     ),
+        .i_cmd_decim    ( cmd_set_decim                 ),
         .i_cmd_param    ( cmd_param                     ),
         .o_data         ( sampler_ch1                   ),
         .o_valid        ( sampler_valid_ch1             ),
@@ -206,10 +206,6 @@ module top
     /* TX UARTS ################################################## */
     
     localparam UART_DATA_SIZE    = 8;
-    localparam UART_PRESCALE     = 16'b0000000101000101; /* 38400 */
-    // localparam UART_TX_PRESCALE     = 16'b0000001010001011; /* 19200 */
-    // localparam UART_TX_PRESCALE     = 16'b0000010100010110; /* 9600 */
-    // localparam UART_PRESCALE     = 16'b0000101000101100; /* 4800 */
     
     wire    uart_tx_ready;
     wire    uart_tx_ready_ch1_l;
@@ -221,44 +217,44 @@ module top
     
     uart_tx #
     (
-        .DATA_WIDTH         ( UART_DATA_SIZE        )
+        .CLK_FREQUENCY  ( 100000000             ),
+        .UART_FREQUENCY ( 9600                  )
     )
     u_uart_tx_ch1_l
     (
-        .clk                ( sys_clock             ),
-        .rst                ( sys_reset             ),   
-        .s_axis_tdata       ( sampler_ch1[ 7 : 0 ]  ),
-        .s_axis_tvalid      ( sampler_valid_ch1     ),
-        .s_axis_tready      ( uart_tx_ready_ch1_l   ),
-        .txd                ( o_tx_ch1_l            ),
-        .busy               ( uart_tx_busy_ch1_l    ),
-        .prescale           ( UART_PRESCALE         )
+        .user_clk       ( sys_clock             ),
+        .rst_n          ( ~sys_reset            ),
+        .start_tx       ( sampler_valid_ch1     ),
+        .data           ( sampler_ch1[ 7 : 0 ]  ),
+        .tx_bit         ( o_tx_ch1_l            ),
+        .ready          ( uart_tx_ready_ch1_l   ),
+        .chipscope_clk  ()
     );
     
     uart_tx #
     (
-        .DATA_WIDTH         ( UART_DATA_SIZE        )
+        .CLK_FREQUENCY  ( 100000000             ),
+        .UART_FREQUENCY ( 9600                  )
     )
     u_uart_tx_ch1_h
     (
-        .clk                ( sys_clock             ),
-        .rst                ( sys_reset             ),   
-        .s_axis_tdata       ( sampler_ch1[ 13 : 8 ] ),
-        .s_axis_tvalid      ( sampler_valid_ch1     ),
-        .s_axis_tready      ( uart_tx_ready_ch1_h   ),
-        .txd                ( o_tx_ch1_h            ),
-        .busy               ( uart_tx_busy_ch1_h    ),
-        .prescale           ( UART_PRESCALE         )
+        .user_clk       ( sys_clock             ),
+        .rst_n          ( ~sys_reset            ),
+        .start_tx       ( sampler_valid_ch1     ),
+        .data           ( sampler_ch1[ 13 : 6 ] ),
+        .tx_bit         ( o_tx_ch1_h            ),
+        .ready          ( uart_tx_ready_ch1_h   ),
+        .chipscope_clk  ()
     );
     
     /* ########################################################### */
     /* COMMAND UNIT ############################################## */
     
+    wire                                wait_cmd;
     wire                                cmd_reset;
     wire                                cmd_sample;
-    wire                                cmd_decim;
+    wire                                cmd_set_decim;
     wire    [ UART_DATA_SIZE - 1 : 0 ]  cmd_param;
-    wire                                cmd_valid;
     
     command_unit #
     (
@@ -269,12 +265,11 @@ module top
         .i_clock            ( sys_clock             ),
         .i_reset            ( sys_reset             ),
         .i_rx               ( i_rx                  ),
-        .i_ready            ( sampler_idle_ch1      ),
-        .o_sample           ( cmd_sample            ),
-        .o_reset            ( cmd_reset             ),
-        .o_decim            ( cmd_decim             ),
-        .o_param            ( cmd_param             ),
-        .o_valid            ( cmd_valid             )
+        .o_wait_cmd         ( wait_cmd              ),
+        .o_cmd_reset        ( cmd_reset             ),
+        .o_cmd_sample       ( cmd_sample            ),
+        .o_cmd_set_decim    ( cmd_set_decim         ),
+        .o_cmd_param        ( cmd_param             )
     );
         
     /* ########################################################### */
@@ -287,7 +282,7 @@ module top
         .i_reset            ( sys_reset             ),
         .i_init_done        ( adc1410_init_done     ),
         .i_idle             ( sampler_idle_ch1      ),
-        .i_cmd_valid        ( cmd_valid             ),
+        .i_wait_cmd         ( wait_cmd              ),
         .o_led_r            ( o_led0_r              ),
         .o_led_g            ( o_led0_g              ),
         .o_led_b            ( o_led0_b              ),

@@ -20,16 +20,17 @@ module sampler #
     output wire                         o_idle
 );
 
-    localparam  MEM_SIZE        =   1024;
-    localparam  ADDR_SIZE       =   12;
-    localparam  STATUS_SIZE     =   3;
+    localparam DECIMATE_DEFAULT =   4;    
+    localparam MEM_SIZE         =   1024;
+    localparam ADDR_SIZE        =   12;
+    localparam STATUS_SIZE      =   3;
     
-    localparam  STATUS_INIT     =   0;
-    localparam  STATUS_WAIT     =   1;
-    localparam  STATUS_WRITE    =   2;
-    localparam  STATUS_FETCH    =   3;
-    localparam  STATUS_READ     =   4;
-    localparam  STATUS_HOLD     =   5;
+    localparam STATUS_INIT      =   0;
+    localparam STATUS_WAIT      =   1;
+    localparam STATUS_WRITE     =   2;
+    localparam STATUS_FETCH     =   3;
+    localparam STATUS_READ      =   4;
+    localparam STATUS_HOLD      =   5;
     
     reg     [ STATUS_SIZE   - 1 : 0 ]   status;
     reg     [ STATUS_SIZE   - 1 : 0 ]   next_status;
@@ -59,7 +60,7 @@ module sampler #
         if( i_reset || ~i_adc_init ) begin
             
             status          <= STATUS_INIT;
-            decimate_order  <= { DATA_SIZE { 1'b0 } } + 1'b1;
+            decimate_order  <= DECIMATE_DEFAULT;
             
         end
         else begin

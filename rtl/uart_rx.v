@@ -1,138 +1,121 @@
-/*
-Copyright (c) 2014-2017 Alex Forencich
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
+// Copyright 2018 Schuyler Eldridge
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-// Language: Verilog 2001
+// Uart receiver module. Reads data from a serial UART line (rx) and
+// outputs it over a parallel bus (data) based on the clock frequency
+// of the FPGA and the anticipated UART frequency.
 
-`timescale 1ns / 1ps
+//`define PARITY                          // enable parity bit (not implemented)
+module uart_rx
+  #(
+    parameter
+    CLK_FREQUENCY = 66_000_000,         // fpga clock frequency
+    UART_FREQUENCY = 921_600            // UART clock frequency
+    )
+  (
+   input            clk, rst_n, rx,     // 1-bit inputs
+   output reg       valid,              // signals that data is valid
+   output reg [7:0] data                // output parallel data
+   );
 
-/*
- * AXI4-Stream UART
- */
-module uart_rx #
-(
-    parameter DATA_WIDTH = 8
-)
-(
-    input  wire                   clk,
-    input  wire                   rst,
+  reg [2:0]         state, next_state;  // state/next state variables
+  reg [3:0]         bit_count;          // remembers the bit that we're on
+  reg [7:0]         data_tmp;           // stores intermediate values for data
+  reg [14:0]        tick_count;         // used to know when to read rx line
 
-    /*
-     * AXI output
-     */
-    output wire [DATA_WIDTH-1:0]  m_axis_tdata,
-    output wire                   m_axis_tvalid,
-    input  wire                   m_axis_tready,
+  localparam
+    TICKS_PER_BIT       = CLK_FREQUENCY / UART_FREQUENCY,
+    HALF_TICKS_PER_BIT  = TICKS_PER_BIT / 2,
+    NUM_BITS            = 4'd8;
 
-    /*
-     * UART interface
-     */
-    input  wire                   rxd,
+  localparam
+    IDLE   = 3'd0,                      // wait for a transmission to come in
+    START  = 3'd1,                      // start bit
+    DATA   = 3'd2,                      // data bits
+//    PARITY = 3'd3,                      // parity bit (not implemented)
+    VALID  = 3'd4,                      // output valid data
+    STOP   = 3'd5;                      // stop bit
 
-    /*
-     * Status
-     */
-    output wire                   busy,
-    output wire                   overrun_error,
-    output wire                   frame_error,
-
-    /*
-     * Configuration
-     */
-    input  wire [15:0]            prescale
-
-);
-
-reg [DATA_WIDTH-1:0] m_axis_tdata_reg = 0;
-reg m_axis_tvalid_reg = 0;
-
-reg rxd_reg = 1;
-
-reg busy_reg = 0;
-reg overrun_error_reg = 0;
-reg frame_error_reg = 0;
-
-reg [DATA_WIDTH-1:0] data_reg = 0;
-reg [18:0] prescale_reg = 0;
-reg [3:0] bit_cnt = 0;
-
-assign m_axis_tdata = m_axis_tdata_reg;
-assign m_axis_tvalid = m_axis_tvalid_reg;
-
-assign busy = busy_reg;
-assign overrun_error = overrun_error_reg;
-assign frame_error = frame_error_reg;
-
-always @(posedge clk) begin
-    if (rst) begin
-        m_axis_tdata_reg <= 0;
-        m_axis_tvalid_reg <= 0;
-        rxd_reg <= 1;
-        prescale_reg <= 0;
-        bit_cnt <= 0;
-        busy_reg <= 0;
-        overrun_error_reg <= 0;
-        frame_error_reg <= 0;
-    end else begin
-        rxd_reg <= rxd;
-        overrun_error_reg <= 0;
-        frame_error_reg <= 0;
-
-        if (m_axis_tvalid && m_axis_tready) begin
-            m_axis_tvalid_reg <= 0;
-        end
-
-        if (prescale_reg > 0) begin
-            prescale_reg <= prescale_reg - 1;
-        end else if (bit_cnt > 0) begin
-            if (bit_cnt > DATA_WIDTH+1) begin
-                if (!rxd_reg) begin
-                    bit_cnt <= bit_cnt - 1;
-                    prescale_reg <= (prescale << 3)-1;
-                end else begin
-                    bit_cnt <= 0;
-                    prescale_reg <= 0;
-                end
-            end else if (bit_cnt > 1) begin
-                bit_cnt <= bit_cnt - 1;
-                prescale_reg <= (prescale << 3)-1;
-                data_reg <= {rxd_reg, data_reg[DATA_WIDTH-1:1]};
-            end else if (bit_cnt == 1) begin
-                bit_cnt <= bit_cnt - 1;
-                if (rxd_reg) begin
-                    m_axis_tdata_reg <= data_reg;
-                    m_axis_tvalid_reg <= 1;
-                    overrun_error_reg <= m_axis_tvalid_reg;
-                end else begin
-                    frame_error_reg <= 1;
-                end
-            end
-        end else begin
-            busy_reg <= 0;
-            if (!rxd_reg) begin
-                prescale_reg <= (prescale << 2)-2;
-                bit_cnt <= DATA_WIDTH+2;
-                data_reg <= 0;
-                busy_reg <= 1;
-            end
-        end
+  always @ (posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      tick_count <= 15'b0;
+      bit_count  <= 4'b0;
     end
-end
+    else begin
+      case (state)
+        START: begin
+          tick_count <= (tick_count==HALF_TICKS_PER_BIT) ? 15'b0 : tick_count + 15'b1;
+          bit_count  <= 4'b0;
+        end
+        DATA: begin
+          tick_count <= (tick_count==TICKS_PER_BIT-1) ? 15'b0 :
+                        tick_count + 15'b1;
+          bit_count  <= (tick_count==TICKS_PER_BIT-1) ? bit_count + 1 :
+                        bit_count;
+        end
+        VALID: begin
+          tick_count <= tick_count + 15'b1;
+        end
+        STOP: begin
+          tick_count <= (tick_count==TICKS_PER_BIT-1) ? 15'b0 :
+                        tick_count + 15'b1;
+        end
+        default: begin
+          tick_count <= 15'b0;
+          bit_count  <= 4'b0;
+        end
+      endcase
+    end
+  end
+
+  always @ (posedge clk or negedge rst_n)
+    state <= (!rst_n) ? IDLE : next_state;
+
+  always @ (posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      data     <= 8'b0;
+      data_tmp <= 8'b0;
+      valid    <= 1'b0;
+    end
+    else begin
+      data     <= 8'bx;
+      data_tmp <= data_tmp;
+      valid    <= 0;
+      case (state)
+        IDLE: data_tmp       <= 8'bx;
+        START: data_tmp      <= 8'bx;
+        DATA: if (tick_count == TICKS_PER_BIT-1) data_tmp[bit_count] <= rx;
+        VALID: begin
+          data  <= data_tmp;
+          valid <= 1'b1;
+        end
+        STOP: data_tmp <= 8'bx;
+      endcase
+    end
+  end
+
+  always @ * begin
+    case (state)
+      IDLE: next_state     = (!rx)                              ? START : state;
+      START: next_state    = (tick_count==HALF_TICKS_PER_BIT)   ? DATA : state;
+      DATA: next_state     = ((tick_count==TICKS_PER_BIT - 1) &
+                              (bit_count==NUM_BITS - 1))?VALID:state;
+//      PARITY: next_state   = () ? : state;
+      VALID: next_state    = STOP;
+      STOP: next_state     = (tick_count==TICKS_PER_BIT-1)        ? IDLE : state;
+      default: next_state  = IDLE;
+    endcase
+  end
 
 endmodule
-

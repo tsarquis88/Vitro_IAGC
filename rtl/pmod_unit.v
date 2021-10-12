@@ -7,7 +7,7 @@ module pmod_unit
     input  wire i_reset,
     input  wire i_idle,
     input  wire i_init_done,
-    input  wire i_cmd_valid,
+    input  wire i_wait_cmd,
     output wire o_led_r,
     output wire o_led_g,
     output wire o_led_b,
@@ -44,6 +44,7 @@ module pmod_unit
         end
     end 
     
+    /*
     always@( posedge i_clock ) begin
         if( i_reset ) begin
             buzzer_counter      <= 0;
@@ -62,12 +63,20 @@ module pmod_unit
         
         last_i_cmd_valid    <= 1'b0;
     end
+    */
     
-    always@( i_init_done or i_idle or led_pwm ) begin
+    always@( i_init_done or i_idle or led_pwm or i_wait_cmd ) begin
         if( i_init_done ) begin
-            led_g  =   i_idle ? led_pwm : 1'b0;
-            led_r  =   1'b0;
-            led_b  =   i_idle ? 1'b0    : led_pwm;
+            if( i_idle ) begin
+                led_g  =   led_pwm;
+                led_r  =   i_wait_cmd ? led_pwm : 1'b0;
+                led_b  =   1'b0;
+            end
+            else begin
+                led_g  =   1'b0;
+                led_r  =   1'b0;
+                led_b  =   led_pwm;
+            end
         end
         else begin
             led_g  =   1'b0;
