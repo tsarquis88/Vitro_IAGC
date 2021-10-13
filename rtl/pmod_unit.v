@@ -53,11 +53,11 @@ module pmod_unit
     end 
     
     /* LED 0 */    
-    always@( i_init_done or i_idle or led_pwm or i_wait_cmd ) begin
+    always@( i_init_done or i_idle or led_pwm ) begin
         if( i_init_done ) begin
             if( i_idle ) begin
                 led0_g =   led_pwm;
-                led0_r =   i_wait_cmd ? led_pwm : 1'b0;
+                led0_r =   1'b0;
                 led0_b =   1'b0;
             end
             else begin
@@ -85,9 +85,16 @@ module pmod_unit
         end
         else begin
         
-            led1_r  <= error  ? led_pwm : 1'b0;
-            led1_g  <= 1'b0;
-            led1_b  <= succes ? led_pwm : 1'b0;
+            if( i_wait_cmd ) begin
+                led1_r  <= led_pwm;
+                led1_g  <= led_pwm;
+                led1_b  <= 1'b0;    
+            end
+            else begin
+                led1_r  <= error  ? led_pwm : 1'b0;
+                led1_g  <= 1'b0;
+                led1_b  <= succes ? led_pwm : 1'b0;
+            end
             
             if( error || succes ) begin
                 led1_c  <= led1_c + 1;

@@ -199,6 +199,7 @@ module top
         .i_sample       ( sample                        ),
         .i_adc_init     ( adc1410_init_done             ),
         .i_cmd_decim    ( cmd_set_decim                 ),
+        .i_cmd_clean    ( cmd_clean_mem                 ),
         .i_cmd_param    ( cmd_param                     ),
         .o_data         ( sampler_ch1                   ),
         .o_valid        ( sampler_valid_ch1             ),
@@ -244,7 +245,7 @@ module top
         .user_clk       ( sys_clock             ),
         .rst_n          ( ~sys_reset            ),
         .start_tx       ( sampler_valid_ch1     ),
-        .data           ( sampler_ch1[ 13 : 6 ] ),
+        .data           ( sampler_ch1[ 13 : 8 ] ),
         .tx_bit         ( o_tx_ch1_h            ),
         .ready          ( uart_tx_ready_ch1_h   ),
         .chipscope_clk  ()
@@ -257,6 +258,7 @@ module top
     wire                                cmd_reset;
     wire                                cmd_sample;
     wire                                cmd_set_decim;
+    wire                                cmd_clean_mem;
     wire    [ UART_DATA_SIZE - 1 : 0 ]  cmd_param;
     wire                                cmd_succes;
     wire                                cmd_error;
@@ -274,6 +276,7 @@ module top
         .o_cmd_reset        ( cmd_reset             ),
         .o_cmd_sample       ( cmd_sample            ),
         .o_cmd_set_decim    ( cmd_set_decim         ),
+        .o_cmd_clean_mem    ( cmd_clean_mem         ),
         .o_cmd_param        ( cmd_param             ),
         .o_error            ( cmd_error             ),
         .o_succes           ( cmd_succes            )

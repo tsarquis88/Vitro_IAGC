@@ -20,9 +20,14 @@ if( ref_len > limit ):
 ref   = np.zeros( ref_len )
 
 i = 0
+end = ref_len;
 while i < ref_len:
     ref[ i ] = ref_l[ i ] + ref_h[ i ] * 256
-    i += 1
+    if( ref[ i ] == 0 ):
+       end = i - 1;
+       i = ref_len;
+    else:
+        i += 1
 
 # labels
 title   = 'ADC1410 IF samples'
@@ -34,7 +39,7 @@ title_font = { 'weight': 'light', 'size': 36, }
 axis_font  = { 'weight': 'bold', 'size': 10, }
 
 # Y axis step
-step = ( ref.max() - 8192 ) / 4
+step = 500
 
 plt.figure( figsize = ( 16, 8 ) )
 plt.plot( ref, 'b', label = 'Reference signal' )
@@ -44,20 +49,11 @@ plt.ylabel( ylabel, axis_font )
 plt.legend()
 plt.title( title, fontdict = title_font )
 plt.grid( 'black' )
-plt.xlim( 0, len( ref ) )
+plt.xlim( 0, end )
+plt.ylim( 4000, 13000 )
 ax = plt.gca()
 ax.set_facecolor( 'tab:gray' )
 
-#if( ref.max() > err.max() ):
-max = ref.max()
-#else:
-#        max = err.max()
-
-#if( ref.min() < err.min() ):
-min = ref.min()
-#else:
-#        min = err.min()
-
-plt.yticks( np.arange( min.round( -1 ), max, step = step ) )
+plt.yticks( np.arange( 3500, 12500, step = step ) )
 
 plt.show()

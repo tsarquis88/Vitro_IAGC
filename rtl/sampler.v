@@ -14,6 +14,7 @@ module sampler #
     input  wire                         i_sample,
     input  wire                         i_adc_init,
     input  wire                         i_cmd_decim,
+    input  wire                         i_cmd_clean,
     input  wire [ DATA_SIZE - 1 : 0 ]   i_cmd_param,  
     output wire [ DATA_SIZE - 1 : 0 ]   o_data,
     output wire                         o_valid,
@@ -218,19 +219,20 @@ module sampler #
     
     memory #                      
     (
-        .DATA_SIZE      ( DATA_SIZE ),
-        .ADDR_SIZE      ( ADDR_SIZE ),
-        .MEMORY_SIZE    ( MEM_SIZE  )
+        .DATA_SIZE      ( DATA_SIZE     ),
+        .ADDR_SIZE      ( ADDR_SIZE     ),
+        .MEMORY_SIZE    ( MEM_SIZE      )
     )
     u_memory
     (
-        .i_clock        ( i_clock   ),
-        .i_reset        ( i_reset   ),
-        .i_addr         ( addr      ),
-        .i_read         ( read      ),
-        .i_write        ( write     ),
-        .i_data         ( i_data    ),
-        .o_data         ( data_mem  )
+        .i_clock        ( i_clock       ),
+        .i_reset        ( i_reset       ),
+        .i_addr         ( addr          ),
+        .i_read         ( read          ),
+        .i_write        ( write         ),
+        .i_data         ( i_data        ),
+        .i_clean        ( i_cmd_clean   ),
+        .o_data         ( data_mem      )
     );         
     
 endmodule

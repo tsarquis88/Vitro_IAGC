@@ -13,6 +13,7 @@ module command_unit #
     output wire                         o_cmd_reset,
     output wire                         o_cmd_sample,
     output wire                         o_cmd_set_decim,
+    output wire                         o_cmd_clean_mem,
     output wire [ DATA_SIZE - 1 : 0 ]   o_cmd_param,
     output wire                         o_succes,
     output wire                         o_error
@@ -33,6 +34,7 @@ module command_unit #
     reg                             cmd_reset;
     reg                             cmd_sample;
     reg                             cmd_set_decim;
+    reg                             cmd_clean_mem;
     reg     [ DATA_SIZE - 1 : 0 ]   cmd_param;
     
     reg                             error;
@@ -67,6 +69,7 @@ module command_unit #
                     cmd_reset       <= 1'b0;
                     cmd_sample      <= 1'b0;
                     cmd_set_decim   <= 1'b0;
+                    cmd_clean_mem   <= 1'b0;
                     cmd_param       <= { DATA_SIZE { 1'b0 } };
                     count           <= 0;
                     succes          <= 1'b0;
@@ -77,6 +80,7 @@ module command_unit #
                     cmd_reset       <= 1'b0;
                     cmd_sample      <= 1'b0;
                     cmd_set_decim   <= 1'b0;
+                    cmd_clean_mem   <= 1'b0;
                     cmd_param       <= { DATA_SIZE { 1'b0 } };
                     count           <= 0;
                     succes          <= 1'b0;
@@ -87,16 +91,18 @@ module command_unit #
                     cmd_reset       <= rx_data[ 7 : 4 ] == 4'b0001 ? 1'b1 : 1'b0;
                     cmd_sample      <= rx_data[ 7 : 4 ] == 4'b0010 ? 1'b1 : 1'b0;
                     cmd_set_decim   <= rx_data[ 7 : 4 ] == 4'b0100 ? 1'b1 : 1'b0;
+                    cmd_clean_mem   <= rx_data[ 7 : 4 ] == 4'b1000 ? 1'b1 : 1'b0;
                     cmd_param       <= rx_data[ 3 : 0 ];
                     count           <= count + 1;
-                    succes          <= rx_data[ 7 : 4 ] == 4'b0001 || rx_data[ 7 : 4 ] == 4'b0010 || rx_data[ 7 : 4 ] == 4'b0100;
-                    error           <= rx_data[ 7 : 4 ] != 4'b0001 && rx_data[ 7 : 4 ] != 4'b0010 && rx_data[ 7 : 4 ] != 4'b0100;
+                    succes          <= rx_data[ 7 : 4 ] == 4'b0001 || rx_data[ 7 : 4 ] == 4'b0010 || rx_data[ 7 : 4 ] == 4'b0100 || rx_data[ 7 : 4 ] == 4'b1000;
+                    error           <= rx_data[ 7 : 4 ] != 4'b0001 && rx_data[ 7 : 4 ] != 4'b0010 && rx_data[ 7 : 4 ] != 4'b0100 && rx_data[ 7 : 4 ] != 4'b1000;
                 end
                 
                 default: begin
                     cmd_reset       <= 1'b0;
                     cmd_sample      <= 1'b0;
                     cmd_set_decim   <= 1'b0;
+                    cmd_clean_mem   <= 1'b0;
                     cmd_param       <= { DATA_SIZE { 1'b0 } };
                     count           <= 0;
                     succes          <= 1'b0;
@@ -125,6 +131,7 @@ module command_unit #
     assign  o_cmd_reset     =   cmd_reset;
     assign  o_cmd_sample    =   cmd_sample;
     assign  o_cmd_set_decim =   cmd_set_decim;
+    assign  o_cmd_clean_mem =   cmd_clean_mem;
     assign  o_cmd_param     =   cmd_param;
     assign  o_succes        =   succes;
     assign  o_error         =   error;
