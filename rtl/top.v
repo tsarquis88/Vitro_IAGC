@@ -10,6 +10,9 @@ module top
     output wire o_led0_g,
     output wire o_led0_r,
     output wire o_led0_b,
+    output wire o_led1_g,
+    output wire o_led1_r,
+    output wire o_led1_b,
     
     output wire o_tx_ch1_l,
     output wire o_tx_ch1_h,
@@ -255,6 +258,8 @@ module top
     wire                                cmd_sample;
     wire                                cmd_set_decim;
     wire    [ UART_DATA_SIZE - 1 : 0 ]  cmd_param;
+    wire                                cmd_succes;
+    wire                                cmd_error;
     
     command_unit #
     (
@@ -269,7 +274,9 @@ module top
         .o_cmd_reset        ( cmd_reset             ),
         .o_cmd_sample       ( cmd_sample            ),
         .o_cmd_set_decim    ( cmd_set_decim         ),
-        .o_cmd_param        ( cmd_param             )
+        .o_cmd_param        ( cmd_param             ),
+        .o_error            ( cmd_error             ),
+        .o_succes           ( cmd_succes            )
     );
         
     /* ########################################################### */
@@ -283,10 +290,14 @@ module top
         .i_init_done        ( adc1410_init_done     ),
         .i_idle             ( sampler_idle_ch1      ),
         .i_wait_cmd         ( wait_cmd              ),
-        .o_led_r            ( o_led0_r              ),
-        .o_led_g            ( o_led0_g              ),
-        .o_led_b            ( o_led0_b              ),
-        .o_buzzer           ( o_buzzer              )
+        .i_error            ( cmd_error             ),
+        .i_succes           ( cmd_succes            ),
+        .o_led0_r           ( o_led0_r              ),
+        .o_led0_g           ( o_led0_g              ),
+        .o_led0_b           ( o_led0_b              ),
+        .o_led1_r           ( o_led1_r              ),
+        .o_led1_g           ( o_led1_g              ),
+        .o_led1_b           ( o_led1_b              )
     );
         
 endmodule

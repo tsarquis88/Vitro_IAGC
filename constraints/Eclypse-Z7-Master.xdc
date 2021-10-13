@@ -15,9 +15,9 @@ set_property -dict { PACKAGE_PIN C18   IOSTANDARD LVCMOS33 } [get_ports { i_samp
 set_property -dict { PACKAGE_PIN A17   IOSTANDARD LVCMOS33 } [get_ports { o_led0_b }]; #IO_L9N_T1_DQS_AD3N Sch=led0_b
 set_property -dict { PACKAGE_PIN B16   IOSTANDARD LVCMOS33 } [get_ports { o_led0_g }]; #IO_L8P_T1_AD10P Sch=led0_g
 set_property -dict { PACKAGE_PIN B17   IOSTANDARD LVCMOS33 } [get_ports { o_led0_r }]; #IO_L8N_T1_AD10N Sch=led0_r
-#set_property -dict { PACKAGE_PIN A16   IOSTANDARD LVCMOS33 } [get_ports { led1_b }]; #IO_L9P_T1_DQS_AD3P Sch=led1_b
-#set_property -dict { PACKAGE_PIN A18   IOSTANDARD LVCMOS33 } [get_ports { o_led1_g }]; #IO_L10P_T1_AD11P Sch=led1_g
-#set_property -dict { PACKAGE_PIN A19   IOSTANDARD LVCMOS33 } [get_ports { led1_r }]; #IO_L10N_T1_AD11N Sch=led1_r
+set_property -dict { PACKAGE_PIN A16   IOSTANDARD LVCMOS33 } [get_ports { o_led1_b }]; #IO_L9P_T1_DQS_AD3P Sch=led1_b
+set_property -dict { PACKAGE_PIN A18   IOSTANDARD LVCMOS33 } [get_ports { o_led1_g }]; #IO_L10P_T1_AD11P Sch=led1_g
+set_property -dict { PACKAGE_PIN A19   IOSTANDARD LVCMOS33 } [get_ports { o_led1_r }]; #IO_L10N_T1_AD11N Sch=led1_r
 
 ## Pmod Header JA
 set_property -dict { PACKAGE_PIN B15   IOSTANDARD LVCMOS33 } [get_ports { o_tx_ch1_l }]; #IO_0 Sch=ja1_fpga

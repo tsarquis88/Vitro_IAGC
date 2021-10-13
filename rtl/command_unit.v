@@ -13,7 +13,9 @@ module command_unit #
     output wire                         o_cmd_reset,
     output wire                         o_cmd_sample,
     output wire                         o_cmd_set_decim,
-    output wire [ DATA_SIZE - 1 : 0 ]   o_cmd_param
+    output wire [ DATA_SIZE - 1 : 0 ]   o_cmd_param,
+    output wire                         o_succes,
+    output wire                         o_error
 );
 
     localparam STATUS_SIZE  = 2;
@@ -32,6 +34,9 @@ module command_unit #
     reg                             cmd_sample;
     reg                             cmd_set_decim;
     reg     [ DATA_SIZE - 1 : 0 ]   cmd_param;
+    
+    reg                             error;
+    reg                             succes;
         
     uart_rx #
     (
@@ -64,6 +69,8 @@ module command_unit #
                     cmd_set_decim   <= 1'b0;
                     cmd_param       <= { DATA_SIZE { 1'b0 } };
                     count           <= 0;
+                    succes          <= 1'b0;
+                    error           <= 1'b0;
                 end
                 
                 STATUS_WAIT: begin
@@ -72,6 +79,8 @@ module command_unit #
                     cmd_set_decim   <= 1'b0;
                     cmd_param       <= { DATA_SIZE { 1'b0 } };
                     count           <= 0;
+                    succes          <= 1'b0;
+                    error           <= 1'b0;
                 end
                 
                 STATUS_HOLD: begin
@@ -80,6 +89,8 @@ module command_unit #
                     cmd_set_decim   <= rx_data[ 7 : 4 ] == 4'b0100 ? 1'b1 : 1'b0;
                     cmd_param       <= rx_data[ 3 : 0 ];
                     count           <= count + 1;
+                    succes          <= rx_data[ 7 : 4 ] == 4'b0001 || rx_data[ 7 : 4 ] == 4'b0010 || rx_data[ 7 : 4 ] == 4'b0100;
+                    error           <= rx_data[ 7 : 4 ] != 4'b0001 && rx_data[ 7 : 4 ] != 4'b0010 && rx_data[ 7 : 4 ] != 4'b0100;
                 end
                 
                 default: begin
@@ -88,6 +99,8 @@ module command_unit #
                     cmd_set_decim   <= 1'b0;
                     cmd_param       <= { DATA_SIZE { 1'b0 } };
                     count           <= 0;
+                    succes          <= 1'b0;
+                    error           <= 1'b0;
                 end
                 
             endcase
@@ -102,7 +115,7 @@ module command_unit #
             case( status )
                 STATUS_IDLE:    next_status = rx_valid && rx_data == 8'b00000000    ? STATUS_WAIT : STATUS_IDLE;
                 STATUS_WAIT:    next_status = rx_valid                              ? STATUS_HOLD : STATUS_WAIT;
-                STATUS_HOLD:    next_status = count == 5                            ? STATUS_IDLE : STATUS_HOLD;
+                STATUS_HOLD:    next_status = count == 3                            ? STATUS_IDLE : STATUS_HOLD;
                 default:        next_status = STATUS_IDLE;
             endcase
         end
@@ -113,6 +126,8 @@ module command_unit #
     assign  o_cmd_sample    =   cmd_sample;
     assign  o_cmd_set_decim =   cmd_set_decim;
     assign  o_cmd_param     =   cmd_param;
+    assign  o_succes        =   succes;
+    assign  o_error         =   error;
     
 endmodule
 

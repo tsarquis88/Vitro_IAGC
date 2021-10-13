@@ -8,22 +8,26 @@ module pmod_unit_tb
     reg     reset;
     
     reg     adc_init;
-    reg     valid;
+    reg     wait_cmd;
     reg     idle;
-    reg     recon;
+    reg     error;
+    reg     succes;
     
     wire    led0_r;
     wire    led0_g;
     wire    led0_b;
-    wire    buzzer;
+    wire    led1_r;
+    wire    led1_g;
+    wire    led1_b;
     
     initial begin
         clock       =   1'b0;
         reset       =   1'b1;
         adc_init    =   1'b0;
-        valid       =   1'b0;
+        wait_cmd    =   1'b0;
         idle        =   1'b1;
-        recon       =   1'b0;
+        error       =   1'b0;
+        succes      =   1'b0;
         
         #10
         reset       =   1'b0;
@@ -31,12 +35,25 @@ module pmod_unit_tb
         #20
         adc_init    =   1'b1;
         
+        #100
+        error       =   1'b1;
+        #15
+        error       =   1'b0;
+        
+        #30
+        succes      =   1'b1;
+        #10
+        succes      =   1'b0;
+        
+        #500
+        succes      =   1'b1;
         #20
-        valid       =   1'b1;
-        recon       =   1'b0;
+        succes      =   1'b0;
+        
+        #50000
+        succes      =   1'b1;
         #20
-        valid       =   1'b0;
-        recon       =   1'b0;
+        succes      =   1'b0;
         
     end
     
@@ -52,12 +69,15 @@ module pmod_unit_tb
         .i_reset            ( reset         ),
         .i_init_done        ( adc_init      ),
         .i_idle             ( idle          ),
-        .i_cmd_valid        ( valid         ),
-        .i_cmd_recon        ( recon         ),
-        .o_led_r            ( led0_r        ),
-        .o_led_g            ( led0_g        ),
-        .o_led_b            ( led0_b        ),
-        .o_buzzer           ( buzzer        )
+        .i_wait_cmd         ( wait_cmd      ),
+        .i_error            ( error         ),
+        .i_succes           ( succes        ),
+        .o_led0_r           ( led0_r        ),
+        .o_led0_g           ( led0_g        ),
+        .o_led0_b           ( led0_b        ),
+        .o_led1_r           ( led1_r        ),
+        .o_led1_g           ( led1_g        ),
+        .o_led1_b           ( led1_b        )
     );
   
 endmodule
