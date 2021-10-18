@@ -2,12 +2,13 @@
 
 module adc1410 #
 (
-    parameter   DATA_SIZE = 16
+    parameter   DATA_SIZE           = 16,
+    parameter   IAGC_STATUS_SIZE    = 4
 )
 (
     input                           i_sys_clock,
     input                           i_adc_clock,
-    input                           i_reset,
+    input  [ IAGC_STATUS_SIZE - 1 : 0 ] i_iagc_status,
     input                           i_adc_data_0,
     input                           i_adc_data_1,
     input                           i_adc_data_2,
@@ -44,6 +45,14 @@ module adc1410 #
     output  [ DATA_SIZE - 1 : 0 ]   o_data_out_ch2,
     output                          o_init_done
 );
+
+    localparam IAGC_STATUS_RESET        = 4'b0000;
+    localparam IAGC_STATUS_INIT         = 4'b0001;
+    localparam IAGC_STATUS_IDLE         = 4'b0010;
+    localparam IAGC_STATUS_SAMPLE       = 4'b0011;
+    localparam IAGC_STATUS_CMD_PARSE    = 4'b0100;
+    localparam IAGC_STATUS_CMD_READ     = 4'b0101;
+    localparam IAGC_STATUS_CMD_ERROR    = 4'b0110;
     
     localparam  ADC_IN_DATA_SIZE    =   14;
     
@@ -52,6 +61,7 @@ module adc1410 #
     wire                                    init_done;
     wire                                    reset;
     
+    assign reset                = i_iagc_status == IAGC_STATUS_RESET ? 1'b0 : 1'b1;
     assign test_mode            = 1'b0;
     assign data_in[ 0  ]        = i_adc_data_0;
     assign data_in[ 1  ]        = i_adc_data_1;
@@ -90,7 +100,7 @@ module adc1410 #
     (
         .SysClk             ( i_sys_clock           ),
         .ADC_InClk          ( i_adc_clock           ),
-        .sRst_n             ( ~i_reset              ),
+        .sRst_n             ( reset                 ),
         .sInitDone_n        ( init_done             ),
         .FIFO_EMPTY_CHA     (                       ),
         .FIFO_EMPTY_CHB     (                       ),

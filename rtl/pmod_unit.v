@@ -1,25 +1,32 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-module pmod_unit
+module pmod_unit #
 (
-    input  wire i_clock,
-    input  wire i_reset,
-    input  wire i_idle,
-    input  wire i_init_done,
-    input  wire i_wait_cmd,
-    input  wire i_error,
-    input  wire i_succes,
-    output wire o_led0_r,
-    output wire o_led0_g,
-    output wire o_led0_b,
-    output wire o_led1_r,
-    output wire o_led1_g,
-    output wire o_led1_b
+    parameter IAGC_STATUS_SIZE  =   4
+)
+(
+    input  wire                                 i_clock,
+    input  wire                                 i_reset,
+    input  wire [ IAGC_STATUS_SIZE - 1 : 0 ]    i_iagc_status,
+    output wire                                 o_led0_r,
+    output wire                                 o_led0_g,
+    output wire                                 o_led0_b,
+    output wire                                 o_led1_r,
+    output wire                                 o_led1_g,
+    output wire                                 o_led1_b
 );
 
+    localparam IAGC_STATUS_RESET        = 4'b0000;
+    localparam IAGC_STATUS_INIT         = 4'b0001;
+    localparam IAGC_STATUS_IDLE         = 4'b0010;
+    localparam IAGC_STATUS_SAMPLE       = 4'b0011;
+    localparam IAGC_STATUS_CMD_PARSE    = 4'b0100;
+    localparam IAGC_STATUS_CMD_READ     = 4'b0101;
+    localparam IAGC_STATUS_CMD_ERROR    = 4'b0110;
+    
     localparam  LED_PWM_TICKS       =   50;
-    localparam  SEG_TICKS           =   100000000;
+    localparam  SEC_TICKS           =   100000000;
 
     reg         led_pwm;
     integer     led_pwm_counter;
@@ -31,9 +38,7 @@ module pmod_unit
     reg         led1_b;
     reg         led1_r;
     
-    integer     led1_c;
-    reg         error;
-    reg         succes;
+    integer     sec_counter;
     
     /* PWM generation */
     always@( posedge i_clock ) begin
@@ -52,61 +57,65 @@ module pmod_unit
         end
     end 
     
-    /* LED 0 */    
-    always@( i_init_done or i_idle or led_pwm ) begin
-        if( i_init_done ) begin
-            if( i_idle ) begin
-                led0_g =   led_pwm;
-                led0_r =   1'b0;
-                led0_b =   1'b0;
-            end
-            else begin
-                led0_g =   1'b0;
-                led0_r =   1'b0;
-                led0_b =   led_pwm;
-            end
-        end
-        else begin
-            led0_g =   1'b0;
-            led0_r =   led_pwm;
-            led0_b =   1'b0;
-        end
-    end
-    
-    /* LED 1 */
     always@( posedge i_clock ) begin
         if( i_reset ) begin
-            led1_r  <= 1'b0;
-            led1_g  <= 1'b0;
-            led1_b  <= 1'b0;
-            led1_c  <= 0;
-            error   <= 1'b0;
-            succes  <= 1'b0;
+            sec_counter <= 0;
         end
         else begin
-        
-            if( i_wait_cmd ) begin
-                led1_r  <= led_pwm;
-                led1_g  <= led_pwm;
-                led1_b  <= 1'b0;    
+            if( sec_counter == 0 ) begin
+                sec_counter <= i_iagc_status == IAGC_STATUS_CMD_ERROR ? 1 : 0;
             end
-            else begin
-                led1_r  <= error  ? led_pwm : 1'b0;
-                led1_g  <= 1'b0;
-                led1_b  <= succes ? led_pwm : 1'b0;
-            end
-            
-            if( error || succes ) begin
-                led1_c  <= led1_c + 1;
-                error   <= led1_c >= SEG_TICKS ? 1'b0 : error;
-                succes  <= led1_c >= SEG_TICKS ? 1'b0 : succes;
-            end
-            else begin
-                led1_c  <= 0;
-                error   <= i_error;
-                succes  <= i_succes;
+            else begin    
+                sec_counter <= sec_counter >= SEC_TICKS ? 0 : sec_counter + 1;
             end
         end
+    end
+        
+    always@( * ) begin
+        
+        case( i_iagc_status ) 
+            
+            IAGC_STATUS_INIT: begin
+                led0_r  = led_pwm;
+                led0_g  = 1'b0;
+                led0_b  = 1'b0;
+                
+                led1_r  = 1'b0;
+                led1_g  = 1'b0;
+                led1_b  = 1'b0;
+            end
+            
+            IAGC_STATUS_IDLE: begin
+                led0_r  = 1'b0;
+                led0_g  = led_pwm;
+                led0_b  = 1'b0;
+                
+                led1_r  = sec_counter > 0 ? led_pwm : 1'b0;
+                led1_g  = 1'b0;
+                led1_b  = 1'b0;
+            end
+            
+            IAGC_STATUS_SAMPLE: begin
+                led0_r  = 1'b0;
+                led0_g  = 1'b0;
+                led0_b  = led_pwm;
+                
+                led1_r  = 1'b0;
+                led1_g  = 1'b0;
+                led1_b  = 1'b0;
+            end
+            
+            default: begin
+                led0_r  = 1'b0;
+                led0_g  = 1'b0;
+                led0_b  = 1'b0;
+                
+                led1_r  = 1'b0;
+                led1_g  = 1'b0;
+                led1_b  = 1'b0;
+            end
+        
+        endcase 
     end
     
     assign  o_led0_r    = led0_r;

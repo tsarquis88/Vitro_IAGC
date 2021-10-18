@@ -79,26 +79,48 @@ module top
     );
     
     /* ########################################################### */
+    /* GLOBAL FSM ################################################ */
+    
+    localparam  IAGC_STATUS_SIZE    =   4;
+    
+    wire    [ IAGC_STATUS_SIZE - 1 : 0 ]    iagc_status;
+    
+    iagc_fsm #
+    (
+        .STATUS_SIZE            ( IAGC_STATUS_SIZE  )
+    )
+    u_iagc_fsm
+    (
+        .i_clock                ( sys_clock         ),
+        .i_reset                ( sys_reset         ),
+        .i_adc1410_init_done    ( adc1410_init_done ),
+        .i_sample               ( i_sample          ),
+        .i_sampling             ( ~sampler_idle_ch1 ),
+        .i_cmd_valid            ( uart_rx_valid     ),
+        .i_cmd_reset            ( cmd_reset         ),
+        .i_cmd_sample           ( cmd_sample        ),
+        .o_status               ( iagc_status       )
+    );
+    
+    /* ########################################################### */
     /* ADC1410 ################################################### */
     
     localparam  ADC1410_DATA_SIZE   =   16;
     
-    wire                                    adc1410_reset;
     wire    [ ADC1410_DATA_SIZE - 1 : 0 ]   adc1410_ch1;
     wire    [ ADC1410_DATA_SIZE - 1 : 0 ]   adc1410_ch2;
     wire                                    adc1410_init_done;
-    
-    assign adc1410_reset = sys_reset || cmd_reset;
-    
+        
     adc1410 #
     (
-        .DATA_SIZE          ( ADC1410_DATA_SIZE )
+        .DATA_SIZE          ( ADC1410_DATA_SIZE ),
+        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  )
     )
     u_adc1410
     (
         .i_sys_clock        ( sys_clock         ),
         .i_adc_clock        ( adc_clock         ),
-        .i_reset            ( adc1410_reset     ),
+        .i_iagc_status      ( iagc_status       ),
         .i_adc_data_0       ( i_adc_data_0      ),
         .i_adc_data_1       ( i_adc_data_1      ),
         .i_adc_data_2       ( i_adc_data_2      ),
@@ -182,22 +204,19 @@ module top
     wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampler_ch1;
     wire                                    sampler_valid_ch1;
     wire                                    sampler_idle_ch1;
-    
-    assign sample = i_sample || cmd_sample;
-    
+        
     sampler #
     (
-        .DATA_SIZE      ( SAMPLER_DATA_SIZE             )
+        .DATA_SIZE          ( SAMPLER_DATA_SIZE     ),
+        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE      )
     )
     u_sampler_ch1
     (
         .i_clock        ( sys_clock                     ),
-        .i_reset        ( sys_reset                     ),
+        .i_iagc_status  ( iagc_status                   ),
         .i_next         ( uart_tx_ready                 ),
         .i_data         ( conversor_ch1                 ),
         .i_gate         ( i_gate                        ),
-        .i_sample       ( sample                        ),
-        .i_adc_init     ( adc1410_init_done             ),
         .i_cmd_decim    ( cmd_set_decim                 ),
         .i_cmd_clean    ( cmd_clean_mem                 ),
         .i_cmd_param    ( cmd_param                     ),
@@ -207,22 +226,27 @@ module top
     );
    
     /* ########################################################### */
-    /* TX UARTS ################################################## */
+    /* UARTS ##################################################### */
     
     localparam UART_DATA_SIZE    = 8;
     
-    wire    uart_tx_ready;
-    wire    uart_tx_ready_ch1_l;
-    wire    uart_tx_ready_ch1_h;
-    wire    uart_tx_busy_ch1_l;
-    wire    uart_tx_busy_ch1_h;
+    wire                                uart_tx_ready;
+    wire                                uart_tx_ready_ch1_l;
+    wire                                uart_tx_ready_ch1_h;
+    wire                                uart_tx_busy_ch1_l;
+    wire                                uart_tx_busy_ch1_h;
+    wire    [ UART_DATA_SIZE - 1 : 0 ]  uart_rx_data;
+    wire                                uart_rx_valid;
+    
+    localparam UART_CLK_FREQ    = 100000000;
+    localparam UART_BAUDRATE    = 9600;
     
     assign  uart_tx_ready = uart_tx_ready_ch1_l && uart_tx_ready_ch1_h;
     
     uart_tx #
     (
-        .CLK_FREQUENCY  ( 100000000             ),
-        .UART_FREQUENCY ( 9600                  )
+        .CLK_FREQUENCY  ( UART_CLK_FREQ         ),
+        .UART_FREQUENCY ( UART_BAUDRATE         )
     )
     u_uart_tx_ch1_l
     (
@@ -232,13 +256,13 @@ module top
         .data           ( sampler_ch1[ 7 : 0 ]  ),
         .tx_bit         ( o_tx_ch1_l            ),
         .ready          ( uart_tx_ready_ch1_l   ),
-        .chipscope_clk  ()
+        .chipscope_clk  (                       )
     );
     
     uart_tx #
     (
-        .CLK_FREQUENCY  ( 100000000             ),
-        .UART_FREQUENCY ( 9600                  )
+        .CLK_FREQUENCY  ( UART_CLK_FREQ         ),
+        .UART_FREQUENCY ( UART_BAUDRATE         )
     )
     u_uart_tx_ch1_h
     (
@@ -248,53 +272,61 @@ module top
         .data           ( sampler_ch1[ 13 : 8 ] ),
         .tx_bit         ( o_tx_ch1_h            ),
         .ready          ( uart_tx_ready_ch1_h   ),
-        .chipscope_clk  ()
+        .chipscope_clk  (                       )
+    );
+    
+    uart_rx #
+    (
+        .CLK_FREQUENCY  ( UART_CLK_FREQ         ),
+        .UART_FREQUENCY ( UART_BAUDRATE         )
+    )
+    u_uart_rx
+    (
+        .clk            ( sys_clock             ),
+        .rst_n          ( ~sys_reset            ),
+        .data           ( uart_rx_data          ),
+        .rx             ( i_rx                  ),
+        .valid          ( uart_rx_valid         )
     );
     
     /* ########################################################### */
     /* COMMAND UNIT ############################################## */
     
-    wire                                wait_cmd;
     wire                                cmd_reset;
     wire                                cmd_sample;
     wire                                cmd_set_decim;
     wire                                cmd_clean_mem;
     wire    [ UART_DATA_SIZE - 1 : 0 ]  cmd_param;
-    wire                                cmd_succes;
-    wire                                cmd_error;
     
     command_unit #
     (
+        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE      ),
         .DATA_SIZE          ( UART_DATA_SIZE        )
     )
     u_command_unit
     (
         .i_clock            ( sys_clock             ),
-        .i_reset            ( sys_reset             ),
-        .i_rx               ( i_rx                  ),
-        .o_wait_cmd         ( wait_cmd              ),
+        .i_iagc_status      ( iagc_status           ),
+        .i_rx_data          ( uart_rx_data          ),
         .o_cmd_reset        ( cmd_reset             ),
         .o_cmd_sample       ( cmd_sample            ),
         .o_cmd_set_decim    ( cmd_set_decim         ),
         .o_cmd_clean_mem    ( cmd_clean_mem         ),
-        .o_cmd_param        ( cmd_param             ),
-        .o_error            ( cmd_error             ),
-        .o_succes           ( cmd_succes            )
+        .o_cmd_param        ( cmd_param             )
     );
         
     /* ########################################################### */
     /* PMOD UNIT ################################################# */
     
-    pmod_unit
+    pmod_unit #
+    (
+        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE      )
+    )
     u_pmod_unit
     (
         .i_clock            ( sys_clock             ),
         .i_reset            ( sys_reset             ),
-        .i_init_done        ( adc1410_init_done     ),
-        .i_idle             ( sampler_idle_ch1      ),
-        .i_wait_cmd         ( wait_cmd              ),
-        .i_error            ( cmd_error             ),
-        .i_succes           ( cmd_succes            ),
+        .i_iagc_status      ( iagc_status           ),
         .o_led0_r           ( o_led0_r              ),
         .o_led0_g           ( o_led0_g              ),
         .o_led0_b           ( o_led0_b              ),

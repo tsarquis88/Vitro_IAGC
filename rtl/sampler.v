@@ -3,23 +3,30 @@
 
 module sampler # 
 (
-    parameter   DATA_SIZE   =   8
+    parameter DATA_SIZE         = 8,
+    parameter IAGC_STATUS_SIZE  = 4
 )
 (
-    input  wire                         i_clock,
-    input  wire                         i_reset,
-    input  wire                         i_next,
-    input  wire [ DATA_SIZE - 1 : 0 ]   i_data,
-    input  wire                         i_gate,
-    input  wire                         i_sample,
-    input  wire                         i_adc_init,
-    input  wire                         i_cmd_decim,
-    input  wire                         i_cmd_clean,
-    input  wire [ DATA_SIZE - 1 : 0 ]   i_cmd_param,  
-    output wire [ DATA_SIZE - 1 : 0 ]   o_data,
-    output wire                         o_valid,
-    output wire                         o_idle
+    input  wire                                 i_clock,
+    input  wire                                 i_next,
+    input  wire [ DATA_SIZE        - 1 : 0 ]    i_data,
+    input  wire                                 i_gate,
+    input  wire [ IAGC_STATUS_SIZE - 1 : 0 ]    i_iagc_status,
+    input  wire                                 i_cmd_decim,
+    input  wire                                 i_cmd_clean,
+    input  wire [ DATA_SIZE        - 1 : 0 ]    i_cmd_param,  
+    output wire [ DATA_SIZE        - 1 : 0 ]    o_data,
+    output wire                                 o_valid,
+    output wire                                 o_idle
 );
+
+    localparam IAGC_STATUS_RESET        = 4'b0000;
+    localparam IAGC_STATUS_INIT         = 4'b0001;
+    localparam IAGC_STATUS_IDLE         = 4'b0010;
+    localparam IAGC_STATUS_SAMPLE       = 4'b0011;
+    localparam IAGC_STATUS_CMD_PARSE    = 4'b0100;
+    localparam IAGC_STATUS_CMD_READ     = 4'b0101;
+    localparam IAGC_STATUS_CMD_ERROR    = 4'b0110;
 
     localparam DECIMATE_DEFAULT =   4;    
     localparam MEM_SIZE         =   1024;
@@ -51,14 +58,13 @@ module sampler #
     reg                             first_write;
     
     reg                             last_i_next;
-    reg                             last_i_sample;
     reg                             last_i_gate;
     wire                            posedge_i_next;
     wire                            posedge_i_gate;
     
     always@( posedge i_clock ) begin
     
-        if( i_reset || ~i_adc_init ) begin
+        if( i_iagc_status == IAGC_STATUS_RESET ) begin
             
             status          <= STATUS_INIT;
             decimate_order  <= DECIMATE_DEFAULT;
@@ -68,7 +74,6 @@ module sampler #
         
             status          <= next_status;
             last_i_next     <= i_next;
-            last_i_sample   <= i_sample;
             last_i_gate     <= i_gate;
             
             case( status )
@@ -175,7 +180,7 @@ module sampler #
         case( status )
         
             STATUS_INIT: begin
-                next_status = i_sample ? STATUS_WAIT : STATUS_INIT;
+                next_status = i_iagc_status == IAGC_STATUS_SAMPLE ? STATUS_WAIT : STATUS_INIT;
             end
         
             STATUS_WAIT: begin
@@ -219,20 +224,21 @@ module sampler #
     
     memory #                      
     (
-        .DATA_SIZE      ( DATA_SIZE     ),
-        .ADDR_SIZE      ( ADDR_SIZE     ),
-        .MEMORY_SIZE    ( MEM_SIZE      )
+        .DATA_SIZE          ( DATA_SIZE         ),
+        .ADDR_SIZE          ( ADDR_SIZE         ),
+        .MEMORY_SIZE        ( MEM_SIZE          ),
+        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  )
     )
     u_memory
     (
-        .i_clock        ( i_clock       ),
-        .i_reset        ( i_reset       ),
-        .i_addr         ( addr          ),
-        .i_read         ( read          ),
-        .i_write        ( write         ),
-        .i_data         ( i_data        ),
-        .i_clean        ( i_cmd_clean   ),
-        .o_data         ( data_mem      )
+        .i_clock            ( i_clock           ),
+        .i_iagc_status      ( i_iagc_status     ),
+        .i_addr             ( addr              ),
+        .i_read             ( read              ),
+        .i_write            ( write             ),
+        .i_data             ( i_data            ),
+        .i_clean            ( i_cmd_clean       ),
+        .o_data             ( data_mem          )
     );         
     
 endmodule
