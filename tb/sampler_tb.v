@@ -3,40 +3,30 @@
 module sampler_tb
 (
 );
-   
-    localparam      DATA_SIZE   =   8;
+       
+    reg         clock;
+    reg  [3:0]  iagc_status;
+    reg         gate;
+    reg  [15:0] data;
+    wire [15:0] sample;
+    wire [11:0] addr;
+    wire        idle;
     
-    reg                             clock;
-    reg                             reset;
-    wire                            next;
-    reg                             gate;
-    reg     [ DATA_SIZE - 1 : 0 ]   data;
-    reg                             adc_init;
-    wire                            valid;
-    wire    [ DATA_SIZE - 1 : 0 ]   sampler_data;
-    wire                            tx;
-    reg                             sample;
-    wire                            idle;
     
     initial begin
-        clock       =   1'b0;
-        reset       =   1'b1;
-        adc_init    =   1'b0;
-        gate        =   1'b0;
-        data        =   { DATA_SIZE { 1'b0 } };
-        sample      =   1'b0;
+        clock       = 1'b0;
+        gate        = 1'b0;
+        data        = { 12 { 1'b0 } };
+        iagc_status = 4'b0000;
         
-        #10
-        reset       =   1'b0;
+        #100
+        iagc_status = 4'b0001;
         
-        #20
+        #100
+        iagc_status = 4'b0011;
         
-        adc_init    =   1'b1;
-        
-        #1000
-        sample      =   1'b1;
-        #10
-        sample      =   1'b0;
+        #100
+        iagc_status = 4'b0001;
     end
     
     always begin
@@ -45,7 +35,7 @@ module sampler_tb
     end
     
     always begin
-        #100
+        #300
         gate    =   ~gate;
     end
     
@@ -53,43 +43,16 @@ module sampler_tb
         data    <=  data + 1'b1;
     end
    
-    sampler #
-    (
-        .DATA_SIZE      ( DATA_SIZE         )
-    )
+    sampler
     u_sampler
     (
-        .i_clock        ( clock             ),
-        .i_reset        ( reset             ),
-        .i_next         ( next              ),
-        .i_data         ( data              ),
-        .i_adc_init     ( adc_init          ),
-        .i_gate         ( gate              ),
-        .i_sample       ( sample            ),
-        .i_cmd_decim    ( 1'b0              ),
-        .i_cmd_param    ( 4'b0000           ),
-        .o_data         ( sampler_data      ),
-        .o_valid        ( valid             ),
-        .o_idle         ( idle              )
+        .i_clock            ( clock             ),
+        .i_iagc_status      ( iagc_status       ),
+        .i_data             ( data              ),
+        .i_gate             ( gate              ),
+        .o_data             ( sample            ),
+        .o_addr             ( addr              ),
+        .o_idle             ( idle              )
     );
     
-    localparam UART_TX_DATA_SIZE    = 8;
-    localparam UART_TX_PRESCALE     = 16'b0000010100010110;
-    
-    uart_tx #
-    (
-        .DATA_WIDTH         ( UART_TX_DATA_SIZE     )
-    )
-    u_uart_tx
-    (
-        .clk                ( clock                 ),
-        .rst                ( reset                 ),   
-        .s_axis_tdata       ( sampler_data          ),
-        .s_axis_tvalid      ( valid                 ),
-        .s_axis_tready      ( next                  ),
-        .txd                ( tx                    ),
-        .busy               ( busy                  ),
-        .prescale           ( UART_TX_PRESCALE      )
-    );
-  
 endmodule

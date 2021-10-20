@@ -3,7 +3,7 @@
 
 module data_conversor #
 (
-    parameter   CONVERSOR_DATA_SIZE =   8
+    parameter   CONVERSOR_DATA_SIZE =   14
 )
 (
     input  wire [ CONVERSOR_DATA_SIZE - 1 : 0 ] i_data,

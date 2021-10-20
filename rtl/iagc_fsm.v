@@ -10,10 +10,14 @@ module iagc_fsm#
     input  wire                         i_reset,
     input  wire                         i_adc1410_init_done,
     input  wire                         i_sample,
-    input  wire                         i_sampling,
     input  wire                         i_cmd_valid,
     input  wire                         i_cmd_reset,
     input  wire                         i_cmd_sample,
+    input  wire                         i_cmd_dump_mem,
+    input  wire                         i_cmd_clean_mem,
+    input  wire                         i_sample_end,
+    input  wire                         i_dump_end,
+    input  wire                         i_clean_end,
     output wire [ STATUS_SIZE - 1 : 0 ] o_status
 );
 
@@ -24,6 +28,8 @@ module iagc_fsm#
     localparam IAGC_STATUS_CMD_PARSE    = 4'b0100;
     localparam IAGC_STATUS_CMD_READ     = 4'b0101;
     localparam IAGC_STATUS_CMD_ERROR    = 4'b0110;
+    localparam IAGC_STATUS_DUMP_MEM     = 4'b0111;
+    localparam IAGC_STATUS_CLEAN_MEM    = 4'b1000;
         
     reg     [ STATUS_SIZE - 1 : 0 ] status;
     reg     [ STATUS_SIZE - 1 : 0 ] next_status;
@@ -55,7 +61,7 @@ module iagc_fsm#
             end
             
             IAGC_STATUS_SAMPLE: begin
-                next_status = i_sampling ? IAGC_STATUS_SAMPLE : IAGC_STATUS_IDLE;
+                next_status = i_sample_end ? IAGC_STATUS_IDLE : IAGC_STATUS_SAMPLE;
             end
             
             IAGC_STATUS_CMD_PARSE: begin
@@ -67,12 +73,24 @@ module iagc_fsm#
                     next_status = IAGC_STATUS_RESET;
                 else if( i_cmd_sample )
                     next_status = IAGC_STATUS_SAMPLE;
+                else if( i_cmd_dump_mem )
+                    next_status = IAGC_STATUS_DUMP_MEM;
+                else if( i_cmd_clean_mem )
+                    next_status = IAGC_STATUS_CLEAN_MEM;
                 else
                     next_status = IAGC_STATUS_CMD_ERROR;
             end
             
             IAGC_STATUS_CMD_ERROR: begin
                 next_status = IAGC_STATUS_IDLE;
+            end
+            
+            IAGC_STATUS_DUMP_MEM: begin
+                next_status = i_dump_end ? IAGC_STATUS_IDLE : IAGC_STATUS_DUMP_MEM; 
+            end
+            
+            IAGC_STATUS_CLEAN_MEM: begin
+                next_status = i_clean_end ? IAGC_STATUS_IDLE : IAGC_STATUS_CLEAN_MEM; 
             end
                         
             default: begin

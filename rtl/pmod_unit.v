@@ -24,6 +24,7 @@ module pmod_unit #
     localparam IAGC_STATUS_CMD_PARSE    = 4'b0100;
     localparam IAGC_STATUS_CMD_READ     = 4'b0101;
     localparam IAGC_STATUS_CMD_ERROR    = 4'b0110;
+    localparam IAGC_STATUS_DUMP_MEM     = 4'b0111;
     
     localparam  LED_PWM_TICKS       =   50;
     localparam  SEC_TICKS           =   100000000;
@@ -99,6 +100,16 @@ module pmod_unit #
                 led0_r  = 1'b0;
                 led0_g  = 1'b0;
                 led0_b  = led_pwm;
+                
+                led1_r  = 1'b0;
+                led1_g  = 1'b0;
+                led1_b  = 1'b0;
+            end
+            
+            IAGC_STATUS_DUMP_MEM: begin
+                led0_r  = led_pwm;
+                led0_g  = led_pwm;
+                led0_b  = 1'b0;
                 
                 led1_r  = 1'b0;
                 led1_g  = 1'b0;

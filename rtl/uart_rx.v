@@ -89,18 +89,18 @@ module uart_rx
       valid    <= 1'b0;
     end
     else begin
-      data     <= 8'bx;
+      data     <= data_tmp;
       data_tmp <= data_tmp;
       valid    <= 0;
       case (state)
-        IDLE: data_tmp       <= 8'bx;
-        START: data_tmp      <= 8'bx;
+        IDLE: data_tmp       <= data_tmp;
+        START: data_tmp      <= data_tmp;
         DATA: if (tick_count == TICKS_PER_BIT-1) data_tmp[bit_count] <= rx;
         VALID: begin
           data  <= data_tmp;
           valid <= 1'b1;
         end
-        STOP: data_tmp <= 8'bx;
+        STOP: data_tmp <= data_tmp;
       endcase
     end
   end

@@ -2,7 +2,7 @@
 
 module adc1410 #
 (
-    parameter   DATA_SIZE           = 16,
+    parameter   DATA_SIZE           = 14,
     parameter   IAGC_STATUS_SIZE    = 4
 )
 (
@@ -54,12 +54,15 @@ module adc1410 #
     localparam IAGC_STATUS_CMD_READ     = 4'b0101;
     localparam IAGC_STATUS_CMD_ERROR    = 4'b0110;
     
-    localparam  ADC_IN_DATA_SIZE    =   14;
+    localparam ADC_IN_DATA_SIZE     = 14;
+    localparam ADC_OUT_DATA_SIZE    = 16;
     
     wire    [ ADC_IN_DATA_SIZE - 1 : 0 ]    data_in;
     wire                                    test_mode;
     wire                                    init_done;
     wire                                    reset;
+    wire    [ ADC_OUT_DATA_SIZE - 1 : 0 ]   data_out_ch1;
+    wire    [ ADC_OUT_DATA_SIZE - 1 : 0 ]   data_out_ch2;
     
     assign reset                = i_iagc_status == IAGC_STATUS_RESET ? 1'b0 : 1'b1;
     assign test_mode            = 1'b0;
@@ -79,6 +82,8 @@ module adc1410 #
     assign data_in[ 13 ]        = i_adc_data_13;
     assign o_adc_dco_clock_n    = 1'b0;
     assign o_init_done          = ~init_done;
+    assign o_data_out_ch1       = data_out_ch1[ 15 : 2 ];
+    assign o_data_out_ch2       = data_out_ch2[ 15 : 2 ];
     
     /*
                <--- IP Configuration --->
@@ -104,8 +109,8 @@ module adc1410 #
         .sInitDone_n        ( init_done             ),
         .FIFO_EMPTY_CHA     (                       ),
         .FIFO_EMPTY_CHB     (                       ),
-        .sCh1Out            ( o_data_out_ch1        ),
-        .sCh2Out            ( o_data_out_ch2        ),
+        .sCh1Out            ( data_out_ch1          ),
+        .sCh2Out            ( data_out_ch2          ),
         .sTestMode          ( test_mode             ),
         .adcClkIn_p         ( o_adc_clock_in_p      ),
         .adcClkIn_n         ( o_adc_clock_in_n      ),

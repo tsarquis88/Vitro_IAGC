@@ -26,7 +26,7 @@ set_property -dict { PACKAGE_PIN B15   IOSTANDARD LVCMOS33 } [get_ports { o_tx_c
 set_property -dict { PACKAGE_PIN E16   IOSTANDARD LVCMOS33 } [get_ports { o_tx_ch1_h }]; #IO_L1P_T0_AD0P Sch=ja4_fpga
 set_property -dict { PACKAGE_PIN E15   IOSTANDARD LVCMOS33 } [get_ports { i_rx }]; #IO_L2N_T0_AD8N Sch=ja7_fpga
 #set_property -dict { PACKAGE_PIN F17   IOSTANDARD LVCMOS33 } [get_ports { o_tx_1 }]; #IO_L2P_T0_AD8P Sch=ja8_fpga
-set_property -dict { PACKAGE_PIN F16   IOSTANDARD LVCMOS33 } [get_ports { o_buzzer }]; #IO_L3N_T0_DQS_AD1N Sch=ja9_fpga
+#set_property -dict { PACKAGE_PIN F16   IOSTANDARD LVCMOS33 } [get_ports { o_buzzer }]; #IO_L3N_T0_DQS_AD1N Sch=ja9_fpga
 set_property -dict { PACKAGE_PIN G16   IOSTANDARD LVCMOS33 } [get_ports { i_gate }]; #IO_L3P_T0_DQS_AD1P Sch=ja10_fpga
 
 ## Pmod Header JB

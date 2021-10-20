@@ -1,11 +1,13 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-module top
+module top_sim
 (
     input  wire i_clock,
     
     input  wire i_reset,
+    
+    input  wire i_adc_init_done,
         
     output wire o_led0_g,
     output wire o_led0_r,
@@ -21,40 +23,7 @@ module top
     
     input  wire i_sample,
     
-    input  wire i_gate,   
-    
-    input  wire i_adc_data_0,
-    input  wire i_adc_data_1,
-    input  wire i_adc_data_2,
-    input  wire i_adc_data_3,
-    input  wire i_adc_data_4,
-    input  wire i_adc_data_5,
-    input  wire i_adc_data_6,
-    input  wire i_adc_data_7,
-    input  wire i_adc_data_8,
-    input  wire i_adc_data_9,
-    input  wire i_adc_data_10,
-    input  wire i_adc_data_11,
-    input  wire i_adc_data_12,
-    input  wire i_adc_data_13,
-    inout  wire io_adc_sdio,
-    input  wire i_adc_dco_clock_p,
-    output wire o_adc_dco_clock_n,
-    output wire o_adc_sclk,
-    output wire o_adc_clock_in_n,
-    output wire o_adc_clock_in_p,
-    output wire o_ch1_coupling_h,
-    output wire o_ch1_coupling_l,
-    output wire o_ch2_coupling_h,
-    output wire o_ch2_coupling_l,
-    output wire o_ch2_gain_h,
-    output wire o_ch2_gain_l,
-    output wire o_ch1_gain_l,
-    output wire o_ch1_gain_h,
-    output wire o_adc_relay_com_l,
-    output wire o_adc_relay_com_h,
-    output wire o_adc_cs,
-    output wire o_adc_sync       
+    input  wire i_gate
 );
     
     /* ########################################################### */
@@ -91,108 +60,26 @@ module top
     (
         .i_clock                ( sys_clock         ),
         .i_reset                ( sys_reset         ),
-        .i_adc1410_init_done    ( adc1410_init_done ),
+        .i_adc1410_init_done    ( i_adc_init_done   ),
         .i_sample               ( i_sample          ),
         .i_cmd_valid            ( uart_rx_valid     ),
         .i_cmd_reset            ( cmd_reset         ),
         .i_cmd_sample           ( cmd_sample        ),
         .i_cmd_dump_mem         ( cmd_dump_mem      ),
-        .i_cmd_clean_mem        ( cmd_clean_mem     ),
         .i_sample_end           ( sampler_end       ),
         .i_dump_end             ( dump_unit_end     ),
-        .i_clean_end            ( mem_clean_end     ),
         .o_status               ( iagc_status       )
-    );
-    
-    /* ########################################################### */
-    /* ADC1410 ################################################### */
-    
-    localparam  ADC1410_DATA_SIZE   =   14;
-    
-    wire    [ ADC1410_DATA_SIZE - 1 : 0 ]   adc1410_ch1;
-    wire    [ ADC1410_DATA_SIZE - 1 : 0 ]   adc1410_ch2;
-    wire                                    adc1410_init_done;
-        
-    adc1410 #
-    (
-        .DATA_SIZE          ( ADC1410_DATA_SIZE ),
-        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  )
-    )
-    u_adc1410
-    (
-        .i_sys_clock        ( sys_clock         ),
-        .i_adc_clock        ( adc_clock         ),
-        .i_iagc_status      ( iagc_status       ),
-        .i_adc_data_0       ( i_adc_data_0      ),
-        .i_adc_data_1       ( i_adc_data_1      ),
-        .i_adc_data_2       ( i_adc_data_2      ),
-        .i_adc_data_3       ( i_adc_data_3      ),
-        .i_adc_data_4       ( i_adc_data_4      ),
-        .i_adc_data_5       ( i_adc_data_5      ),
-        .i_adc_data_6       ( i_adc_data_6      ),
-        .i_adc_data_7       ( i_adc_data_7      ),
-        .i_adc_data_8       ( i_adc_data_8      ),
-        .i_adc_data_9       ( i_adc_data_9      ),
-        .i_adc_data_10      ( i_adc_data_10     ),
-        .i_adc_data_11      ( i_adc_data_11     ),
-        .i_adc_data_12      ( i_adc_data_12     ),
-        .i_adc_data_13      ( i_adc_data_13     ),
-        .io_adc_sdio        ( io_adc_sdio       ),
-        .i_adc_dco_clock_p  ( i_adc_dco_clock_p ),
-        .o_adc_dco_clock_n  ( o_adc_dco_clock_n ),
-        .o_adc_sclk         ( o_adc_sclk        ),
-        .o_adc_clock_in_n   ( o_adc_clock_in_n  ),
-        .o_adc_clock_in_p   ( o_adc_clock_in_p  ),
-        .o_ch1_coupling_h   ( o_ch1_coupling_h  ),
-        .o_ch1_coupling_l   ( o_ch1_coupling_l  ),
-        .o_ch2_coupling_h   ( o_ch2_coupling_h  ),
-        .o_ch2_coupling_l   ( o_ch2_coupling_l  ),
-        .o_ch2_gain_h       ( o_ch2_gain_h      ),
-        .o_ch2_gain_l       ( o_ch2_gain_l      ),
-        .o_ch1_gain_l       ( o_ch1_gain_l      ),
-        .o_ch1_gain_h       ( o_ch1_gain_h      ),
-        .o_adc_relay_com_l  ( o_adc_relay_com_l ),
-        .o_adc_relay_com_h  ( o_adc_relay_com_h ),
-        .o_adc_cs           ( o_adc_cs          ),
-        .o_adc_sync         ( o_adc_sync        ),
-        .o_data_out_ch1     ( adc1410_ch1       ),
-        .o_data_out_ch2     ( adc1410_ch2       ),
-        .o_init_done        ( adc1410_init_done ) 
-    );
-    
-    /* ########################################################### */
-    /* DATA CONVERSORS ########################################### */
-        
-    wire    [ ADC1410_DATA_SIZE - 1 : 0 ] conversor_ch1;
-    wire    [ ADC1410_DATA_SIZE - 1 : 0 ] conversor_ch2;
-    
-    data_conversor #
-    (
-        .CONVERSOR_DATA_SIZE    ( ADC1410_DATA_SIZE     )
-    )
-    u_data_conversor_ch1
-    (
-        .i_data                 ( adc1410_ch1           ),
-        .o_data                 ( conversor_ch1         )
-    );
-    
-    data_conversor #
-    (
-        .CONVERSOR_DATA_SIZE    ( ADC1410_DATA_SIZE     )
-    )
-    u_data_conversor_ch2
-    (
-        .i_data                 ( adc1410_ch2           ),
-        .o_data                 ( conversor_ch2         )
     );
     
     /* ########################################################### */
     /* RAMP ###################################################### */
     
-    reg [ ADC1410_DATA_SIZE - 1 : 0 ] ramp;
+    localparam DATA_SIZE = 16;
+    
+    reg [ DATA_SIZE - 1 : 0 ]   ramp;
     
     always@( posedge sys_clock ) begin
-        ramp <=  ~i_gate ? { ADC1410_DATA_SIZE { 1'b0 } } : ramp + 1'b1;
+        ramp <=  ~i_gate ? { DATA_SIZE { 1'b0 } } : ramp + 1'b1;
     end
     
     /* ########################################################### */
@@ -200,7 +87,7 @@ module top
     
     localparam SAMPLER_DATA_SIZE    = 16;
     localparam ADDR_SIZE            = 12;
-    localparam MEMORY_SIZE          = 1024;
+    localparam MEMORY_SIZE          = 8;
 
     
     wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampler_sample;
@@ -218,7 +105,7 @@ module top
     (
         .i_clock            ( sys_clock         ),
         .i_iagc_status      ( iagc_status       ),
-        .i_data             ( conversor_ch1     ),
+        .i_data             ( ramp              ),
         .i_gate             ( i_gate            ),
         .o_data             ( sampler_sample    ),
         .o_addr             ( sampler_addr      ),
@@ -229,7 +116,6 @@ module top
     /* RAM ####################################################### */
     
     wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   mem_data;
-    wire                                    mem_clean_end;
     
     memory #
     (
@@ -245,17 +131,19 @@ module top
         .i_waddr            ( sampler_addr      ),
         .i_raddr            ( dump_unit_addr    ),
         .i_data             ( sampler_sample    ),
-        .o_clean_end        ( mem_clean_end     ),
         .o_data             ( mem_data          )    
     );
     
     /* ########################################################### */
     /* DUMP UNIT ################################################# */
     
+    wire                            tx_ready;
     wire                            dump_unit_valid;
     wire    [ ADDR_SIZE - 1 : 0 ]   dump_unit_addr;
     wire                            dump_unit_end;
-        
+    
+    assign tx_ready = uart_tx_ready_ch1_l && uart_tx_ready_ch1_h;
+    
     dump_unit #
     (
         .ADDR_SIZE          ( ADDR_SIZE         ),
@@ -265,7 +153,7 @@ module top
     u_dump_unit
     (
         .i_clock            ( sys_clock         ),
-        .i_ready            ( uart_tx_ready     ),
+        .i_ready            ( tx_ready          ),
         .i_iagc_status      ( iagc_status       ),
         .o_addr             ( dump_unit_addr    ),
         .o_valid            ( dump_unit_valid   ),
@@ -284,7 +172,7 @@ module top
     wire                                uart_rx_valid;
     
     localparam UART_CLK_FREQ    = 100000000;
-    localparam UART_BAUDRATE    = 9600;
+    localparam UART_BAUDRATE    = 38400;
     
     assign  uart_tx_ready = uart_tx_ready_ch1_l && uart_tx_ready_ch1_h;
     
