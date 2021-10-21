@@ -48,13 +48,20 @@ module top_sim
     /* ########################################################### */
     /* GLOBAL FSM ################################################ */
     
-    localparam  IAGC_STATUS_SIZE    =   4;
+    localparam IAGC_STATUS_SIZE = 4;
+    localparam ADDR_SIZE        = 13;
+    localparam DEF_MEMORY_SIZE  = 4096;
+    localparam CMD_PARAM_SIZE   = 4;
     
     wire    [ IAGC_STATUS_SIZE - 1 : 0 ]    iagc_status;
+    wire    [ ADDR_SIZE        - 1 : 0 ]    iagc_memory_size;
     
     iagc_fsm #
     (
-        .STATUS_SIZE            ( IAGC_STATUS_SIZE  )
+        .STATUS_SIZE            ( IAGC_STATUS_SIZE  ),
+        .DEF_MEMORY_SIZE        ( DEF_MEMORY_SIZE   ),
+        .CMD_PARAM_SIZE         ( CMD_PARAM_SIZE    ),
+        .ADDR_SIZE              ( ADDR_SIZE         )
     )
     u_iagc_fsm
     (
@@ -66,28 +73,31 @@ module top_sim
         .i_cmd_reset            ( cmd_reset         ),
         .i_cmd_sample           ( cmd_sample        ),
         .i_cmd_dump_mem         ( cmd_dump_mem      ),
+        .i_cmd_clean_mem        ( cmd_clean_mem     ),
+        .i_cmd_set_mem          ( cmd_set_mem       ),
         .i_sample_end           ( sampler_end       ),
         .i_dump_end             ( dump_unit_end     ),
+        .i_clean_end            ( mem_clean_end     ),
+        .i_cmd_parameter        ( cmd_param         ),
+        .o_memory_size          ( iagc_memory_size  ),
         .o_status               ( iagc_status       )
     );
     
     /* ########################################################### */
     /* RAMP ###################################################### */
     
-    localparam DATA_SIZE = 16;
+    localparam ADC1410_DATA_SIZE = 16;
     
-    reg [ DATA_SIZE - 1 : 0 ]   ramp;
+    reg [ ADC1410_DATA_SIZE - 1 : 0 ] ramp;
     
     always@( posedge sys_clock ) begin
-        ramp <=  ~i_gate ? { DATA_SIZE { 1'b0 } } : ramp + 1'b1;
+        ramp <=  ~i_gate ? { ADC1410_DATA_SIZE { 1'b0 } } : ramp + 1'b1;
     end
     
     /* ########################################################### */
     /* SAMPLERS ################################################## */
     
     localparam SAMPLER_DATA_SIZE    = 16;
-    localparam ADDR_SIZE            = 12;
-    localparam MEMORY_SIZE          = 8;
 
     
     wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampler_sample;
@@ -98,7 +108,6 @@ module top_sim
     (
         .DATA_SIZE         ( SAMPLER_DATA_SIZE  ),
         .ADDR_SIZE         ( ADDR_SIZE          ),
-        .MEMORY_SIZE       ( MEMORY_SIZE        ),
         .IAGC_STATUS_SIZE  ( IAGC_STATUS_SIZE   )
     )
     u_sampler_ch1
@@ -107,6 +116,7 @@ module top_sim
         .i_iagc_status      ( iagc_status       ),
         .i_data             ( ramp              ),
         .i_gate             ( i_gate            ),
+        .i_memory_size      ( iagc_memory_size  ),
         .o_data             ( sampler_sample    ),
         .o_addr             ( sampler_addr      ),
         .o_end              ( sampler_end       )
@@ -116,12 +126,13 @@ module top_sim
     /* RAM ####################################################### */
     
     wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   mem_data;
+    wire                                    mem_clean_end;
     
     memory #
     (
         .DATA_SIZE         ( SAMPLER_DATA_SIZE  ),
         .ADDR_SIZE         ( ADDR_SIZE          ),
-        .MEMORY_SIZE       ( MEMORY_SIZE        ),
+        .DEF_MEMORY_SIZE   ( DEF_MEMORY_SIZE    ),
         .IAGC_STATUS_SIZE  ( IAGC_STATUS_SIZE   )
     )
     u_memory
@@ -131,30 +142,29 @@ module top_sim
         .i_waddr            ( sampler_addr      ),
         .i_raddr            ( dump_unit_addr    ),
         .i_data             ( sampler_sample    ),
+        .i_memory_size      ( iagc_memory_size  ),
+        .o_clean_end        ( mem_clean_end     ),
         .o_data             ( mem_data          )    
     );
     
     /* ########################################################### */
     /* DUMP UNIT ################################################# */
     
-    wire                            tx_ready;
     wire                            dump_unit_valid;
     wire    [ ADDR_SIZE - 1 : 0 ]   dump_unit_addr;
     wire                            dump_unit_end;
-    
-    assign tx_ready = uart_tx_ready_ch1_l && uart_tx_ready_ch1_h;
-    
+        
     dump_unit #
     (
         .ADDR_SIZE          ( ADDR_SIZE         ),
-        .MEMORY_SIZE        ( MEMORY_SIZE       ),
         .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  )
     )
     u_dump_unit
     (
         .i_clock            ( sys_clock         ),
-        .i_ready            ( tx_ready          ),
+        .i_ready            ( uart_tx_ready     ),
         .i_iagc_status      ( iagc_status       ),
+        .i_memory_size      ( iagc_memory_size  ),
         .o_addr             ( dump_unit_addr    ),
         .o_valid            ( dump_unit_valid   ),
         .o_end              ( dump_unit_end     )
@@ -172,7 +182,7 @@ module top_sim
     wire                                uart_rx_valid;
     
     localparam UART_CLK_FREQ    = 100000000;
-    localparam UART_BAUDRATE    = 38400;
+    localparam UART_BAUDRATE    = 9600;
     
     assign  uart_tx_ready = uart_tx_ready_ch1_l && uart_tx_ready_ch1_h;
     
@@ -224,29 +234,32 @@ module top_sim
     
     /* ########################################################### */
     /* COMMAND UNIT ############################################## */
-    
+        
     wire                                cmd_reset;
     wire                                cmd_sample;
     wire                                cmd_set_decim;
     wire                                cmd_clean_mem;                                                    
     wire                                cmd_dump_mem;
-    wire    [ UART_DATA_SIZE - 1 : 0 ]  cmd_param;
+    wire                                cmd_set_mem;
+    wire    [ CMD_PARAM_SIZE - 1 : 0 ]  cmd_param;
     
     command_unit #
     (
         .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE      ),
-        .DATA_SIZE          ( UART_DATA_SIZE        )
+        .DATA_SIZE          ( UART_DATA_SIZE        ),
+        .CMD_PARAM_SIZE     ( CMD_PARAM_SIZE        )
     )
     u_command_unit
     (
         .i_clock            ( sys_clock             ),
         .i_iagc_status      ( iagc_status           ),
-        .i_rx_data          ( uart_rx_data          ),
+        .i_cmd              ( uart_rx_data          ),
         .o_cmd_reset        ( cmd_reset             ),
         .o_cmd_sample       ( cmd_sample            ),
         .o_cmd_set_decim    ( cmd_set_decim         ),
         .o_cmd_clean_mem    ( cmd_clean_mem         ),
         .o_cmd_dump_mem     ( cmd_dump_mem          ),
+        .o_cmd_set_mem      ( cmd_set_mem           ),
         .o_cmd_param        ( cmd_param             )
     );
         

@@ -5,8 +5,9 @@ module memory #
 (
     parameter DATA_SIZE         = 16,
     parameter ADDR_SIZE         = 12,
-    parameter MEMORY_SIZE       = 1024,
-    parameter IAGC_STATUS_SIZE  = 4
+    parameter DEF_MEMORY_SIZE   = 4096,
+    parameter IAGC_STATUS_SIZE  = 4,
+    parameter CMD_PARAM_SIZE    = 4
 )
 (
     input  wire                                 i_clock,
@@ -14,6 +15,7 @@ module memory #
     input  wire [ ADDR_SIZE        - 1 : 0 ]    i_raddr,
     input  wire [ ADDR_SIZE        - 1 : 0 ]    i_waddr,
     input  wire [ DATA_SIZE        - 1 : 0 ]    i_data,
+    input  wire [ ADDR_SIZE        - 1 : 0 ]    i_memory_size,
     output wire                                 o_clean_end,
     output wire [ DATA_SIZE        - 1 : 0 ]    o_data         
 );
@@ -27,50 +29,64 @@ module memory #
     localparam IAGC_STATUS_CMD_ERROR    = 4'b0110;
     localparam IAGC_STATUS_DUMP_MEM     = 4'b0111;
     localparam IAGC_STATUS_CLEAN_MEM    = 4'b1000;
+    localparam IAGC_STATUS_SET_MEM      = 4'b1001;
 
-    reg [ DATA_SIZE - 1 : 0 ]   memory [ MEMORY_SIZE - 1 : 0 ];
+    reg [ DATA_SIZE - 1 : 0 ]   memory [ DEF_MEMORY_SIZE - 1 : 0 ];
     reg [ DATA_SIZE - 1 : 0 ]   data;
     
     reg                         clean_end;
     reg                         clean_first;
-    integer                     clean_addr;
+    reg [ ADDR_SIZE - 1 : 0 ]   clean_addr;
+    reg [ ADDR_SIZE - 1 : 0 ]   max_addr;
 
     always@( negedge i_clock ) begin
-    
+                
         case( i_iagc_status )
         
+            IAGC_STATUS_RESET: begin     
+                max_addr <= DEF_MEMORY_SIZE;
+            end
+            
             IAGC_STATUS_SAMPLE: begin     
                 memory[ i_waddr ]       <= i_data;
                 clean_end               <= 1'b0; 
-                clean_addr              <= 0;
+                clean_addr              <= { ADDR_SIZE { 1'b0 } };
                 clean_first             <= 1'b1;
+                max_addr                <= max_addr;
             end
         
             IAGC_STATUS_DUMP_MEM: begin
                 data                    <= memory[ i_raddr ];
                 clean_end               <= 1'b0;
-                clean_addr              <= 0;
-                clean_first             <= 1'b1; 
+                clean_addr              <= { ADDR_SIZE { 1'b0 } };
+                clean_first             <= 1'b1;
+                max_addr                <= max_addr; 
             end
             
             IAGC_STATUS_CLEAN_MEM: begin
-                if( clean_addr >= MEMORY_SIZE - 1 ) begin
+                if( clean_addr >= max_addr - 1 ) begin
                     clean_end       <= 1'b1;
                     clean_addr      <= clean_addr;
                 end
                 else begin
                     clean_end       <= 1'b0;
-                    clean_addr      <= clean_first ? 0 : clean_addr + 1;
+                    clean_addr      <= clean_first ? { ADDR_SIZE { 1'b0 } } : clean_addr + 1'b1;
                 end
                 
                 memory[ clean_addr ]    <= { DATA_SIZE { 1'b0 } };
                 clean_first             <= 1'b0;
+                max_addr                <= max_addr;
+            end
+            
+            IAGC_STATUS_SET_MEM: begin     
+                max_addr <= i_memory_size;
             end
             
             default: begin
                 clean_end   <= 1'b0;
-                clean_addr  <= 0;
+                clean_addr  <= { ADDR_SIZE { 1'b0 } };
                 clean_first <= 1'b1;
+                max_addr    <= max_addr;
             end
         endcase
     end    

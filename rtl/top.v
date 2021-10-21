@@ -79,13 +79,25 @@ module top
     /* ########################################################### */
     /* GLOBAL FSM ################################################ */
     
-    localparam  IAGC_STATUS_SIZE    =   4;
+    localparam IAGC_STATUS_SIZE = 4;
+    localparam ADDR_SIZE        = 13;
+    localparam CMD_PARAM_SIZE   = 4;
+    localparam DECIMATOR_SIZE   = 4;
+    localparam DEF_MEMORY_SIZE  = 4096;
+    localparam DEF_DECIMATOR    = 4;
     
     wire    [ IAGC_STATUS_SIZE - 1 : 0 ]    iagc_status;
+    wire    [ ADDR_SIZE        - 1 : 0 ]    iagc_memory_size;
+    wire    [ DECIMATOR_SIZE   - 1 : 0 ]    iagc_decimator;
     
     iagc_fsm #
     (
-        .STATUS_SIZE            ( IAGC_STATUS_SIZE  )
+        .STATUS_SIZE            ( IAGC_STATUS_SIZE  ),
+        .CMD_PARAM_SIZE         ( CMD_PARAM_SIZE    ),
+        .ADDR_SIZE              ( ADDR_SIZE         ),
+        .DECIMATOR_SIZE         ( DECIMATOR_SIZE    ),
+        .DEF_MEMORY_SIZE        ( DEF_MEMORY_SIZE   ),
+        .DEF_DECIMATOR          ( DEF_DECIMATOR     )
     )
     u_iagc_fsm
     (
@@ -98,9 +110,14 @@ module top
         .i_cmd_sample           ( cmd_sample        ),
         .i_cmd_dump_mem         ( cmd_dump_mem      ),
         .i_cmd_clean_mem        ( cmd_clean_mem     ),
+        .i_cmd_set_mem          ( cmd_set_mem       ),
+        .i_cmd_set_decim        ( cmd_set_decim     ),
         .i_sample_end           ( sampler_end       ),
         .i_dump_end             ( dump_unit_end     ),
         .i_clean_end            ( mem_clean_end     ),
+        .i_cmd_parameter        ( cmd_param         ),
+        .o_memory_size          ( iagc_memory_size  ),
+        .o_decimator            ( iagc_decimator    ),
         .o_status               ( iagc_status       )
     );
     
@@ -199,8 +216,6 @@ module top
     /* SAMPLERS ################################################## */
     
     localparam SAMPLER_DATA_SIZE    = 16;
-    localparam ADDR_SIZE            = 12;
-    localparam MEMORY_SIZE          = 1024;
 
     
     wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampler_sample;
@@ -209,10 +224,10 @@ module top
         
     sampler #
     (
-        .DATA_SIZE         ( SAMPLER_DATA_SIZE  ),
-        .ADDR_SIZE         ( ADDR_SIZE          ),
-        .MEMORY_SIZE       ( MEMORY_SIZE        ),
-        .IAGC_STATUS_SIZE  ( IAGC_STATUS_SIZE   )
+        .DATA_SIZE          ( SAMPLER_DATA_SIZE ),
+        .ADDR_SIZE          ( ADDR_SIZE         ),
+        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  ),
+        .DECIMATOR_SIZE     ( DECIMATOR_SIZE    )
     )
     u_sampler_ch1
     (
@@ -220,6 +235,8 @@ module top
         .i_iagc_status      ( iagc_status       ),
         .i_data             ( conversor_ch1     ),
         .i_gate             ( i_gate            ),
+        .i_memory_size      ( iagc_memory_size  ),
+        .i_decimator        ( iagc_decimator    ),
         .o_data             ( sampler_sample    ),
         .o_addr             ( sampler_addr      ),
         .o_end              ( sampler_end       )
@@ -235,7 +252,7 @@ module top
     (
         .DATA_SIZE         ( SAMPLER_DATA_SIZE  ),
         .ADDR_SIZE         ( ADDR_SIZE          ),
-        .MEMORY_SIZE       ( MEMORY_SIZE        ),
+        .DEF_MEMORY_SIZE   ( DEF_MEMORY_SIZE    ),
         .IAGC_STATUS_SIZE  ( IAGC_STATUS_SIZE   )
     )
     u_memory
@@ -245,6 +262,7 @@ module top
         .i_waddr            ( sampler_addr      ),
         .i_raddr            ( dump_unit_addr    ),
         .i_data             ( sampler_sample    ),
+        .i_memory_size      ( iagc_memory_size  ),
         .o_clean_end        ( mem_clean_end     ),
         .o_data             ( mem_data          )    
     );
@@ -259,7 +277,6 @@ module top
     dump_unit #
     (
         .ADDR_SIZE          ( ADDR_SIZE         ),
-        .MEMORY_SIZE        ( MEMORY_SIZE       ),
         .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  )
     )
     u_dump_unit
@@ -267,6 +284,7 @@ module top
         .i_clock            ( sys_clock         ),
         .i_ready            ( uart_tx_ready     ),
         .i_iagc_status      ( iagc_status       ),
+        .i_memory_size      ( iagc_memory_size  ),
         .o_addr             ( dump_unit_addr    ),
         .o_valid            ( dump_unit_valid   ),
         .o_end              ( dump_unit_end     )
@@ -336,29 +354,32 @@ module top
     
     /* ########################################################### */
     /* COMMAND UNIT ############################################## */
-    
+        
     wire                                cmd_reset;
     wire                                cmd_sample;
     wire                                cmd_set_decim;
     wire                                cmd_clean_mem;                                                    
     wire                                cmd_dump_mem;
-    wire    [ UART_DATA_SIZE - 1 : 0 ]  cmd_param;
+    wire                                cmd_set_mem;
+    wire    [ CMD_PARAM_SIZE - 1 : 0 ]  cmd_param;
     
     command_unit #
     (
         .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE      ),
-        .DATA_SIZE          ( UART_DATA_SIZE        )
+        .DATA_SIZE          ( UART_DATA_SIZE        ),
+        .CMD_PARAM_SIZE     ( CMD_PARAM_SIZE        )
     )
     u_command_unit
     (
         .i_clock            ( sys_clock             ),
         .i_iagc_status      ( iagc_status           ),
-        .i_rx_data          ( uart_rx_data          ),
+        .i_cmd              ( uart_rx_data          ),
         .o_cmd_reset        ( cmd_reset             ),
         .o_cmd_sample       ( cmd_sample            ),
         .o_cmd_set_decim    ( cmd_set_decim         ),
         .o_cmd_clean_mem    ( cmd_clean_mem         ),
         .o_cmd_dump_mem     ( cmd_dump_mem          ),
+        .o_cmd_set_mem      ( cmd_set_mem           ),
         .o_cmd_param        ( cmd_param             )
     );
         

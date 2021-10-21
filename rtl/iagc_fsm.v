@@ -1,24 +1,34 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-module iagc_fsm#
+module iagc_fsm #
 (
-    parameter   STATUS_SIZE =   4
+    parameter STATUS_SIZE       = 4,
+    parameter DEF_MEMORY_SIZE   = 4096,
+    parameter CMD_PARAM_SIZE    = 4,
+    parameter ADDR_SIZE         = 12,
+    parameter DECIMATOR_SIZE    = 4,
+    parameter DEF_DECIMATOR     = 4
 )
 (
-    input  wire                         i_clock,
-    input  wire                         i_reset,
-    input  wire                         i_adc1410_init_done,
-    input  wire                         i_sample,
-    input  wire                         i_cmd_valid,
-    input  wire                         i_cmd_reset,
-    input  wire                         i_cmd_sample,
-    input  wire                         i_cmd_dump_mem,
-    input  wire                         i_cmd_clean_mem,
-    input  wire                         i_sample_end,
-    input  wire                         i_dump_end,
-    input  wire                         i_clean_end,
-    output wire [ STATUS_SIZE - 1 : 0 ] o_status
+    input  wire                             i_clock,
+    input  wire                             i_reset,
+    input  wire                             i_adc1410_init_done,
+    input  wire                             i_sample,
+    input  wire                             i_cmd_valid,
+    input  wire                             i_cmd_reset,
+    input  wire                             i_cmd_sample,
+    input  wire                             i_cmd_dump_mem,
+    input  wire                             i_cmd_clean_mem,
+    input  wire                             i_cmd_set_mem,
+    input  wire                             i_cmd_set_decim,
+    input  wire                             i_sample_end,
+    input  wire                             i_dump_end,
+    input  wire                             i_clean_end,
+    input  wire [ CMD_PARAM_SIZE - 1 : 0 ]  i_cmd_parameter,
+    output wire [ ADDR_SIZE      - 1 : 0 ]  o_memory_size,
+    output wire [ DECIMATOR_SIZE - 1 : 0 ]  o_decimator,
+    output wire [ STATUS_SIZE    - 1 : 0 ]  o_status
 );
 
     localparam IAGC_STATUS_RESET        = 4'b0000;
@@ -30,13 +40,34 @@ module iagc_fsm#
     localparam IAGC_STATUS_CMD_ERROR    = 4'b0110;
     localparam IAGC_STATUS_DUMP_MEM     = 4'b0111;
     localparam IAGC_STATUS_CLEAN_MEM    = 4'b1000;
+    localparam IAGC_STATUS_SET_MEM      = 4'b1001;
+    localparam IAGC_STATUS_SET_DEC      = 4'b1010;
         
-    reg     [ STATUS_SIZE - 1 : 0 ] status;
-    reg     [ STATUS_SIZE - 1 : 0 ] next_status;
+    reg     [ STATUS_SIZE    - 1 : 0 ]  status;
+    reg     [ STATUS_SIZE    - 1 : 0 ]  next_status;
+    reg     [ ADDR_SIZE      - 1 : 0 ]  memory_size;
+    reg     [ DECIMATOR_SIZE - 1 : 0 ]  decimator;
     
     /* */
     always@( posedge i_clock ) begin
-        status  <= i_reset ? IAGC_STATUS_RESET : next_status;
+        if( i_reset ) begin
+            status      <= IAGC_STATUS_RESET;
+            memory_size <= DEF_MEMORY_SIZE;
+            decimator   <= DEF_DECIMATOR;
+        end
+        else begin
+            status      <= next_status;
+            
+            if( status == IAGC_STATUS_SET_MEM )
+                memory_size <= 1 << i_cmd_parameter;
+            else
+                memory_size <= memory_size;
+                
+            if( status == IAGC_STATUS_SET_DEC )
+                decimator <= i_cmd_parameter;
+            else
+                decimator <= decimator;
+        end
     end
     
     /* */
@@ -77,6 +108,10 @@ module iagc_fsm#
                     next_status = IAGC_STATUS_DUMP_MEM;
                 else if( i_cmd_clean_mem )
                     next_status = IAGC_STATUS_CLEAN_MEM;
+                else if( i_cmd_set_mem )
+                    next_status = IAGC_STATUS_SET_MEM;
+                else if( i_cmd_set_decim )
+                    next_status = IAGC_STATUS_SET_DEC;
                 else
                     next_status = IAGC_STATUS_CMD_ERROR;
             end
@@ -92,6 +127,14 @@ module iagc_fsm#
             IAGC_STATUS_CLEAN_MEM: begin
                 next_status = i_clean_end ? IAGC_STATUS_IDLE : IAGC_STATUS_CLEAN_MEM; 
             end
+            
+            IAGC_STATUS_SET_MEM: begin
+                next_status = IAGC_STATUS_IDLE; 
+            end
+            
+            IAGC_STATUS_SET_DEC: begin
+                next_status = IAGC_STATUS_IDLE; 
+            end
                         
             default: begin
                 next_status = IAGC_STATUS_RESET;
@@ -100,7 +143,9 @@ module iagc_fsm#
         endcase
     end
     
-    assign  o_status    = status;
+    assign o_status         = status;
+    assign o_memory_size    = memory_size;
+    assign o_decimator      = decimator;
     
 endmodule
 

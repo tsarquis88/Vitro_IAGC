@@ -5,14 +5,16 @@ module sampler #
 (
     parameter DATA_SIZE         = 16,
     parameter ADDR_SIZE         = 12,
-    parameter MEMORY_SIZE       = 1024,
-    parameter IAGC_STATUS_SIZE  = 4
+    parameter IAGC_STATUS_SIZE  = 4,
+    parameter DECIMATOR_SIZE    = 4
 )
 (
     input  wire                                 i_clock,
     input  wire [ DATA_SIZE        - 1 : 0 ]    i_data,
     input  wire                                 i_gate,
     input  wire [ IAGC_STATUS_SIZE - 1 : 0 ]    i_iagc_status,
+    input  wire [ ADDR_SIZE        - 1 : 0 ]    i_memory_size,
+    input  wire [ DECIMATOR_SIZE   - 1 : 0 ]    i_decimator,
     output wire [ ADDR_SIZE        - 1 : 0 ]    o_addr, 
     output wire [ DATA_SIZE        - 1 : 0 ]    o_data,
     output wire                                 o_end
@@ -26,8 +28,10 @@ module sampler #
     localparam IAGC_STATUS_CMD_READ     = 4'b0101;
     localparam IAGC_STATUS_CMD_ERROR    = 4'b0110;
     localparam IAGC_STATUS_DUMP_MEM     = 4'b0111;
+    localparam IAGC_STATUS_CLEAN_MEM    = 4'b1000;
+    localparam IAGC_STATUS_SET_MEM      = 4'b1001;
+    localparam IAGC_STATUS_SET_DEC      = 4'b1010;
 
-    localparam DECIMATE_DEFAULT =   4;   
     localparam STATUS_SIZE      =   3;
     
     localparam STATUS_INIT      =   0;
@@ -38,7 +42,6 @@ module sampler #
     reg     [ STATUS_SIZE   - 1 : 0 ]   status;
     reg     [ STATUS_SIZE   - 1 : 0 ]   next_status;
     reg     [ ADDR_SIZE     - 1 : 0 ]   addr;
-    reg     [ DATA_SIZE     - 1 : 0 ]   decimate_order;
     reg     [ DATA_SIZE     - 1 : 0 ]   sample;
     
     integer                             samples_count;
@@ -52,16 +55,13 @@ module sampler #
         if( i_iagc_status == IAGC_STATUS_RESET ) begin
             
             status          <= STATUS_INIT;
-            decimate_order  <= DECIMATE_DEFAULT;
-            
+                        
         end
         else begin
         
             status          <= next_status;
             last_i_gate     <= i_gate;
-            
-            decimate_order  <= DECIMATE_DEFAULT;
-            
+                        
             case( status )
                 
                 STATUS_INIT: begin
@@ -81,7 +81,7 @@ module sampler #
                 end
                 
                 STATUS_WRITE: begin
-                    if( samples_count >= decimate_order - 1 ) begin
+                    if( samples_count >= i_decimator - 1 ) begin
                         addr            <= first_write ? { ADDR_SIZE { 1'b0 } } : addr + 1'b1;
                         samples_count   <= 0;
                         sample          <= i_data;
@@ -129,7 +129,7 @@ module sampler #
             end
             
             STATUS_WRITE: begin
-                if( addr == MEMORY_SIZE - 1 )
+                if( addr == i_memory_size - 1 )
                     next_status = STATUS_END;
                 else
                     next_status = i_gate ? STATUS_WRITE : STATUS_WAIT;

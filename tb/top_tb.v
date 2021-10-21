@@ -48,7 +48,7 @@ module top_tb
         sample          = 1'b0;
         
         #10000
-        tx_data         = 8'b10000000;
+        tx_data         = 8'b01010100;
         tx_valid        = 1'b1;
         #100
         tx_valid        = 1'b0;

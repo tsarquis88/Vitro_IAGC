@@ -4,13 +4,13 @@
 module dump_unit # 
 (
     parameter ADDR_SIZE         = 12,
-    parameter MEMORY_SIZE       = 1024,
     parameter IAGC_STATUS_SIZE  = 4
 )
 (
     input  wire                                 i_clock,
     input  wire                                 i_ready,
     input  wire [ IAGC_STATUS_SIZE - 1 : 0 ]    i_iagc_status,
+    input  wire [ ADDR_SIZE        - 1 : 0 ]    i_memory_size,
     output wire [ ADDR_SIZE        - 1 : 0 ]    o_addr,
     output wire                                 o_valid,
     output wire                                 o_end
@@ -46,12 +46,12 @@ module dump_unit #
     
         if( i_iagc_status == IAGC_STATUS_RESET ) begin
             
-            status          <= STATUS_INIT;
+            status <= STATUS_INIT;
             
         end
         else begin
         
-            status          <= next_status;
+            status <= next_status;
             
             case( status )
                 
@@ -109,7 +109,7 @@ module dump_unit #
             end
         
             STATUS_FETCH: begin
-                next_status = addr >= MEMORY_SIZE - 1 ? STATUS_END : STATUS_VALID;
+                next_status = addr >= i_memory_size - 1 ? STATUS_END : STATUS_VALID;
             end
             
             STATUS_VALID: begin
