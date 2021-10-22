@@ -14,8 +14,7 @@ module top
     output wire o_led1_r,
     output wire o_led1_b,
     
-    output wire o_tx_ch1_l,
-    output wire o_tx_ch1_h,
+    output wire o_tx,
     
     input  wire i_rx,
     
@@ -114,7 +113,7 @@ module top
         .i_cmd_set_decim        ( cmd_set_decim     ),
         .i_sample_end           ( sampler_end       ),
         .i_dump_end             ( dump_unit_end     ),
-        .i_clean_end            ( mem_clean_end     ),
+        .i_clean_end            ( memory_clean_end  ),
         .i_cmd_parameter        ( cmd_param         ),
         .o_memory_size          ( iagc_memory_size  ),
         .o_decimator            ( iagc_decimator    ),
@@ -245,8 +244,8 @@ module top
     /* ########################################################### */
     /* RAM ####################################################### */
     
-    wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   mem_data;
-    wire                                    mem_clean_end;
+    wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   memory_data;
+    wire                                    memory_clean_end;
     
     memory #
     (
@@ -263,21 +262,26 @@ module top
         .i_raddr            ( dump_unit_addr    ),
         .i_data             ( sampler_sample    ),
         .i_memory_size      ( iagc_memory_size  ),
-        .o_clean_end        ( mem_clean_end     ),
-        .o_data             ( mem_data          )    
+        .o_clean_end        ( memory_clean_end  ),
+        .o_data             ( memory_data       )    
     );
     
     /* ########################################################### */
     /* DUMP UNIT ################################################# */
     
-    wire                            dump_unit_valid;
-    wire    [ ADDR_SIZE - 1 : 0 ]   dump_unit_addr;
-    wire                            dump_unit_end;
+    localparam UART_DATA_SIZE    = 8;
+
+    wire                                dump_unit_valid;
+    wire    [ ADDR_SIZE      - 1 : 0 ]  dump_unit_addr;
+    wire                                dump_unit_end;
+    wire    [ UART_DATA_SIZE - 1 : 0 ]  dump_unit_data;
         
     dump_unit #
     (
         .ADDR_SIZE          ( ADDR_SIZE         ),
-        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  )
+        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  ),
+        .SAMPLER_DATA_SIZE  ( SAMPLER_DATA_SIZE ),
+        .UART_DATA_SIZE     ( UART_DATA_SIZE    )
     )
     u_dump_unit
     (
@@ -285,6 +289,8 @@ module top
         .i_ready            ( uart_tx_ready     ),
         .i_iagc_status      ( iagc_status       ),
         .i_memory_size      ( iagc_memory_size  ),
+        .i_memory_data      ( memory_data       ),
+        .o_data             ( dump_unit_data    ),
         .o_addr             ( dump_unit_addr    ),
         .o_valid            ( dump_unit_valid   ),
         .o_end              ( dump_unit_end     )
@@ -293,49 +299,27 @@ module top
     /* ########################################################### */
     /* UARTS ##################################################### */
     
-    localparam UART_DATA_SIZE    = 8;
-    
     wire                                uart_tx_ready;
-    wire                                uart_tx_ready_ch1_l;
-    wire                                uart_tx_ready_ch1_h;
     wire    [ UART_DATA_SIZE - 1 : 0 ]  uart_rx_data;
     wire                                uart_rx_valid;
     
     localparam UART_CLK_FREQ    = 100000000;
-    localparam UART_BAUDRATE    = 9600;
-    
-    assign  uart_tx_ready = uart_tx_ready_ch1_l && uart_tx_ready_ch1_h;
-    
+    localparam UART_BAUDRATE    = 38400;
+        
     uart_tx #
     (
-        .CLK_FREQUENCY  ( UART_CLK_FREQ             ),
-        .UART_FREQUENCY ( UART_BAUDRATE             )
+        .CLK_FREQUENCY  ( UART_CLK_FREQ         ),
+        .UART_FREQUENCY ( UART_BAUDRATE         )
     )
     u_uart_tx_ch1_l
     (
-        .user_clk       ( sys_clock                 ),
-        .rst_n          ( ~sys_reset                ),
-        .start_tx       ( dump_unit_valid           ),
-        .data           ( mem_data[ 7 : 0 ]         ),
-        .tx_bit         ( o_tx_ch1_l                ),
-        .ready          ( uart_tx_ready_ch1_l       ),
-        .chipscope_clk  (                           )
-    );
-    
-    uart_tx #
-    (
-        .CLK_FREQUENCY  ( UART_CLK_FREQ             ),
-        .UART_FREQUENCY ( UART_BAUDRATE             )
-    )
-    u_uart_tx_ch1_h
-    (
-        .user_clk       ( sys_clock                 ),
-        .rst_n          ( ~sys_reset                ),
-        .start_tx       ( dump_unit_valid           ),
-        .data           ( mem_data[ 13 : 8 ]        ),
-        .tx_bit         ( o_tx_ch1_h                ),
-        .ready          ( uart_tx_ready_ch1_h       ),
-        .chipscope_clk  (                           )
+        .user_clk       ( sys_clock             ),
+        .rst_n          ( ~sys_reset            ),
+        .start_tx       ( dump_unit_valid       ),
+        .data           ( dump_unit_data        ),
+        .tx_bit         ( o_tx                  ),
+        .ready          ( uart_tx_ready         ),
+        .chipscope_clk  (                       )
     );
     
     uart_rx #

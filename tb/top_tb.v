@@ -13,8 +13,7 @@ module top_tb
     reg         sample;
     
     wire        rx;
-    wire        tx_l;
-    wire        tx_h;
+    wire        tx;
     
     wire        led0_r;
     wire        led0_g;
@@ -26,6 +25,8 @@ module top_tb
     reg         tx_valid;
     reg  [7:0]  tx_data;
     wire        tx_ready;
+    wire [7:0]  rx_data;
+    wire        rx_valid;
     
     initial begin        
         clock           = 1'b0;
@@ -48,7 +49,7 @@ module top_tb
         sample          = 1'b0;
         
         #10000
-        tx_data         = 8'b01010100;
+        tx_data         = 8'b01000000;
         tx_valid        = 1'b1;
         #100
         tx_valid        = 1'b0;
@@ -79,24 +80,37 @@ module top_tb
         .o_led1_g           ( led1_g        ),
         .o_led1_r           ( led1_r        ),
         .o_led1_b           ( led1_b        ),
-        .o_tx_ch1_l         ( tx_l          ),
-        .o_tx_ch1_h         ( tx_h          )
+        .o_tx               ( tx            )
     );
     
     uart_tx #
     (
-        .CLK_FREQUENCY  ( 125000000                 ),
-        .UART_FREQUENCY ( 9600                      )
+        .CLK_FREQUENCY  ( 125000000 ),
+        .UART_FREQUENCY ( 9600      )
     )
     u_uart_tx
     (
-        .user_clk       ( clock                     ),
-        .rst_n          ( ~reset                    ),
-        .start_tx       ( tx_valid                  ),
-        .data           ( tx_data                   ),
-        .tx_bit         ( rx                        ),
-        .ready          ( tx_ready                  ),
-        .chipscope_clk  (                           )
+        .user_clk       ( clock     ),
+        .rst_n          ( ~reset    ),
+        .start_tx       ( tx_valid  ),
+        .data           ( tx_data   ),
+        .tx_bit         ( rx        ),
+        .ready          ( tx_ready  ),
+        .chipscope_clk  (           )
+    );
+    
+    uart_rx #
+    (
+        .CLK_FREQUENCY  ( 125000000 ),
+        .UART_FREQUENCY ( 9600      )
+    )
+    u_uart_rx
+    (
+        .clk            ( clock     ),
+        .rst_n          ( ~reset    ),
+        .data           ( rx_data   ),
+        .rx             ( tx        ),
+        .valid          ( rx_valid  )
     );
     
 endmodule
