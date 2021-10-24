@@ -16,15 +16,10 @@ module iagc_fsm #
     input  wire                             i_adc1410_init_done,
     input  wire                             i_sample,
     input  wire                             i_cmd_valid,
-    input  wire                             i_cmd_reset,
-    input  wire                             i_cmd_sample,
-    input  wire                             i_cmd_dump_mem,
-    input  wire                             i_cmd_clean_mem,
-    input  wire                             i_cmd_set_mem,
-    input  wire                             i_cmd_set_decim,
     input  wire                             i_sample_end,
     input  wire                             i_dump_end,
     input  wire                             i_clean_end,
+    input  wire [ CMD_PARAM_SIZE - 1 : 0 ]  i_cmd_operation,
     input  wire [ CMD_PARAM_SIZE - 1 : 0 ]  i_cmd_parameter,
     output wire [ ADDR_SIZE      - 1 : 0 ]  o_memory_size,
     output wire [ DECIMATOR_SIZE - 1 : 0 ]  o_decimator,
@@ -42,6 +37,13 @@ module iagc_fsm #
     localparam IAGC_STATUS_CLEAN_MEM    = 4'b1000;
     localparam IAGC_STATUS_SET_MEM      = 4'b1001;
     localparam IAGC_STATUS_SET_DEC      = 4'b1010;
+    
+    localparam CMD_RESET        = 4'b0000;
+    localparam CMD_SAMPLE       = 4'b0001;
+    localparam CMD_SET_DEC      = 4'b0010;
+    localparam CMD_CLEAN_MEM    = 4'b0011;
+    localparam CMD_DUMP_MEM     = 4'b0100;
+    localparam CMD_SET_MEM      = 4'b0101;
         
     reg     [ STATUS_SIZE    - 1 : 0 ]  status;
     reg     [ STATUS_SIZE    - 1 : 0 ]  next_status;
@@ -100,20 +102,15 @@ module iagc_fsm #
             end
             
             IAGC_STATUS_CMD_READ: begin
-                if( i_cmd_reset )
-                    next_status = IAGC_STATUS_RESET;
-                else if( i_cmd_sample )
-                    next_status = IAGC_STATUS_SAMPLE;
-                else if( i_cmd_dump_mem )
-                    next_status = IAGC_STATUS_DUMP_MEM;
-                else if( i_cmd_clean_mem )
-                    next_status = IAGC_STATUS_CLEAN_MEM;
-                else if( i_cmd_set_mem )
-                    next_status = IAGC_STATUS_SET_MEM;
-                else if( i_cmd_set_decim )
-                    next_status = IAGC_STATUS_SET_DEC;
-                else
-                    next_status = IAGC_STATUS_CMD_ERROR;
+                case( i_cmd_operation )
+                    CMD_RESET:      next_status = IAGC_STATUS_RESET;
+                    CMD_DUMP_MEM:   next_status = IAGC_STATUS_DUMP_MEM;
+                    CMD_SAMPLE:     next_status = IAGC_STATUS_SAMPLE;
+                    CMD_CLEAN_MEM:  next_status = IAGC_STATUS_CLEAN_MEM;
+                    CMD_SET_MEM:    next_status = IAGC_STATUS_SET_MEM;
+                    CMD_SET_DEC:    next_status = IAGC_STATUS_SET_DEC;
+                    default:        next_status = IAGC_STATUS_CMD_ERROR;
+                endcase
             end
             
             IAGC_STATUS_CMD_ERROR: begin

@@ -105,15 +105,10 @@ module top
         .i_adc1410_init_done    ( adc1410_init_done ),
         .i_sample               ( i_sample          ),
         .i_cmd_valid            ( uart_rx_valid     ),
-        .i_cmd_reset            ( cmd_reset         ),
-        .i_cmd_sample           ( cmd_sample        ),
-        .i_cmd_dump_mem         ( cmd_dump_mem      ),
-        .i_cmd_clean_mem        ( cmd_clean_mem     ),
-        .i_cmd_set_mem          ( cmd_set_mem       ),
-        .i_cmd_set_decim        ( cmd_set_decim     ),
         .i_sample_end           ( sampler_end       ),
         .i_dump_end             ( dump_unit_end     ),
         .i_clean_end            ( memory_clean_end  ),
+        .i_cmd_operation        ( cmd_op            ),
         .i_cmd_parameter        ( cmd_param         ),
         .o_memory_size          ( iagc_memory_size  ),
         .o_decimator            ( iagc_decimator    ),
@@ -339,13 +334,8 @@ module top
     /* ########################################################### */
     /* COMMAND UNIT ############################################## */
         
-    wire                                cmd_reset;
-    wire                                cmd_sample;
-    wire                                cmd_set_decim;
-    wire                                cmd_clean_mem;                                                    
-    wire                                cmd_dump_mem;
-    wire                                cmd_set_mem;
     wire    [ CMD_PARAM_SIZE - 1 : 0 ]  cmd_param;
+    wire    [ CMD_PARAM_SIZE - 1 : 0 ]  cmd_op;
     
     command_unit #
     (
@@ -358,12 +348,7 @@ module top
         .i_clock            ( sys_clock             ),
         .i_iagc_status      ( iagc_status           ),
         .i_cmd              ( uart_rx_data          ),
-        .o_cmd_reset        ( cmd_reset             ),
-        .o_cmd_sample       ( cmd_sample            ),
-        .o_cmd_set_decim    ( cmd_set_decim         ),
-        .o_cmd_clean_mem    ( cmd_clean_mem         ),
-        .o_cmd_dump_mem     ( cmd_dump_mem          ),
-        .o_cmd_set_mem      ( cmd_set_mem           ),
+        .o_cmd_op           ( cmd_op                ),
         .o_cmd_param        ( cmd_param             )
     );
         
