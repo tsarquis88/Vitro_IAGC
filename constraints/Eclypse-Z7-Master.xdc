@@ -20,21 +20,21 @@ set_property -dict { PACKAGE_PIN A18   IOSTANDARD LVCMOS33 } [get_ports { o_led1
 set_property -dict { PACKAGE_PIN A19   IOSTANDARD LVCMOS33 } [get_ports { o_led1_r }]; #IO_L10N_T1_AD11N Sch=led1_r
 
 ## Pmod Header JA
-set_property -dict { PACKAGE_PIN B15   IOSTANDARD LVCMOS33 } [get_ports { o_tx }]; #IO_0 Sch=ja1_fpga
+#set_property -dict { PACKAGE_PIN B15   IOSTANDARD LVCMOS33 } [get_ports { o_tx }]; #IO_0 Sch=ja1_fpga
 #set_property -dict { PACKAGE_PIN C15   IOSTANDARD LVCMOS33 } [get_ports { o_adc_led_1 }]; #IO_25 Sch=ja2_fpga
 #set_property -dict { PACKAGE_PIN D15   IOSTANDARD LVCMOS33 } [get_ports { o_adc_led_2 }]; #IO_L1N_T0_AD0N Sch=ja3_fpga
 #set_property -dict { PACKAGE_PIN E16   IOSTANDARD LVCMOS33 } [get_ports { o_tx_ch1_h }]; #IO_L1P_T0_AD0P Sch=ja4_fpga
-set_property -dict { PACKAGE_PIN E15   IOSTANDARD LVCMOS33 } [get_ports { i_rx }]; #IO_L2N_T0_AD8N Sch=ja7_fpga
+set_property -dict { PACKAGE_PIN E15   IOSTANDARD LVCMOS33 } [get_ports { i_gate }]; #IO_L2N_T0_AD8N Sch=ja7_fpga
 #set_property -dict { PACKAGE_PIN F17   IOSTANDARD LVCMOS33 } [get_ports { o_tx_1 }]; #IO_L2P_T0_AD8P Sch=ja8_fpga
 #set_property -dict { PACKAGE_PIN F16   IOSTANDARD LVCMOS33 } [get_ports { o_buzzer }]; #IO_L3N_T0_DQS_AD1N Sch=ja9_fpga
-set_property -dict { PACKAGE_PIN G16   IOSTANDARD LVCMOS33 } [get_ports { i_gate }]; #IO_L3P_T0_DQS_AD1P Sch=ja10_fpga
+#set_property -dict { PACKAGE_PIN G16   IOSTANDARD LVCMOS33 } [get_ports { i_gate }]; #IO_L3P_T0_DQS_AD1P Sch=ja10_fpga
 
 ## Pmod Header JB
-#set_property -dict { PACKAGE_PIN G15   IOSTANDARD LVCMOS33 } [get_ports { i_gate }]; #IO_L4N_T0 Sch=jb1_fpga
+set_property -dict { PACKAGE_PIN G15   IOSTANDARD LVCMOS33 } [get_ports { o_tx }]; #IO_L4N_T0 Sch=jb1_fpga
 #set_property -dict { PACKAGE_PIN D16   IOSTANDARD LVCMOS33 } [get_ports { o_adc_led_9 }]; #IO_L4P_T0 Sch=jb2_fpga
 #set_property -dict { PACKAGE_PIN D17   IOSTANDARD LVCMOS33 } [get_ports { i_rx }]; #IO_L5N_T0_AD9N Sch=jb3_fpga
 #set_property -dict { PACKAGE_PIN E18   IOSTANDARD LVCMOS33 } [get_ports { o_tx }]; #IO_L5P_T0_AD9P Sch=jb4_fpga
-#set_property -dict { PACKAGE_PIN F18   IOSTANDARD LVCMOS33 } [get_ports { o_adc_led_12 }]; #IO_L6N_T0_VREF Sch=jb7_fpga
+set_property -dict { PACKAGE_PIN F18   IOSTANDARD LVCMOS33 } [get_ports { i_rx }]; #IO_L6N_T0_VREF Sch=jb7_fpga
 #set_property -dict { PACKAGE_PIN G17   IOSTANDARD LVCMOS33 } [get_ports { o_adc_led_13 }]; #IO_L6P_T0 Sch=jb8_fpga
 #set_property -dict { PACKAGE_PIN H18   IOSTANDARD LVCMOS33 } [get_ports { o_adc_led_14 }]; #IO_L7N_T1_AD2N Sch=jb9_fpga
 #set_property -dict { PACKAGE_PIN H17   IOSTANDARD LVCMOS33 } [get_ports { o_adc_led_15 }]; #IO_L7P_T1_AD2P Sch=jb10_fpga

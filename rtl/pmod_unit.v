@@ -25,6 +25,10 @@ module pmod_unit #
     localparam IAGC_STATUS_CMD_READ     = 4'b0101;
     localparam IAGC_STATUS_CMD_ERROR    = 4'b0110;
     localparam IAGC_STATUS_DUMP_MEM     = 4'b0111;
+    localparam IAGC_STATUS_CLEAN_MEM    = 4'b1000;
+    localparam IAGC_STATUS_SET_MEM      = 4'b1001;
+    localparam IAGC_STATUS_SET_DEC      = 4'b1010;
+    localparam IAGC_STATUS_HALT         = 4'b1011;
     
     localparam  LED_PWM_TICKS       =   50;
     localparam  SEC_TICKS           =   100000000;

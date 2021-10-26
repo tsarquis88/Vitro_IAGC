@@ -29,8 +29,8 @@ module command_unit #
     reg [ CMD_PARAM_SIZE - 1 : 0 ]  cmd_param;
     
     always@( posedge i_clock ) begin
-            cmd_param   <= i_cmd[ 3 : 0 ];
-            cmd_op      <= i_cmd[ 7 : 4 ];
+        cmd_param   <= i_cmd[ 3 : 0 ];
+        cmd_op      <= i_cmd[ 7 : 4 ];
     end
     
     assign o_cmd_op     = cmd_op;
