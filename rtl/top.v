@@ -42,18 +42,44 @@ module top
     output wire o_adc_sclk,
     output wire o_adc_clock_in_n,
     output wire o_adc_clock_in_p,
-    output wire o_ch1_coupling_h,
-    output wire o_ch1_coupling_l,
-    output wire o_ch2_coupling_h,
-    output wire o_ch2_coupling_l,
-    output wire o_ch2_gain_h,
-    output wire o_ch2_gain_l,
-    output wire o_ch1_gain_l,
-    output wire o_ch1_gain_h,
+    output wire o_adc_ch1_coupling_h,
+    output wire o_adc_ch1_coupling_l,
+    output wire o_adc_ch2_coupling_h,
+    output wire o_adc_ch2_coupling_l,
+    output wire o_adc_ch2_gain_h,
+    output wire o_adc_ch2_gain_l,
+    output wire o_adc_ch1_gain_l,
+    output wire o_adc_ch1_gain_h,
     output wire o_adc_relay_com_l,
     output wire o_adc_relay_com_h,
     output wire o_adc_cs,
-    output wire o_adc_sync       
+    output wire o_adc_sync,
+    
+    inout  wire io_dac_sdio,
+    output wire o_dac_cs,
+    output wire o_dac_sclk,
+    output wire o_dac_reset,
+    output wire o_dac_clkio_p,
+    output wire o_dac_clkio_n,
+    output wire o_dac_clkin_p,
+    output wire o_dac_clkin_n,
+    output wire o_dac_data_0,
+    output wire o_dac_data_1,
+    output wire o_dac_data_2,
+    output wire o_dac_data_3,
+    output wire o_dac_data_4,
+    output wire o_dac_data_5,
+    output wire o_dac_data_6,
+    output wire o_dac_data_7,
+    output wire o_dac_data_8,
+    output wire o_dac_data_9,
+    output wire o_dac_data_10,
+    output wire o_dac_data_11,
+    output wire o_dac_data_12,
+    output wire o_dac_data_13,
+    output wire o_dac_set_fs_ch1,
+    output wire o_dac_set_fs_ch2,
+    output wire o_dac_enable       
 );
     
     /* ########################################################### */
@@ -62,6 +88,7 @@ module top
     wire    sys_clock;
     wire    sys_reset;
     wire    adc_clock;
+    wire    dac_clock;
     
     clock_unit #
     (
@@ -70,8 +97,9 @@ module top
     (
         .i_clock        ( i_clock   ),
         .i_reset        ( i_reset   ),
-        .o_adc_clock    ( adc_clock ),
         .o_sys_clock    ( sys_clock ),
+        .o_adc_clock    ( adc_clock ),
+        .o_dac_clock    ( dac_clock ),
         .o_valid        ( sys_reset )
     );
     
@@ -103,6 +131,7 @@ module top
         .i_clock                ( sys_clock         ),
         .i_reset                ( sys_reset         ),
         .i_adc1410_init_done    ( adc1410_init_done ),
+        .i_dac1411_init_done    ( dac1411_init_done ),
         .i_sample               ( i_sample          ),
         .i_cmd_valid            ( uart_rx_valid     ),
         .i_sample_end           ( sampler_end       ),
@@ -118,92 +147,160 @@ module top
     /* ########################################################### */
     /* ADC1410 ################################################### */
     
-    localparam  ADC1410_DATA_SIZE   =   14;
+    localparam  ZMOD_DATA_SIZE = 14;
     
-    wire    [ ADC1410_DATA_SIZE - 1 : 0 ]   adc1410_ch1;
-    wire    [ ADC1410_DATA_SIZE - 1 : 0 ]   adc1410_ch2;
-    wire                                    adc1410_init_done;
+    wire    [ ZMOD_DATA_SIZE - 1 : 0 ]  adc1410_ch1;
+    wire    [ ZMOD_DATA_SIZE - 1 : 0 ]  adc1410_ch2;
+    wire                                adc1410_init_done;
         
     adc1410 #
     (
-        .DATA_SIZE          ( ADC1410_DATA_SIZE ),
+        .DATA_SIZE          ( ZMOD_DATA_SIZE    ),
         .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  )
     )
     u_adc1410
     (
+        .i_sys_clock            ( sys_clock             ),
+        .i_adc_clock            ( adc_clock             ),
+        .i_iagc_status          ( iagc_status           ),
+        .i_adc_data_0           ( i_adc_data_0          ),
+        .i_adc_data_1           ( i_adc_data_1          ),
+        .i_adc_data_2           ( i_adc_data_2          ),
+        .i_adc_data_3           ( i_adc_data_3          ),
+        .i_adc_data_4           ( i_adc_data_4          ),
+        .i_adc_data_5           ( i_adc_data_5          ),
+        .i_adc_data_6           ( i_adc_data_6          ),
+        .i_adc_data_7           ( i_adc_data_7          ),
+        .i_adc_data_8           ( i_adc_data_8          ),
+        .i_adc_data_9           ( i_adc_data_9          ),
+        .i_adc_data_10          ( i_adc_data_10         ),
+        .i_adc_data_11          ( i_adc_data_11         ),
+        .i_adc_data_12          ( i_adc_data_12         ),
+        .i_adc_data_13          ( i_adc_data_13         ),
+        .io_adc_sdio            ( io_adc_sdio           ),
+        .i_adc_dco_clock_p      ( i_adc_dco_clock_p     ),
+        .o_adc_dco_clock_n      ( o_adc_dco_clock_n     ),
+        .o_adc_sclk             ( o_adc_sclk            ),
+        .o_adc_clock_in_n       ( o_adc_clock_in_n      ),
+        .o_adc_clock_in_p       ( o_adc_clock_in_p      ),
+        .o_adc_ch1_coupling_h   ( o_adc_ch1_coupling_h  ),
+        .o_adc_ch1_coupling_l   ( o_adc_ch1_coupling_l  ),
+        .o_adc_ch2_coupling_h   ( o_adc_ch2_coupling_h  ),
+        .o_adc_ch2_coupling_l   ( o_adc_ch2_coupling_l  ),
+        .o_adc_ch2_gain_h       ( o_adc_ch2_gain_h      ),
+        .o_adc_ch2_gain_l       ( o_adc_ch2_gain_l      ),
+        .o_adc_ch1_gain_l       ( o_adc_ch1_gain_l      ),
+        .o_adc_ch1_gain_h       ( o_adc_ch1_gain_h      ),
+        .o_adc_relay_com_l      ( o_adc_relay_com_l     ),
+        .o_adc_relay_com_h      ( o_adc_relay_com_h     ),
+        .o_adc_cs               ( o_adc_cs              ),
+        .o_adc_sync             ( o_adc_sync            ),
+        .o_adc_data_out_ch1     ( adc1410_ch1           ),
+        .o_adc_data_out_ch2     ( adc1410_ch2           ),
+        .o_adc_init_done        ( adc1410_init_done     ) 
+    );
+    
+    /* ########################################################### */
+    /* DAC1411 ################################################### */
+    
+    wire        dac1411_init_done;
+    
+    dac1411 #
+    (
+        .DATA_SIZE          ( ZMOD_DATA_SIZE    ),
+        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  )
+    )
+    u_dac1411
+    (
         .i_sys_clock        ( sys_clock         ),
-        .i_adc_clock        ( adc_clock         ),
+        .i_dac_clock        ( dac_clock         ),
         .i_iagc_status      ( iagc_status       ),
-        .i_adc_data_0       ( i_adc_data_0      ),
-        .i_adc_data_1       ( i_adc_data_1      ),
-        .i_adc_data_2       ( i_adc_data_2      ),
-        .i_adc_data_3       ( i_adc_data_3      ),
-        .i_adc_data_4       ( i_adc_data_4      ),
-        .i_adc_data_5       ( i_adc_data_5      ),
-        .i_adc_data_6       ( i_adc_data_6      ),
-        .i_adc_data_7       ( i_adc_data_7      ),
-        .i_adc_data_8       ( i_adc_data_8      ),
-        .i_adc_data_9       ( i_adc_data_9      ),
-        .i_adc_data_10      ( i_adc_data_10     ),
-        .i_adc_data_11      ( i_adc_data_11     ),
-        .i_adc_data_12      ( i_adc_data_12     ),
-        .i_adc_data_13      ( i_adc_data_13     ),
-        .io_adc_sdio        ( io_adc_sdio       ),
-        .i_adc_dco_clock_p  ( i_adc_dco_clock_p ),
-        .o_adc_dco_clock_n  ( o_adc_dco_clock_n ),
-        .o_adc_sclk         ( o_adc_sclk        ),
-        .o_adc_clock_in_n   ( o_adc_clock_in_n  ),
-        .o_adc_clock_in_p   ( o_adc_clock_in_p  ),
-        .o_ch1_coupling_h   ( o_ch1_coupling_h  ),
-        .o_ch1_coupling_l   ( o_ch1_coupling_l  ),
-        .o_ch2_coupling_h   ( o_ch2_coupling_h  ),
-        .o_ch2_coupling_l   ( o_ch2_coupling_l  ),
-        .o_ch2_gain_h       ( o_ch2_gain_h      ),
-        .o_ch2_gain_l       ( o_ch2_gain_l      ),
-        .o_ch1_gain_l       ( o_ch1_gain_l      ),
-        .o_ch1_gain_h       ( o_ch1_gain_h      ),
-        .o_adc_relay_com_l  ( o_adc_relay_com_l ),
-        .o_adc_relay_com_h  ( o_adc_relay_com_h ),
-        .o_adc_cs           ( o_adc_cs          ),
-        .o_adc_sync         ( o_adc_sync        ),
-        .o_data_out_ch1     ( adc1410_ch1       ),
-        .o_data_out_ch2     ( adc1410_ch2       ),
-        .o_init_done        ( adc1410_init_done ) 
+        .i_data_ch1         ( adc_sample_ch1    ),
+        .i_data_ch2         ( adc_sample_ch2    ),
+        .io_dac_sdio        ( io_dac_sdio       ),
+        .o_init_done        ( dac1411_init_done ),
+        .o_dac_cs           ( o_dac_cs          ),
+        .o_dac_sclk         ( o_dac_sclk        ),
+        .o_dac_reset        ( o_dac_reset       ),
+        .o_dac_clkio_p      ( o_dac_clkio_p     ),
+        .o_dac_clkio_n      ( o_dac_clkio_n     ),
+        .o_dac_clkin_p      ( o_dac_clkin_p     ),
+        .o_dac_clkin_n      ( o_dac_clkin_n     ),
+        .o_dac_data_0       ( o_dac_data_0      ),
+        .o_dac_data_1       ( o_dac_data_1      ),
+        .o_dac_data_2       ( o_dac_data_2      ),
+        .o_dac_data_3       ( o_dac_data_3      ),
+        .o_dac_data_4       ( o_dac_data_4      ),
+        .o_dac_data_5       ( o_dac_data_5      ),
+        .o_dac_data_6       ( o_dac_data_6      ),
+        .o_dac_data_7       ( o_dac_data_7      ),
+        .o_dac_data_8       ( o_dac_data_8      ),
+        .o_dac_data_9       ( o_dac_data_9      ),
+        .o_dac_data_10      ( o_dac_data_10     ),
+        .o_dac_data_11      ( o_dac_data_11     ),
+        .o_dac_data_12      ( o_dac_data_12     ),
+        .o_dac_data_13      ( o_dac_data_13     ),
+        .o_dac_set_fs_ch1   ( o_dac_set_fs_ch1  ),
+        .o_dac_set_fs_ch2   ( o_dac_set_fs_ch2  ),
+        .o_dac_enable       ( o_dac_enable      )
+    );
+    
+    /* ########################################################### */
+    /* DAC SAMPLER ############################################### */
+    
+    wire    [ ZMOD_DATA_SIZE - 1 : 0 ]  adc_sample_ch1;
+    wire    [ ZMOD_DATA_SIZE - 1 : 0 ]  adc_sample_ch2;
+    
+    dac_sampler # 
+    (
+        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  ),
+        .ZMOD_DATA_SIZE     ( ZMOD_DATA_SIZE    ),
+        .DECIMATOR_SIZE     ( DECIMATOR_SIZE    )
+    )
+    u_dac_sampler
+    (
+        .i_clock            ( sys_clock         ),
+        .i_iagc_status      ( iagc_status       ),
+        .i_data_ch1         ( adc1410_ch1       ),
+        .i_data_ch2         ( adc1410_ch2       ),
+        .i_decimator        ( iagc_decimator    ), 
+        .o_data_ch1         ( adc_sample_ch1    ),
+        .o_data_ch2         ( adc_sample_ch2    )
     );
     
     /* ########################################################### */
     /* DATA CONVERSORS ########################################### */
         
-    wire    [ ADC1410_DATA_SIZE - 1 : 0 ] conversor_ch1;
-    wire    [ ADC1410_DATA_SIZE - 1 : 0 ] conversor_ch2;
+    wire    [ ZMOD_DATA_SIZE - 1 : 0 ] conversor_ch1;
+    wire    [ ZMOD_DATA_SIZE - 1 : 0 ] conversor_ch2;
     
     data_conversor #
     (
-        .CONVERSOR_DATA_SIZE    ( ADC1410_DATA_SIZE     )
+        .CONVERSOR_DATA_SIZE    ( ZMOD_DATA_SIZE    )
     )
     u_data_conversor_ch1
     (
-        .i_data                 ( adc1410_ch1           ),
-        .o_data                 ( conversor_ch1         )
+        .i_data                 ( adc1410_ch1       ),
+        .o_data                 ( conversor_ch1     )
     );
     
     data_conversor #
     (
-        .CONVERSOR_DATA_SIZE    ( ADC1410_DATA_SIZE     )
+        .CONVERSOR_DATA_SIZE    ( ZMOD_DATA_SIZE    )
     )
     u_data_conversor_ch2
     (
-        .i_data                 ( adc1410_ch2           ),
-        .o_data                 ( conversor_ch2         )
+        .i_data                 ( adc1410_ch2       ),
+        .o_data                 ( conversor_ch2     )
     );
     
     /* ########################################################### */
     /* RAMP ###################################################### */
     
-    reg [ ADC1410_DATA_SIZE - 1 : 0 ] ramp;
+    reg [ ZMOD_DATA_SIZE - 1 : 0 ] ramp;
     
     always@( posedge sys_clock ) begin
-        ramp <=  ~i_gate ? { ADC1410_DATA_SIZE { 1'b0 } } : ramp + 1'b1;
+        ramp <=  ~i_gate ? { ZMOD_DATA_SIZE { 1'b0 } } : ramp + 1'b1;
     end
     
     /* ########################################################### */

@@ -14,6 +14,7 @@ module iagc_fsm #
     input  wire                             i_clock,
     input  wire                             i_reset,
     input  wire                             i_adc1410_init_done,
+    input  wire                             i_dac1411_init_done,
     input  wire                             i_sample,
     input  wire                             i_cmd_valid,
     input  wire                             i_sample_end,
@@ -84,7 +85,7 @@ module iagc_fsm #
             end
             
             IAGC_STATUS_INIT: begin
-                next_status = i_adc1410_init_done ? IAGC_STATUS_IDLE : IAGC_STATUS_INIT;
+                next_status = i_adc1410_init_done && i_dac1411_init_done ? IAGC_STATUS_IDLE : IAGC_STATUS_INIT;
             end
             
             IAGC_STATUS_IDLE: begin

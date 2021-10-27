@@ -1,5 +1,4 @@
 `timescale 1ns / 1ps
-`default_nettype none
 
 module adc1410 #
 (
@@ -7,44 +6,44 @@ module adc1410 #
     parameter   IAGC_STATUS_SIZE    = 4
 )
 (
-    input  wire                                 i_sys_clock,
-    input  wire                                 i_adc_clock,
-    input  wire [ IAGC_STATUS_SIZE - 1 : 0 ]    i_iagc_status,
-    input  wire                                 i_adc_data_0,
-    input  wire                                 i_adc_data_1,
-    input  wire                                 i_adc_data_2,
-    input  wire                                 i_adc_data_3,
-    input  wire                                 i_adc_data_4,
-    input  wire                                 i_adc_data_5,
-    input  wire                                 i_adc_data_6,
-    input  wire                                 i_adc_data_7,
-    input  wire                                 i_adc_data_8,
-    input  wire                                 i_adc_data_9,
-    input  wire                                 i_adc_data_10,
-    input  wire                                 i_adc_data_11,
-    input  wire                                 i_adc_data_12,
-    input  wire                                 i_adc_data_13,
-    inout  wire                                 io_adc_sdio,
-    input  wire                                 i_adc_dco_clock_p,
-    output wire                                 o_adc_dco_clock_n,
-    output wire                                 o_adc_sclk,
-    output wire                                 o_adc_clock_in_n,
-    output wire                                 o_adc_clock_in_p,
-    output wire                                 o_adc_ch1_coupling_h,
-    output wire                                 o_adc_ch1_coupling_l,
-    output wire                                 o_adc_ch2_coupling_h,
-    output wire                                 o_adc_ch2_coupling_l,
-    output wire                                 o_adc_ch2_gain_h,
-    output wire                                 o_adc_ch2_gain_l,
-    output wire                                 o_adc_ch1_gain_l,
-    output wire                                 o_adc_ch1_gain_h,
-    output wire                                 o_adc_relay_com_l,
-    output wire                                 o_adc_relay_com_h,
-    output wire                                 o_adc_cs,
-    output wire                                 o_adc_sync,
-    output wire     [ DATA_SIZE       - 1 : 0 ] o_adc_data_out_ch1,
-    output wire     [ DATA_SIZE       - 1 : 0 ] o_adc_data_out_ch2,
-    output wire                                 o_adc_init_done
+    input                           i_sys_clock,
+    input                           i_adc_clock,
+    input  [ IAGC_STATUS_SIZE - 1 : 0 ] i_iagc_status,
+    input                           i_adc_data_0,
+    input                           i_adc_data_1,
+    input                           i_adc_data_2,
+    input                           i_adc_data_3,
+    input                           i_adc_data_4,
+    input                           i_adc_data_5,
+    input                           i_adc_data_6,
+    input                           i_adc_data_7,
+    input                           i_adc_data_8,
+    input                           i_adc_data_9,
+    input                           i_adc_data_10,
+    input                           i_adc_data_11,
+    input                           i_adc_data_12,
+    input                           i_adc_data_13,
+    inout                           io_adc_sdio,
+    input                           i_adc_dco_clock_p,
+    output                          o_adc_dco_clock_n,
+    output                          o_adc_sclk,
+    output                          o_adc_clock_in_n,
+    output                          o_adc_clock_in_p,
+    output                          o_ch1_coupling_h,
+    output                          o_ch1_coupling_l,
+    output                          o_ch2_coupling_h,
+    output                          o_ch2_coupling_l,
+    output                          o_ch2_gain_h,
+    output                          o_ch2_gain_l,
+    output                          o_ch1_gain_l,
+    output                          o_ch1_gain_h,
+    output                          o_adc_relay_com_l,
+    output                          o_adc_relay_com_h,
+    output                          o_adc_cs,
+    output                          o_adc_sync,
+    output  [ DATA_SIZE - 1 : 0 ]   o_data_out_ch1,
+    output  [ DATA_SIZE - 1 : 0 ]   o_data_out_ch2,
+    output                          o_init_done
 );
 
     localparam IAGC_STATUS_RESET        = 4'b0000;
@@ -82,9 +81,9 @@ module adc1410 #
     assign data_in[ 12 ]        = i_adc_data_12;
     assign data_in[ 13 ]        = i_adc_data_13;
     assign o_adc_dco_clock_n    = 1'b0;
-    assign o_adc_init_done      = ~init_done;
-    assign o_adc_data_out_ch1   = data_out_ch1[ 15 : 2 ];
-    assign o_adc_data_out_ch2   = data_out_ch2[ 15 : 2 ];
+    assign o_init_done          = ~init_done;
+    assign o_data_out_ch1       = data_out_ch1[ 15 : 2 ];
+    assign o_data_out_ch2       = data_out_ch2[ 15 : 2 ];
     
     /*
                <--- IP Configuration --->
@@ -121,18 +120,16 @@ module adc1410 #
         .sADC_SDIO          ( io_adc_sdio           ),
         .sADC_CS            ( o_adc_cs              ),
         .sADC_Sclk          ( o_adc_sclk            ),
-        .sCh1CouplingH      ( o_adc_ch1_coupling_h  ),
-        .sCh1CouplingL      ( o_adc_ch1_coupling_l  ),
-        .sCh2CouplingH      ( o_adc_ch2_coupling_h  ),
-        .sCh2CouplingL      ( o_adc_ch2_coupling_l  ),
-        .sCh1GainH          ( o_adc_ch1_gain_h      ),
-        .sCh1GainL          ( o_adc_ch1_gain_l      ),
-        .sCh2GainH          ( o_adc_ch2_gain_h      ),
-        .sCh2GainL          ( o_adc_ch2_gain_l      ),
+        .sCh1CouplingH      ( o_ch1_coupling_h      ),
+        .sCh1CouplingL      ( o_ch1_coupling_l      ),
+        .sCh2CouplingH      ( o_ch2_coupling_h      ),
+        .sCh2CouplingL      ( o_ch2_coupling_l      ),
+        .sCh1GainH          ( o_ch1_gain_h          ),
+        .sCh1GainL          ( o_ch1_gain_l          ),
+        .sCh2GainH          ( o_ch2_gain_h          ),
+        .sCh2GainL          ( o_ch2_gain_l          ),
         .sRelayComH         ( o_adc_relay_com_h     ),
         .sRelayComL         ( o_adc_relay_com_l     )
     );
     
 endmodule
-
-`default_nettype wire

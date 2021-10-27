@@ -5,8 +5,9 @@ module clock_unit
 (
     input  wire i_clock,
     input  wire i_reset,
-    output wire o_adc_clock,
     output wire o_sys_clock,
+    output wire o_adc_clock,
+    output wire o_dac_clock,
     output wire o_valid
 );
     
@@ -18,13 +19,15 @@ module clock_unit
                <--- IP Configuration --->
         clk_in1     =   125 MHz
         clk_out1    =   100 MHz
-        clk_out1    =   400 MHz
+        clk_out2    =   400 MHz
+        clk_out3    =   100 MHz (shifted 90)
     */
     clk_wiz_0
     u_clk_wiz_0
     (
         .clk_out1           ( o_sys_clock   ),
         .clk_out2           ( o_adc_clock   ),
+        .clk_out3           ( o_dac_clock   ),
         .reset              ( i_reset       ),
         .locked             ( locked        ),
         .clk_in1            ( i_clock       )
