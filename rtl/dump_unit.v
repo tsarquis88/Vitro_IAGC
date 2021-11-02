@@ -27,7 +27,12 @@ module dump_unit #
     localparam IAGC_STATUS_CMD_PARSE    = 4'b0100;
     localparam IAGC_STATUS_CMD_READ     = 4'b0101;
     localparam IAGC_STATUS_CMD_ERROR    = 4'b0110;
-    localparam IAGC_STATUS_DUMP_MEM     = 4'b0111;
+    localparam IAGC_STATUS_DUMP_REF     = 4'b0111;
+    localparam IAGC_STATUS_DUMP_ERR     = 4'b1000;
+    localparam IAGC_STATUS_CLEAN_MEM    = 4'b1001;
+    localparam IAGC_STATUS_SET_MEM      = 4'b1010;
+    localparam IAGC_STATUS_SET_DEC      = 4'b1011;
+    localparam IAGC_STATUS_HALT         = 4'b1100;
    
     localparam STATUS_SIZE  = 4;
     
@@ -179,7 +184,10 @@ module dump_unit #
         case( status )
         
             STATUS_INIT: begin
-                next_status = i_iagc_status == IAGC_STATUS_DUMP_MEM ? STATUS_FETCH : STATUS_INIT;
+                if( i_iagc_status == IAGC_STATUS_DUMP_REF || i_iagc_status == IAGC_STATUS_DUMP_ERR ) 
+                    next_status = STATUS_FETCH;
+                else
+                    next_status = STATUS_INIT;
             end
         
             STATUS_FETCH: begin

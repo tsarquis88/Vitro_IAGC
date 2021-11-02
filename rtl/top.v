@@ -81,6 +81,21 @@ module top
     output wire o_dac_set_fs_ch2,
     output wire o_dac_enable       
 );
+
+    /* ########################################################### */
+    /* PARAMETERS ################################################ */
+    
+    localparam IAGC_STATUS_SIZE     = 4;
+    localparam ADDR_SIZE            = 13;
+    localparam CMD_PARAM_SIZE       = 4;
+    localparam DECIMATOR_SIZE       = 4;
+    localparam DEF_MEMORY_SIZE      = 1024;
+    localparam DEF_DECIMATOR        = 4;
+    localparam ZMOD_DATA_SIZE       = 14;
+    localparam SAMPLER_DATA_SIZE    = 16;
+    localparam UART_DATA_SIZE       = 8;
+    localparam UART_CLK_FREQ        = 100000000;
+    localparam UART_BAUDRATE        = 38400;
     
     /* ########################################################### */
     /* CLOCK UNIT ################################################ */
@@ -105,13 +120,6 @@ module top
     
     /* ########################################################### */
     /* GLOBAL FSM ################################################ */
-    
-    localparam IAGC_STATUS_SIZE = 4;
-    localparam ADDR_SIZE        = 13;
-    localparam CMD_PARAM_SIZE   = 4;
-    localparam DECIMATOR_SIZE   = 4;
-    localparam DEF_MEMORY_SIZE  = 4096;
-    localparam DEF_DECIMATOR    = 4;
     
     wire    [ IAGC_STATUS_SIZE - 1 : 0 ]    iagc_status;
     wire    [ ADDR_SIZE        - 1 : 0 ]    iagc_memory_size;
@@ -146,8 +154,6 @@ module top
     
     /* ########################################################### */
     /* ADC1410 ################################################### */
-    
-    localparam  ZMOD_DATA_SIZE = 14;
     
     wire    [ ZMOD_DATA_SIZE - 1 : 0 ]  adc1410_ch1;
     wire    [ ZMOD_DATA_SIZE - 1 : 0 ]  adc1410_ch2;
@@ -269,47 +275,29 @@ module top
     );
     
     /* ########################################################### */
-    /* DATA CONVERSORS ########################################### */
-        
-    wire    [ ZMOD_DATA_SIZE - 1 : 0 ] conversor_ch1;
-    wire    [ ZMOD_DATA_SIZE - 1 : 0 ] conversor_ch2;
+    /* DATA CONVERSOR ############################################ */
+    
+    wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   converted_ref;
+    wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   converted_err;
     
     data_conversor #
     (
-        .CONVERSOR_DATA_SIZE    ( ZMOD_DATA_SIZE    )
+        .ZMOD_DATA_SIZE     ( ZMOD_DATA_SIZE    ),
+        .SAMPLER_DATA_SIZE  ( SAMPLER_DATA_SIZE )
     )
     u_data_conversor_ch1
     (
-        .i_data                 ( adc1410_ch1       ),
-        .o_data                 ( conversor_ch1     )
-    );
-    
-    data_conversor #
-    (
-        .CONVERSOR_DATA_SIZE    ( ZMOD_DATA_SIZE    )
-    )
-    u_data_conversor_ch2
-    (
-        .i_data                 ( adc1410_ch2       ),
-        .o_data                 ( conversor_ch2     )
+        .i_raw_reference    ( adc1410_ch1       ),
+        .i_raw_error        ( adc1410_ch2       ),
+        .o_reference        ( converted_ref     ),
+        .o_error            ( converted_err     )
     );
     
     /* ########################################################### */
-    /* RAMP ###################################################### */
-    
-    reg [ ZMOD_DATA_SIZE - 1 : 0 ] ramp;
-    
-    always@( posedge sys_clock ) begin
-        ramp <=  ~i_gate ? { ZMOD_DATA_SIZE { 1'b0 } } : ramp + 1'b1;
-    end
-    
-    /* ########################################################### */
-    /* SAMPLERS ################################################## */
-    
-    localparam SAMPLER_DATA_SIZE    = 16;
+    /* SAMPLER ################################################### */
 
-    
-    wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampler_sample;
+    wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampled_ref;
+    wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampled_err;
     wire                                    sampler_end;
     wire    [ ADDR_SIZE         - 1 : 0 ]   sampler_addr;
         
@@ -324,11 +312,13 @@ module top
     (
         .i_clock            ( sys_clock         ),
         .i_iagc_status      ( iagc_status       ),
-        .i_data             ( conversor_ch1     ),
+        .i_reference        ( converted_ref     ),
+        .i_error            ( converted_err     ),
         .i_gate             ( i_gate            ),
         .i_memory_size      ( iagc_memory_size  ),
         .i_decimator        ( iagc_decimator    ),
-        .o_data             ( sampler_sample    ),
+        .o_reference_sample ( sampled_ref       ),
+        .o_error_sample     ( sampled_err       ),
         .o_addr             ( sampler_addr      ),
         .o_end              ( sampler_end       )
     );
@@ -352,7 +342,8 @@ module top
         .i_iagc_status      ( iagc_status       ),
         .i_waddr            ( sampler_addr      ),
         .i_raddr            ( dump_unit_addr    ),
-        .i_data             ( sampler_sample    ),
+        .i_reference_sample ( sampled_ref       ),
+        .i_error_sample     ( sampled_err       ),
         .i_memory_size      ( iagc_memory_size  ),
         .o_clean_end        ( memory_clean_end  ),
         .o_data             ( memory_data       )    
@@ -360,8 +351,6 @@ module top
     
     /* ########################################################### */
     /* DUMP UNIT ################################################# */
-    
-    localparam UART_DATA_SIZE    = 8;
 
     wire                                dump_unit_valid;
     wire    [ ADDR_SIZE      - 1 : 0 ]  dump_unit_addr;
@@ -394,16 +383,13 @@ module top
     wire                                uart_tx_ready;
     wire    [ UART_DATA_SIZE - 1 : 0 ]  uart_rx_data;
     wire                                uart_rx_valid;
-    
-    localparam UART_CLK_FREQ    = 100000000;
-    localparam UART_BAUDRATE    = 38400;
         
     uart_tx #
     (
         .CLK_FREQUENCY  ( UART_CLK_FREQ         ),
         .UART_FREQUENCY ( UART_BAUDRATE         )
     )
-    u_uart_tx_ch1_l
+    u_uart_tx
     (
         .user_clk       ( sys_clock             ),
         .rst_n          ( ~sys_reset            ),

@@ -34,20 +34,22 @@ module iagc_fsm #
     localparam IAGC_STATUS_CMD_PARSE    = 4'b0100;
     localparam IAGC_STATUS_CMD_READ     = 4'b0101;
     localparam IAGC_STATUS_CMD_ERROR    = 4'b0110;
-    localparam IAGC_STATUS_DUMP_MEM     = 4'b0111;
-    localparam IAGC_STATUS_CLEAN_MEM    = 4'b1000;
-    localparam IAGC_STATUS_SET_MEM      = 4'b1001;
-    localparam IAGC_STATUS_SET_DEC      = 4'b1010;
-    localparam IAGC_STATUS_HALT         = 4'b1011;
+    localparam IAGC_STATUS_DUMP_REF     = 4'b0111;
+    localparam IAGC_STATUS_DUMP_ERR     = 4'b1000;
+    localparam IAGC_STATUS_CLEAN_MEM    = 4'b1001;
+    localparam IAGC_STATUS_SET_MEM      = 4'b1010;
+    localparam IAGC_STATUS_SET_DEC      = 4'b1011;
+    localparam IAGC_STATUS_HALT         = 4'b1100;
     
     localparam CMD_EMPTY        = 4'b0000; /* Falso comando recibido en ocaciones */
     localparam CMD_RESET        = 4'b0001;
     localparam CMD_SAMPLE       = 4'b0010;
     localparam CMD_SET_DEC      = 4'b0011;
     localparam CMD_CLEAN_MEM    = 4'b0100;
-    localparam CMD_DUMP_MEM     = 4'b0101;
-    localparam CMD_SET_MEM      = 4'b0110;
-    localparam CMD_HALT         = 4'b0111;
+    localparam CMD_DUMP_REF     = 4'b0101;
+    localparam CMD_DUMP_ERR     = 4'b0110;
+    localparam CMD_SET_MEM      = 4'b0111;
+    localparam CMD_HALT         = 4'b1000;
         
     reg     [ STATUS_SIZE    - 1 : 0 ]  status;
     reg     [ STATUS_SIZE    - 1 : 0 ]  next_status;
@@ -109,7 +111,8 @@ module iagc_fsm #
                 case( i_cmd_operation )
                     CMD_EMPTY:      next_status = IAGC_STATUS_IDLE;
                     CMD_RESET:      next_status = IAGC_STATUS_RESET;
-                    CMD_DUMP_MEM:   next_status = IAGC_STATUS_DUMP_MEM;
+                    CMD_DUMP_REF:   next_status = IAGC_STATUS_DUMP_REF;
+                    CMD_DUMP_ERR:   next_status = IAGC_STATUS_DUMP_ERR;
                     CMD_SAMPLE:     next_status = IAGC_STATUS_SAMPLE;
                     CMD_CLEAN_MEM:  next_status = IAGC_STATUS_CLEAN_MEM;
                     CMD_SET_MEM:    next_status = IAGC_STATUS_SET_MEM;
@@ -123,8 +126,12 @@ module iagc_fsm #
                 next_status = IAGC_STATUS_IDLE;
             end
             
-            IAGC_STATUS_DUMP_MEM: begin
-                next_status = i_dump_end ? IAGC_STATUS_IDLE : IAGC_STATUS_DUMP_MEM; 
+            IAGC_STATUS_DUMP_REF: begin
+                next_status = i_dump_end ? IAGC_STATUS_IDLE : IAGC_STATUS_DUMP_REF; 
+            end
+            
+            IAGC_STATUS_DUMP_ERR: begin
+                next_status = i_dump_end ? IAGC_STATUS_IDLE : IAGC_STATUS_DUMP_ERR; 
             end
             
             IAGC_STATUS_CLEAN_MEM: begin

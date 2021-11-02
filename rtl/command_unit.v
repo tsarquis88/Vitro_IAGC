@@ -22,8 +22,12 @@ module command_unit #
     localparam IAGC_STATUS_CMD_PARSE    = 4'b0100;
     localparam IAGC_STATUS_CMD_READ     = 4'b0101;
     localparam IAGC_STATUS_CMD_ERROR    = 4'b0110;
-    localparam IAGC_STATUS_DUMP_MEM     = 4'b0111;
-    localparam IAGC_STATUS_CLEAN_MEM    = 4'b1000;
+    localparam IAGC_STATUS_DUMP_REF     = 4'b0111;
+    localparam IAGC_STATUS_DUMP_ERR     = 4'b1000;
+    localparam IAGC_STATUS_CLEAN_MEM    = 4'b1001;
+    localparam IAGC_STATUS_SET_MEM      = 4'b1010;
+    localparam IAGC_STATUS_SET_DEC      = 4'b1011;
+    localparam IAGC_STATUS_HALT         = 4'b1100;
     
     reg [ CMD_PARAM_SIZE - 1 : 0 ]  cmd_op;
     reg [ CMD_PARAM_SIZE - 1 : 0 ]  cmd_param;
