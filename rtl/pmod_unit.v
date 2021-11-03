@@ -9,6 +9,7 @@ module pmod_unit #
     input  wire                                 i_clock,
     input  wire                                 i_reset,
     input  wire [ IAGC_STATUS_SIZE - 1 : 0 ]    i_iagc_status,
+    input  wire                                 i_in_phase,
     output wire                                 o_led0_r,
     output wire                                 o_led0_g,
     output wire                                 o_led0_b,
@@ -85,63 +86,50 @@ module pmod_unit #
                 led0_r  = led_pwm;
                 led0_g  = 1'b0;
                 led0_b  = 1'b0;
-                
-                led1_r  = 1'b0;
-                led1_g  = 1'b0;
-                led1_b  = 1'b0;
             end
             
             IAGC_STATUS_IDLE: begin
                 led0_r  = 1'b0;
                 led0_g  = led_pwm;
                 led0_b  = 1'b0;
-                
-                led1_r  = sec_counter > 0 ? led_pwm : 1'b0;
-                led1_g  = 1'b0;
-                led1_b  = 1'b0;
             end
             
             IAGC_STATUS_SAMPLE: begin
                 led0_r  = 1'b0;
                 led0_g  = 1'b0;
                 led0_b  = led_pwm;
-                
-                led1_r  = 1'b0;
-                led1_g  = 1'b0;
-                led1_b  = 1'b0;
             end
             
             IAGC_STATUS_DUMP_REF: begin
                 led0_r  = led_pwm;
                 led0_g  = led_pwm;
                 led0_b  = 1'b0;
-                
-                led1_r  = 1'b0;
-                led1_g  = 1'b0;
-                led1_b  = 1'b0;
             end
             
             IAGC_STATUS_DUMP_ERR: begin
                 led0_r  = led_pwm;
                 led0_g  = led_pwm;
                 led0_b  = 1'b0;
-                
-                led1_r  = 1'b0;
-                led1_g  = 1'b0;
-                led1_b  = 1'b0;
             end
             
             default: begin
                 led0_r  = 1'b0;
                 led0_g  = 1'b0;
                 led0_b  = 1'b0;
-                
-                led1_r  = 1'b0;
-                led1_g  = 1'b0;
-                led1_b  = 1'b0;
             end
         
-        endcase 
+        endcase
+        
+        if( i_in_phase ) begin
+            led1_r  = 1'b0;
+            led1_g  = led_pwm;
+            led1_b  = 1'b0;
+        end
+        else begin
+            led1_r  = led_pwm;
+            led1_g  = 1'b0;
+            led1_b  = 1'b0;
+        end
     end
     
     assign  o_led0_r    = led0_r;

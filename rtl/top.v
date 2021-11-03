@@ -322,6 +322,26 @@ module top
         .o_addr             ( sampler_addr      ),
         .o_end              ( sampler_end       )
     );
+    
+    /* ########################################################### */
+    /* PHASE DETECTOR ############################################ */
+    
+    wire in_phase;
+    
+    phase_detector #
+    (
+        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  ),
+        .SAMPLER_DATA_SIZE  ( SAMPLER_DATA_SIZE )
+    )
+    u_phase_detector
+    (
+        .i_clock            ( sys_clock         ),
+        .i_iagc_status      ( iagc_status       ),
+        .i_gate             ( i_gate            ),
+        .i_reference        ( converted_ref     ),
+        .i_error            ( converted_err     ),
+        .o_in_phase         ( in_phase          )
+    );
    
     /* ########################################################### */
     /* RAM ####################################################### */
@@ -447,6 +467,7 @@ module top
         .i_clock            ( sys_clock             ),
         .i_reset            ( sys_reset             ),
         .i_iagc_status      ( iagc_status           ),
+        .i_in_phase         ( in_phase              ),
         .o_led0_r           ( o_led0_r              ),
         .o_led0_g           ( o_led0_g              ),
         .o_led0_b           ( o_led0_b              ),

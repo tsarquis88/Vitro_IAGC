@@ -55,7 +55,6 @@ module sampler #
     reg                                 last_i_gate;
     wire                                posedge_i_gate;
     
-    /* ADC1410 sampples */
     always@( posedge i_clock ) begin
     
         if( i_iagc_status == IAGC_STATUS_RESET ) begin
@@ -76,7 +75,7 @@ module sampler #
                     samples_count   <= 0;
                     ref_sample      <= { DATA_SIZE { 1'b0 } };
                     err_sample      <= { DATA_SIZE { 1'b0 } };
-                    end_count       <= 0;
+                    end_count       <= 0; 
                 end
                 
                 STATUS_WAIT: begin
@@ -133,7 +132,7 @@ module sampler #
         case( status )
         
             STATUS_INIT: begin
-                next_status = i_iagc_status == IAGC_STATUS_SAMPLE ? STATUS_WAIT : STATUS_INIT;
+                next_status = i_iagc_status == IAGC_STATUS_SAMPLE ? STATUS_WRITE : STATUS_INIT;
             end
         
             STATUS_WAIT: begin

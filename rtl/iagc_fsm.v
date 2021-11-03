@@ -41,15 +41,15 @@ module iagc_fsm #
     localparam IAGC_STATUS_SET_DEC      = 4'b1011;
     localparam IAGC_STATUS_HALT         = 4'b1100;
     
-    localparam CMD_EMPTY        = 4'b0000; /* Falso comando recibido en ocaciones */
-    localparam CMD_RESET        = 4'b0001;
-    localparam CMD_SAMPLE       = 4'b0010;
-    localparam CMD_SET_DEC      = 4'b0011;
-    localparam CMD_CLEAN_MEM    = 4'b0100;
-    localparam CMD_DUMP_REF     = 4'b0101;
-    localparam CMD_DUMP_ERR     = 4'b0110;
-    localparam CMD_SET_MEM      = 4'b0111;
-    localparam CMD_HALT         = 4'b1000;
+    localparam CMD_EMPTY        = 0; /* Falso comando recibido en ocaciones */
+    localparam CMD_RESET        = 1;
+    localparam CMD_SAMPLE       = 2;
+    localparam CMD_SET_DEC      = 3;
+    localparam CMD_CLEAN_MEM    = 4;
+    localparam CMD_DUMP_REF     = 5;
+    localparam CMD_DUMP_ERR     = 6;
+    localparam CMD_SET_MEM      = 7;
+    localparam CMD_HALT         = 8;
         
     reg     [ STATUS_SIZE    - 1 : 0 ]  status;
     reg     [ STATUS_SIZE    - 1 : 0 ]  next_status;
