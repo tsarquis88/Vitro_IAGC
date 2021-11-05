@@ -22,20 +22,7 @@ module top
     
     input  wire i_gate,   
     
-    input  wire i_adc_data_0,
-    input  wire i_adc_data_1,
-    input  wire i_adc_data_2,
-    input  wire i_adc_data_3,
-    input  wire i_adc_data_4,
-    input  wire i_adc_data_5,
-    input  wire i_adc_data_6,
-    input  wire i_adc_data_7,
-    input  wire i_adc_data_8,
-    input  wire i_adc_data_9,
-    input  wire i_adc_data_10,
-    input  wire i_adc_data_11,
-    input  wire i_adc_data_12,
-    input  wire i_adc_data_13,
+    input  wire [13:0] i_adc_data,
     inout  wire io_adc_sdio,
     input  wire i_adc_dco_clock_p,
     output wire o_adc_dco_clock_n,
@@ -63,20 +50,7 @@ module top
     output wire o_dac_clkio_n,
     output wire o_dac_clkin_p,
     output wire o_dac_clkin_n,
-    output wire o_dac_data_0,
-    output wire o_dac_data_1,
-    output wire o_dac_data_2,
-    output wire o_dac_data_3,
-    output wire o_dac_data_4,
-    output wire o_dac_data_5,
-    output wire o_dac_data_6,
-    output wire o_dac_data_7,
-    output wire o_dac_data_8,
-    output wire o_dac_data_9,
-    output wire o_dac_data_10,
-    output wire o_dac_data_11,
-    output wire o_dac_data_12,
-    output wire o_dac_data_13,
+    output wire [13:0] o_dac_data,
     output wire o_dac_set_fs_ch1,
     output wire o_dac_set_fs_ch2,
     output wire o_dac_enable       
@@ -161,28 +135,15 @@ module top
         
     adc1410 #
     (
-        .DATA_SIZE          ( ZMOD_DATA_SIZE    ),
-        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  )
+        .ZMOD_DATA_SIZE         ( ZMOD_DATA_SIZE        ),
+        .IAGC_STATUS_SIZE       ( IAGC_STATUS_SIZE      )
     )
     u_adc1410
     (
         .i_sys_clock            ( sys_clock             ),
         .i_adc_clock            ( adc_clock             ),
         .i_iagc_status          ( iagc_status           ),
-        .i_adc_data_0           ( i_adc_data_0          ),
-        .i_adc_data_1           ( i_adc_data_1          ),
-        .i_adc_data_2           ( i_adc_data_2          ),
-        .i_adc_data_3           ( i_adc_data_3          ),
-        .i_adc_data_4           ( i_adc_data_4          ),
-        .i_adc_data_5           ( i_adc_data_5          ),
-        .i_adc_data_6           ( i_adc_data_6          ),
-        .i_adc_data_7           ( i_adc_data_7          ),
-        .i_adc_data_8           ( i_adc_data_8          ),
-        .i_adc_data_9           ( i_adc_data_9          ),
-        .i_adc_data_10          ( i_adc_data_10         ),
-        .i_adc_data_11          ( i_adc_data_11         ),
-        .i_adc_data_12          ( i_adc_data_12         ),
-        .i_adc_data_13          ( i_adc_data_13         ),
+        .i_adc_data             ( i_adc_data            ),
         .io_adc_sdio            ( io_adc_sdio           ),
         .i_adc_dco_clock_p      ( i_adc_dco_clock_p     ),
         .o_adc_dco_clock_n      ( o_adc_dco_clock_n     ),
@@ -213,7 +174,7 @@ module top
     
     dac1411 #
     (
-        .DATA_SIZE          ( ZMOD_DATA_SIZE    ),
+        .ZMOD_DATA_SIZE     ( ZMOD_DATA_SIZE    ),
         .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  )
     )
     u_dac1411
@@ -221,10 +182,10 @@ module top
         .i_sys_clock        ( sys_clock         ),
         .i_dac_clock        ( dac_clock         ),
         .i_iagc_status      ( iagc_status       ),
-        .i_data_ch1         ( adc_sample_ch1    ),
-        .i_data_ch2         ( adc_sample_ch2    ),
+        .i_data_ch1         ( adc1410_ch1       ),
+        .i_data_ch2         ( adc1410_ch2       ),
         .io_dac_sdio        ( io_dac_sdio       ),
-        .o_init_done        ( dac1411_init_done ),
+        .o_dac_init_done    ( dac1411_init_done ),
         .o_dac_cs           ( o_dac_cs          ),
         .o_dac_sclk         ( o_dac_sclk        ),
         .o_dac_reset        ( o_dac_reset       ),
@@ -232,20 +193,7 @@ module top
         .o_dac_clkio_n      ( o_dac_clkio_n     ),
         .o_dac_clkin_p      ( o_dac_clkin_p     ),
         .o_dac_clkin_n      ( o_dac_clkin_n     ),
-        .o_dac_data_0       ( o_dac_data_0      ),
-        .o_dac_data_1       ( o_dac_data_1      ),
-        .o_dac_data_2       ( o_dac_data_2      ),
-        .o_dac_data_3       ( o_dac_data_3      ),
-        .o_dac_data_4       ( o_dac_data_4      ),
-        .o_dac_data_5       ( o_dac_data_5      ),
-        .o_dac_data_6       ( o_dac_data_6      ),
-        .o_dac_data_7       ( o_dac_data_7      ),
-        .o_dac_data_8       ( o_dac_data_8      ),
-        .o_dac_data_9       ( o_dac_data_9      ),
-        .o_dac_data_10      ( o_dac_data_10     ),
-        .o_dac_data_11      ( o_dac_data_11     ),
-        .o_dac_data_12      ( o_dac_data_12     ),
-        .o_dac_data_13      ( o_dac_data_13     ),
+        .o_dac_data         ( o_dac_data        ),
         .o_dac_set_fs_ch1   ( o_dac_set_fs_ch1  ),
         .o_dac_set_fs_ch2   ( o_dac_set_fs_ch2  ),
         .o_dac_enable       ( o_dac_enable      )
@@ -256,7 +204,7 @@ module top
     
     wire    [ ZMOD_DATA_SIZE - 1 : 0 ]  adc_sample_ch1;
     wire    [ ZMOD_DATA_SIZE - 1 : 0 ]  adc_sample_ch2;
-    
+    /*
     dac_sampler # 
     (
         .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  ),
@@ -272,7 +220,7 @@ module top
         .i_decimator        ( iagc_decimator    ), 
         .o_data_ch1         ( adc_sample_ch1    ),
         .o_data_ch2         ( adc_sample_ch2    )
-    );
+    );*/
     
     /* ########################################################### */
     /* DATA CONVERSOR ############################################ */

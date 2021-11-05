@@ -1,96 +1,48 @@
 `timescale 1ns / 1ps
+`default_nettype none
 
-module adc1410 #
+module dac1411 #
 (
-    parameter   DATA_SIZE           = 14,
+    parameter   ZMOD_DATA_SIZE      = 14,
     parameter   IAGC_STATUS_SIZE    = 4
 )
 (
-    input                           i_sys_clock,
-    input                           i_adc_clock,
-    input  [ IAGC_STATUS_SIZE - 1 : 0 ] i_iagc_status,
-    input                           i_adc_data_0,
-    input                           i_adc_data_1,
-    input                           i_adc_data_2,
-    input                           i_adc_data_3,
-    input                           i_adc_data_4,
-    input                           i_adc_data_5,
-    input                           i_adc_data_6,
-    input                           i_adc_data_7,
-    input                           i_adc_data_8,
-    input                           i_adc_data_9,
-    input                           i_adc_data_10,
-    input                           i_adc_data_11,
-    input                           i_adc_data_12,
-    input                           i_adc_data_13,
-    inout                           io_adc_sdio,
-    input                           i_adc_dco_clock_p,
-    output                          o_adc_dco_clock_n,
-    output                          o_adc_sclk,
-    output                          o_adc_clock_in_n,
-    output                          o_adc_clock_in_p,
-    output                          o_ch1_coupling_h,
-    output                          o_ch1_coupling_l,
-    output                          o_ch2_coupling_h,
-    output                          o_ch2_coupling_l,
-    output                          o_ch2_gain_h,
-    output                          o_ch2_gain_l,
-    output                          o_ch1_gain_l,
-    output                          o_ch1_gain_h,
-    output                          o_adc_relay_com_l,
-    output                          o_adc_relay_com_h,
-    output                          o_adc_cs,
-    output                          o_adc_sync,
-    output  [ DATA_SIZE - 1 : 0 ]   o_data_out_ch1,
-    output  [ DATA_SIZE - 1 : 0 ]   o_data_out_ch2,
-    output                          o_init_done
+    input  wire                                 i_sys_clock,
+    input  wire                                 i_dac_clock,
+    input  wire [ IAGC_STATUS_SIZE - 1 : 0 ]    i_iagc_status,
+    input  wire [ ZMOD_DATA_SIZE   - 1 : 0 ]    i_data_ch1,
+    input  wire [ ZMOD_DATA_SIZE   - 1 : 0 ]    i_data_ch2,
+    output wire [ ZMOD_DATA_SIZE   - 1 : 0 ]    o_dac_data,
+    inout  wire                                 io_dac_sdio,
+    output wire                                 o_dac_cs,
+    output wire                                 o_dac_sclk,
+    output wire                                 o_dac_reset,
+    output wire                                 o_dac_clkio_p,
+    output wire                                 o_dac_clkin_p,
+    output wire                                 o_dac_clkio_n,
+    output wire                                 o_dac_clkin_n,
+    output wire                                 o_dac_set_fs_ch1,
+    output wire                                 o_dac_set_fs_ch2,
+    output wire                                 o_dac_enable,
+    output wire                                 o_dac_init_done
 );
 
     localparam IAGC_STATUS_RESET        = 4'b0000;
-    localparam IAGC_STATUS_INIT         = 4'b0001;
-    localparam IAGC_STATUS_IDLE         = 4'b0010;
-    localparam IAGC_STATUS_SAMPLE       = 4'b0011;
-    localparam IAGC_STATUS_CMD_PARSE    = 4'b0100;
-    localparam IAGC_STATUS_CMD_READ     = 4'b0101;
-    localparam IAGC_STATUS_CMD_ERROR    = 4'b0110;
     
-    localparam ADC_IN_DATA_SIZE     = 14;
-    localparam ADC_OUT_DATA_SIZE    = 16;
-    
-    wire    [ ADC_IN_DATA_SIZE - 1 : 0 ]    data_in;
-    wire                                    test_mode;
     wire                                    init_done;
     wire                                    reset;
-    wire    [ ADC_OUT_DATA_SIZE - 1 : 0 ]   data_out_ch1;
-    wire    [ ADC_OUT_DATA_SIZE - 1 : 0 ]   data_out_ch2;
+    wire                                    enable;
     
-    assign reset                = i_iagc_status == IAGC_STATUS_RESET ? 1'b0 : 1'b1;
-    assign test_mode            = 1'b0;
-    assign data_in[ 0  ]        = i_adc_data_0;
-    assign data_in[ 1  ]        = i_adc_data_1;
-    assign data_in[ 2  ]        = i_adc_data_2;
-    assign data_in[ 3  ]        = i_adc_data_3;
-    assign data_in[ 4  ]        = i_adc_data_4;
-    assign data_in[ 5  ]        = i_adc_data_5;
-    assign data_in[ 6  ]        = i_adc_data_6;
-    assign data_in[ 7  ]        = i_adc_data_7;
-    assign data_in[ 8  ]        = i_adc_data_8;
-    assign data_in[ 9  ]        = i_adc_data_9;
-    assign data_in[ 10 ]        = i_adc_data_10;
-    assign data_in[ 11 ]        = i_adc_data_11;
-    assign data_in[ 12 ]        = i_adc_data_12;
-    assign data_in[ 13 ]        = i_adc_data_13;
-    assign o_adc_dco_clock_n    = 1'b0;
-    assign o_init_done          = ~init_done;
-    assign o_data_out_ch1       = data_out_ch1[ 15 : 2 ];
-    assign o_data_out_ch2       = data_out_ch2[ 15 : 2 ];
+    assign reset            = i_iagc_status == IAGC_STATUS_RESET ? 1'b0 : 1'b1;
+    assign enable           = 1'b1;
+    assign o_dac_init_done  = ~init_done;
+    assign o_dac_clkin_n    = 1'b0;
+    assign o_dac_clkio_n    = 1'b0;
     
     /*
                <--- IP Configuration --->
-        Ch1CouplingStatic   =   1
-        Ch2CouplingStatic   =   0
-        Ch1GainStatic       =   1
-        Ch2GainStatic       =   1
+        Ch1ScaleStatic      =   1
+        Ch2ScaleStatic      =   1
         Ch1HgAddCoefStatic  =   000000000000000000
         Ch2HgAddCoefStatic  =   000000000000000000
         Ch1LgAddCoefStatic  =   000000000000000000
@@ -100,36 +52,28 @@ module adc1410 #
         Ch1LgMultCoefStatic =   010000000000000000
         Ch2LgMultCoefStatic =   010000000000000000   
     */
-    ZmodADC1410_Controller_0
-    u_ZmodADC1410_Controller_0
+    ZmodDAC1411_Controller_0
+    u_ZmodDAC1411_Controller_0
     (
-        .SysClk             ( i_sys_clock           ),
-        .ADC_InClk          ( i_adc_clock           ),
-        .sRst_n             ( reset                 ),
-        .sInitDone_n        ( init_done             ),
-        .FIFO_EMPTY_CHA     (                       ),
-        .FIFO_EMPTY_CHB     (                       ),
-        .sCh1Out            ( data_out_ch1          ),
-        .sCh2Out            ( data_out_ch2          ),
-        .sTestMode          ( test_mode             ),
-        .adcClkIn_p         ( o_adc_clock_in_p      ),
-        .adcClkIn_n         ( o_adc_clock_in_n      ),
-        .adcSync            ( o_adc_sync            ),
-        .DcoClk             ( i_adc_dco_clock_p     ),
-        .dADC_Data          ( data_in               ),
-        .sADC_SDIO          ( io_adc_sdio           ),
-        .sADC_CS            ( o_adc_cs              ),
-        .sADC_Sclk          ( o_adc_sclk            ),
-        .sCh1CouplingH      ( o_ch1_coupling_h      ),
-        .sCh1CouplingL      ( o_ch1_coupling_l      ),
-        .sCh2CouplingH      ( o_ch2_coupling_h      ),
-        .sCh2CouplingL      ( o_ch2_coupling_l      ),
-        .sCh1GainH          ( o_ch1_gain_h          ),
-        .sCh1GainL          ( o_ch1_gain_l          ),
-        .sCh2GainH          ( o_ch2_gain_h          ),
-        .sCh2GainL          ( o_ch2_gain_l          ),
-        .sRelayComH         ( o_adc_relay_com_h     ),
-        .sRelayComL         ( o_adc_relay_com_l     )
+        .SysClk         ( i_sys_clock       ),
+        .DacClk         ( i_dac_clock       ),
+        .sRst_n         ( reset             ),
+        .sInitDone_n    ( init_done         ),
+        .sCh1In         ( i_data_ch1        ),
+        .sCh2In         ( i_data_ch2        ),
+        .sDAC_EnIn      ( enable            ),
+        .sDAC_CS        ( o_dac_cs          ),
+        .sDAC_SCLK      ( o_dac_sclk        ),
+        .sDAC_SDIO      ( io_dac_sdio       ),
+        .sDAC_Reset     ( o_dac_reset       ),
+        .sDAC_ClkIO     ( o_dac_clkio_p     ),
+        .sDAC_Clkin     ( o_dac_clkin_p     ),
+        .sDAC_Data      ( o_dac_data        ),
+        .sDAC_SetFS1    ( o_dac_set_fs_ch1  ),
+        .sDAC_SetFS2    ( o_dac_set_fs_ch2  ),
+        .sDAC_EnOut     ( o_dac_enable      )
     );
     
 endmodule
+
+`default_nettype wire

@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-module sampler # 
+module dac_sampler # 
 (
     parameter DATA_SIZE         = 16,
     parameter ADDR_SIZE         = 12,
