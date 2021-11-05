@@ -1,12 +1,11 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-module sampler # 
+module adc_sampler # 
 (
     parameter DATA_SIZE         = 16,
     parameter ADDR_SIZE         = 12,
-    parameter IAGC_STATUS_SIZE  = 4,
-    parameter DECIMATOR_SIZE    = 4
+    parameter IAGC_STATUS_SIZE  = 4
 )
 (
     input  wire                                 i_clock,
@@ -15,7 +14,7 @@ module sampler #
     input  wire                                 i_gate,
     input  wire [ IAGC_STATUS_SIZE - 1 : 0 ]    i_iagc_status,
     input  wire [ ADDR_SIZE        - 1 : 0 ]    i_memory_size,
-    input  wire [ DECIMATOR_SIZE   - 1 : 0 ]    i_decimator,
+    input  wire                                 i_sample,
     output wire [ ADDR_SIZE        - 1 : 0 ]    o_addr, 
     output wire [ DATA_SIZE        - 1 : 0 ]    o_reference_sample,
     output wire [ DATA_SIZE        - 1 : 0 ]    o_error_sample,
@@ -49,7 +48,6 @@ module sampler #
     reg     [ DATA_SIZE     - 1 : 0 ]   ref_sample;
     reg     [ DATA_SIZE     - 1 : 0 ]   err_sample;
     
-    integer                             samples_count;
     integer                             end_count;
     reg                                 first_write;
     reg                                 last_i_gate;
@@ -72,7 +70,6 @@ module sampler #
                 STATUS_INIT: begin
                     addr            <= { ADDR_SIZE { 1'b0 } };
                     first_write     <= 1'b1;
-                    samples_count   <= 0;
                     ref_sample      <= { DATA_SIZE { 1'b0 } };
                     err_sample      <= { DATA_SIZE { 1'b0 } };
                     end_count       <= 0; 
@@ -81,23 +78,20 @@ module sampler #
                 STATUS_WAIT: begin
                     addr            <= addr;
                     first_write     <= first_write;
-                    samples_count   <= 0;
                     ref_sample      <= ref_sample;
                     err_sample      <= err_sample;
                     end_count       <= 0;
                 end
                 
                 STATUS_WRITE: begin
-                    if( samples_count >= i_decimator - 1 ) begin
+                    if( i_sample ) begin
                         addr            <= first_write ? { ADDR_SIZE { 1'b0 } } : addr + 1'b1;
-                        samples_count   <= 0;
                         ref_sample      <= i_reference;
                         err_sample      <= i_error;
                         first_write     <= 1'b0;
                     end
                     else begin
                         addr            <= addr;
-                        samples_count   <= samples_count + 1;
                         ref_sample      <= ref_sample;
                         err_sample      <= err_sample;
                         first_write     <= first_write;
@@ -109,7 +103,6 @@ module sampler #
                 STATUS_END: begin
                     addr            <= { ADDR_SIZE { 1'b0 } };
                     first_write     <= 1'b1;
-                    samples_count   <= 0;
                     ref_sample      <= { DATA_SIZE { 1'b0 } };
                     err_sample      <= { DATA_SIZE { 1'b0 } };
                     end_count       <= end_count + 1;
@@ -118,7 +111,6 @@ module sampler #
                 default: begin
                     addr            <= { ADDR_SIZE { 1'b0 } };
                     first_write     <= 1'b1;
-                    samples_count   <= 0;
                     ref_sample      <= { DATA_SIZE { 1'b0 } };
                     err_sample      <= { DATA_SIZE { 1'b0 } };
                     end_count       <= 0;

@@ -127,6 +127,24 @@ module top
     );
     
     /* ########################################################### */
+    /* DECIMATOR ################################################# */
+    
+    wire decimator_sample;
+    
+    decimator # 
+    (
+        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  ),
+        .DECIMATOR_SIZE     ( DECIMATOR_SIZE    )
+    )
+    u_decimator
+    (
+        .i_clock            ( sys_clock         ),
+        .i_iagc_status      ( iagc_status       ),
+        .i_decimator        ( iagc_decimator    ),
+        .o_sample           ( decimator_sample  )
+    );
+    
+    /* ########################################################### */
     /* ADC1410 ################################################### */
     
     wire    [ ZMOD_DATA_SIZE - 1 : 0 ]  adc1410_ch1;
@@ -182,8 +200,8 @@ module top
         .i_sys_clock        ( sys_clock         ),
         .i_dac_clock        ( dac_clock         ),
         .i_iagc_status      ( iagc_status       ),
-        .i_data_ch1         ( adc1410_ch1       ),
-        .i_data_ch2         ( adc1410_ch2       ),
+        .i_data_ch1         ( adc_sample_ch1    ),
+        .i_data_ch2         ( adc_sample_ch2    ),
         .io_dac_sdio        ( io_dac_sdio       ),
         .o_dac_init_done    ( dac1411_init_done ),
         .o_dac_cs           ( o_dac_cs          ),
@@ -204,12 +222,11 @@ module top
     
     wire    [ ZMOD_DATA_SIZE - 1 : 0 ]  adc_sample_ch1;
     wire    [ ZMOD_DATA_SIZE - 1 : 0 ]  adc_sample_ch2;
-    /*
+    
     dac_sampler # 
     (
         .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  ),
-        .ZMOD_DATA_SIZE     ( ZMOD_DATA_SIZE    ),
-        .DECIMATOR_SIZE     ( DECIMATOR_SIZE    )
+        .ZMOD_DATA_SIZE     ( ZMOD_DATA_SIZE    )
     )
     u_dac_sampler
     (
@@ -217,10 +234,10 @@ module top
         .i_iagc_status      ( iagc_status       ),
         .i_data_ch1         ( adc1410_ch1       ),
         .i_data_ch2         ( adc1410_ch2       ),
-        .i_decimator        ( iagc_decimator    ), 
+        .i_sample           ( decimator_sample  ), 
         .o_data_ch1         ( adc_sample_ch1    ),
         .o_data_ch2         ( adc_sample_ch2    )
-    );*/
+    );
     
     /* ########################################################### */
     /* DATA CONVERSOR ############################################ */
@@ -249,14 +266,13 @@ module top
     wire                                    sampler_end;
     wire    [ ADDR_SIZE         - 1 : 0 ]   sampler_addr;
         
-    sampler #
+    adc_sampler #
     (
         .DATA_SIZE          ( SAMPLER_DATA_SIZE ),
         .ADDR_SIZE          ( ADDR_SIZE         ),
-        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  ),
-        .DECIMATOR_SIZE     ( DECIMATOR_SIZE    )
+        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  )
     )
-    u_sampler_ch1
+    u_adc_sampler
     (
         .i_clock            ( sys_clock         ),
         .i_iagc_status      ( iagc_status       ),
@@ -264,7 +280,7 @@ module top
         .i_error            ( converted_err     ),
         .i_gate             ( i_gate            ),
         .i_memory_size      ( iagc_memory_size  ),
-        .i_decimator        ( iagc_decimator    ),
+        .i_sample           ( decimator_sample  ),
         .o_reference_sample ( sampled_ref       ),
         .o_error_sample     ( sampled_err       ),
         .o_addr             ( sampler_addr      ),

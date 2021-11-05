@@ -53,32 +53,92 @@ module iagc_fsm #
         
     reg     [ STATUS_SIZE    - 1 : 0 ]  status;
     reg     [ STATUS_SIZE    - 1 : 0 ]  next_status;
+    
     reg     [ ADDR_SIZE      - 1 : 0 ]  memory_size;
     reg     [ DECIMATOR_SIZE - 1 : 0 ]  decimator;
     
-    /* */
     always@( posedge i_clock ) begin
         if( i_reset ) begin
-            status      <= IAGC_STATUS_RESET;
-            memory_size <= DEF_MEMORY_SIZE;
-            decimator   <= DEF_DECIMATOR;
+            status <= IAGC_STATUS_RESET;
         end
         else begin
-            status      <= next_status;
-            
-            if( status == IAGC_STATUS_SET_MEM )
-                memory_size <= 1 << i_cmd_parameter;
-            else
-                memory_size <= memory_size;
+            status <= next_status;
                 
-            if( status == IAGC_STATUS_SET_DEC )
-                decimator <= i_cmd_parameter;
-            else
-                decimator <= decimator;
+            case( status )
+            
+                IAGC_STATUS_RESET: begin
+                    memory_size <= DEF_MEMORY_SIZE;
+                    decimator   <= DEF_DECIMATOR;
+                end
+                
+                IAGC_STATUS_INIT: begin
+                    memory_size <= DEF_MEMORY_SIZE;
+                    decimator   <= DEF_DECIMATOR;
+                end
+                
+                IAGC_STATUS_IDLE: begin
+                    memory_size <= memory_size;
+                    decimator   <= decimator;
+                end
+                
+                IAGC_STATUS_SAMPLE: begin
+                    memory_size <= memory_size;
+                    decimator   <= decimator;
+                end
+                
+                IAGC_STATUS_CMD_PARSE: begin
+                    memory_size <= memory_size;
+                    decimator   <= decimator;
+                end
+                
+                IAGC_STATUS_CMD_READ: begin
+                    memory_size <= memory_size;
+                    decimator   <= decimator;
+                end
+                
+                IAGC_STATUS_CMD_ERROR: begin
+                    memory_size <= memory_size;
+                    decimator   <= decimator;
+                end
+                
+                IAGC_STATUS_DUMP_REF: begin
+                    memory_size <= memory_size;
+                    decimator   <= decimator;
+                end
+                
+                IAGC_STATUS_DUMP_ERR: begin
+                    memory_size <= memory_size;
+                    decimator   <= decimator;
+                end
+                
+                IAGC_STATUS_CLEAN_MEM: begin
+                    memory_size <= memory_size;
+                    decimator   <= decimator;
+                end
+                
+                IAGC_STATUS_SET_MEM: begin
+                    memory_size <= i_cmd_parameter;
+                    decimator   <= decimator;
+                end
+                
+                IAGC_STATUS_SET_DEC: begin
+                    memory_size <= memory_size;
+                    decimator   <= i_cmd_parameter;
+                end
+                
+                IAGC_STATUS_HALT: begin
+                    memory_size <= memory_size;
+                    decimator   <= decimator;
+                end
+                            
+                default: begin
+                    memory_size <= memory_size;
+                    decimator   <= decimator;
+                end
+            endcase
         end
     end
     
-    /* */
     always@( * ) begin
         case( status )
             
