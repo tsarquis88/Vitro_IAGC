@@ -9,6 +9,7 @@ module decimator #
 (
     input  wire                                 i_clock,
     input  wire [ IAGC_STATUS_SIZE - 1 : 0 ]    i_iagc_status,
+    input  wire                                 i_gate,
     input  wire [ DECIMATOR_SIZE   - 1 : 0 ]    i_decimator,
     output wire                                 o_sample
 );
@@ -19,8 +20,8 @@ module decimator #
     integer                             counter;
     
     always@( posedge i_clock ) begin        
-    
-        if( i_iagc_status == IAGC_STATUS_RESET || i_iagc_status == IAGC_STATUS_INIT )
+        
+        if( i_iagc_status == IAGC_STATUS_RESET || i_iagc_status == IAGC_STATUS_INIT || ~i_gate )
             counter     <= 0;
         else
             counter     <= counter >= i_decimator - 1 ? 0 : counter + 1;

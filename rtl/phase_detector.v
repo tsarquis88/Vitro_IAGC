@@ -9,7 +9,6 @@ module phase_detector #
 (
     input  wire                                 i_clock,
     input  wire                                 i_sample,
-    input  wire                                 i_gate,
     input  wire [ IAGC_STATUS_SIZE  - 1 : 0 ]   i_iagc_status,
     input  wire [ SAMPLER_DATA_SIZE - 1 : 0 ]   i_reference,
     input  wire [ SAMPLER_DATA_SIZE - 1 : 0 ]   i_error,
@@ -50,7 +49,7 @@ module phase_detector #
             end
             
             STATUS_SAMPLE: begin
-                if( i_gate && i_sample ) begin
+                if( i_sample ) begin
                     if( i_reference[ 13 ] && i_error[ 13 ] )
                         phase_counter       <= phase_counter + 1;
                     else if( ~i_reference[ 13 ] && ~i_error[ 13 ] )

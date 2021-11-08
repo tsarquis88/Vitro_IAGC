@@ -11,7 +11,6 @@ module adc_sampler #
     input  wire                                 i_clock,
     input  wire [ DATA_SIZE        - 1 : 0 ]    i_reference,
     input  wire [ DATA_SIZE        - 1 : 0 ]    i_error,
-    input  wire                                 i_gate,
     input  wire [ IAGC_STATUS_SIZE - 1 : 0 ]    i_iagc_status,
     input  wire [ ADDR_SIZE        - 1 : 0 ]    i_memory_size,
     input  wire                                 i_sample,
@@ -35,12 +34,11 @@ module adc_sampler #
     localparam IAGC_STATUS_SET_DEC      = 4'b1011;
     localparam IAGC_STATUS_HALT         = 4'b1100;
 
-    localparam STATUS_SIZE      =   3;
+    localparam STATUS_SIZE      =   2;
     
     localparam STATUS_INIT      =   0;
-    localparam STATUS_WAIT      =   1;
-    localparam STATUS_WRITE     =   2;
-    localparam STATUS_END       =   3;
+    localparam STATUS_WRITE     =   1;
+    localparam STATUS_END       =   2;
     
     reg     [ STATUS_SIZE   - 1 : 0 ]   status;
     reg     [ STATUS_SIZE   - 1 : 0 ]   next_status;
@@ -50,8 +48,6 @@ module adc_sampler #
     
     integer                             end_count;
     reg                                 first_write;
-    reg                                 last_i_gate;
-    wire                                posedge_i_gate;
     
     always@( posedge i_clock ) begin
     
@@ -63,7 +59,6 @@ module adc_sampler #
         else begin
         
             status          <= next_status;
-            last_i_gate     <= i_gate;
                         
             case( status )
                 
@@ -73,14 +68,6 @@ module adc_sampler #
                     ref_sample      <= { DATA_SIZE { 1'b0 } };
                     err_sample      <= { DATA_SIZE { 1'b0 } };
                     end_count       <= 0; 
-                end
-                
-                STATUS_WAIT: begin
-                    addr            <= addr;
-                    first_write     <= first_write;
-                    ref_sample      <= ref_sample;
-                    err_sample      <= err_sample;
-                    end_count       <= 0;
                 end
                 
                 STATUS_WRITE: begin
@@ -126,16 +113,9 @@ module adc_sampler #
             STATUS_INIT: begin
                 next_status = i_iagc_status == IAGC_STATUS_SAMPLE ? STATUS_WRITE : STATUS_INIT;
             end
-        
-            STATUS_WAIT: begin
-                next_status = posedge_i_gate ? STATUS_WRITE : STATUS_WAIT;
-            end
             
             STATUS_WRITE: begin
-                if( addr == i_memory_size - 1 )
-                    next_status = STATUS_END;
-                else
-                    next_status = i_gate ? STATUS_WRITE : STATUS_WAIT;
+                next_status = addr == i_memory_size - 1 ? STATUS_END : STATUS_WRITE;
             end
             
             STATUS_END: begin
@@ -148,7 +128,6 @@ module adc_sampler #
         endcase
     end
     
-    assign posedge_i_gate       = i_gate && ~last_i_gate ? 1'b1 : 1'b0;
     assign o_end                = status == STATUS_END;
     assign o_reference_sample   = ref_sample;
     assign o_error_sample       = err_sample;

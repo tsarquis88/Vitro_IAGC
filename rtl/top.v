@@ -139,6 +139,7 @@ module top
     u_decimator
     (
         .i_clock            ( sys_clock         ),
+        .i_gate             ( i_gate            ),
         .i_iagc_status      ( iagc_status       ),
         .i_decimator        ( iagc_decimator    ),
         .o_sample           ( decimator_sample  )
@@ -278,7 +279,6 @@ module top
         .i_iagc_status      ( iagc_status       ),
         .i_reference        ( converted_ref     ),
         .i_error            ( converted_err     ),
-        .i_gate             ( i_gate            ),
         .i_memory_size      ( iagc_memory_size  ),
         .i_sample           ( decimator_sample  ),
         .o_reference_sample ( sampled_ref       ),
@@ -302,7 +302,6 @@ module top
         .i_clock            ( sys_clock         ),
         .i_iagc_status      ( iagc_status       ),
         .i_sample           ( decimator_sample  ),
-        .i_gate             ( i_gate            ),
         .i_reference        ( converted_ref     ),
         .i_error            ( converted_err     ),
         .o_in_phase         ( in_phase          )
