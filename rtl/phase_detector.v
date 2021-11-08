@@ -8,6 +8,7 @@ module phase_detector #
 )
 (
     input  wire                                 i_clock,
+    input  wire                                 i_sample,
     input  wire                                 i_gate,
     input  wire [ IAGC_STATUS_SIZE  - 1 : 0 ]   i_iagc_status,
     input  wire [ SAMPLER_DATA_SIZE - 1 : 0 ]   i_reference,
@@ -19,7 +20,7 @@ module phase_detector #
     localparam IAGC_STATUS_INIT     = 4'b0001;
             
     /* aprox. 50 samples por pulso */
-    localparam TOTAL_SAMPLES = 500;
+    localparam TOTAL_SAMPLES = 250;
     
     localparam STATUS_SIZE  = 2;
     
@@ -49,7 +50,7 @@ module phase_detector #
             end
             
             STATUS_SAMPLE: begin
-                if( i_gate ) begin
+                if( i_gate && i_sample ) begin
                     if( i_reference[ 13 ] && i_error[ 13 ] )
                         phase_counter       <= phase_counter + 1;
                     else if( ~i_reference[ 13 ] && ~i_error[ 13 ] )

@@ -301,6 +301,7 @@ module top
     (
         .i_clock            ( sys_clock         ),
         .i_iagc_status      ( iagc_status       ),
+        .i_sample           ( decimator_sample  ),
         .i_gate             ( i_gate            ),
         .i_reference        ( converted_ref     ),
         .i_error            ( converted_err     ),
