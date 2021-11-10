@@ -2,9 +2,8 @@
 
 module processor #
 (
-    parameter DATA_SIZE         =   10,
-    parameter REMAINDER_SIZE    =   8,
-    parameter RESULT_SIZE       =   24
+    parameter DATA_SIZE         =   14,
+    parameter REMAINDER_SIZE    =   8
 )
 (
     input                               i_reset,
@@ -17,9 +16,9 @@ module processor #
     output                              o_valid
 );
 
-    wire    [ RESULT_SIZE    - 1 : 0 ]  result;
-    reg     [ DATA_SIZE      - 1 : 0 ]  quotient;
-    reg     [ REMAINDER_SIZE - 1 : 0 ]  remainder;
+    wire    [ DATA_SIZE + REMAINDER_SIZE - 1 : 0 ]  result;
+    reg     [ DATA_SIZE                  - 1 : 0 ]  quotient;
+    reg     [ REMAINDER_SIZE             - 1 : 0 ]  remainder;
     
     always@( result ) begin
         quotient    =   result[ DATA_SIZE + REMAINDER_SIZE - 1 : REMAINDER_SIZE ];
@@ -33,8 +32,8 @@ module processor #
                <--- IP Configuration --->
         Algorithm type  =   Radix2
         Operand sign    =   Signed
-        Divider width   =   8
-        Divisor width   =   8
+        Divider width   =   14
+        Divisor width   =   14
         Raminder width  =   8
         Remainder type  =   Fractional    
     */

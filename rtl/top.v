@@ -70,6 +70,8 @@ module top
     localparam UART_DATA_SIZE       = 8;
     localparam UART_CLK_FREQ        = 100000000;
     localparam UART_BAUDRATE        = 38400;
+    localparam DEF_PHASE_COUNT      = 256;
+    localparam PHASE_COUNT_SIZE     = 16;
     
     /* ########################################################### */
     /* CLOCK UNIT ################################################ */
@@ -98,6 +100,7 @@ module top
     wire    [ IAGC_STATUS_SIZE - 1 : 0 ]    iagc_status;
     wire    [ ADDR_SIZE        - 1 : 0 ]    iagc_memory_size;
     wire    [ DECIMATOR_SIZE   - 1 : 0 ]    iagc_decimator;
+    wire    [ PHASE_COUNT_SIZE - 1 : 0 ]    iagc_phase_count;
     
     iagc_fsm #
     (
@@ -106,7 +109,9 @@ module top
         .ADDR_SIZE              ( ADDR_SIZE         ),
         .DECIMATOR_SIZE         ( DECIMATOR_SIZE    ),
         .DEF_MEMORY_SIZE        ( DEF_MEMORY_SIZE   ),
-        .DEF_DECIMATOR          ( DEF_DECIMATOR     )
+        .DEF_DECIMATOR          ( DEF_DECIMATOR     ),
+        .DEF_PHASE_COUNT        ( DEF_PHASE_COUNT   ),
+        .PHASE_COUNT_SIZE       ( PHASE_COUNT_SIZE  )
     )
     u_iagc_fsm
     (
@@ -123,6 +128,7 @@ module top
         .i_cmd_parameter        ( cmd_param         ),
         .o_memory_size          ( iagc_memory_size  ),
         .o_decimator            ( iagc_decimator    ),
+        .o_phase_count          ( iagc_phase_count  ),
         .o_status               ( iagc_status       )
     );
     
@@ -304,6 +310,7 @@ module top
         .i_sample           ( decimator_sample  ),
         .i_reference        ( converted_ref     ),
         .i_error            ( converted_err     ),
+        .i_phase_count      ( iagc_phase_count  ),
         .o_in_phase         ( in_phase          )
     );
    
