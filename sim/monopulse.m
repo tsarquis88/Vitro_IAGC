@@ -34,61 +34,56 @@ err_s     = err_amp * [ pulse .* sin( 2 * pi * err_fre * t + err_pha ) ];
 err_s_dp  = err_amp * [ pulse .* sin( 2 * pi * err_fre * t + err_pha + pi ) ]; # error desfasado
 
 %% signal quotient
-amp_var   = ( 0.0 : 1 / ( N - 1 ) : 1.0 );
+amp_var   = ( -0.25 : 1.5 / ( N - 1 ) : 1.25 );
 quo_s     = ( amp_var .* err_s ) ./ ref_s;
 quo_s_dp  = ( amp_var .* err_s_dp ) ./ ref_s;
 
 %% plot
+all_plots = 0;
 hfigure = figure( 'Color', 'w' );
-rows    = 4;
 cols    = 1;
+if( all_plots )
+  rows  = 4;
+else
+  rows  = 2;
+endif
 subplot( rows, cols, 1 ); ##
-plt_1 = plot( t, ref_s, "linewidth", 2, 'r' );
-grid on;
-hold;
-plt_2 = plot( t, err_s .* 0.8, "linewidth", 1, 'b' );
-# hlegend1 = legend( plt_1, "Referencia", "Location", "SouthWest" );
-# new_handle = copyobj( hlegend1, hfigure );
-# legend( plt_2, "Error", "Location", "SouthEast" );
-set( gca, "linewidth", 4, "fontsize", 12)
-xlabel( 'Tiempo' );
-ylabel( 'Amplitud' );
-title( 'Referencia (r) y error (b) - Ganancia fija y en fase' );
-subplot( rows, cols, 2 ); ##
-plt_3 = plot( t, ref_s, "linewidth", 2, 'r' );
-grid on;
-hold;
-plt_4 = plot( t, err_s_dp .* 0.8 , "linewidth", 1, 'b' );
-# hlegend1 = legend( plt_3, "Referencia", "Location", "SouthWest" );
-# new_handle = copyobj( hlegend1, hfigure );
-# legend( plt_2, "Error", "Location", "SouthEast" );
-set( gca, "linewidth", 4, "fontsize", 12)
-xlabel( 'Tiempo' );
-ylabel( 'Amplitud' );
-title( 'Referencia (r) y error (b) - Ganancia fija y en desfase' );
-subplot( rows, cols, 3 ); ##
+if( all_plots )
+  plt_1 = plot( t, ref_s, "linewidth", 2, 'r' );
+  grid on;
+  hold;
+  plt_2 = plot( t, err_s .* 0.8, "linewidth", 2, 'b' );
+  set( gca, "linewidth", 4, "fontsize", 12)
+  xlabel( 'Tiempo' );
+  ylabel( 'Amplitud' );
+  title( 'Referencia (r) y error (b) - Ganancia fija y en fase' );
+  subplot( rows, cols, 2 ); ##
+  plt_3 = plot( t, ref_s, "linewidth", 2, 'r' );
+  grid on;
+  hold;
+  plt_4 = plot( t, err_s_dp .* 0.8 , "linewidth", 2, 'b' );
+  set( gca, "linewidth", 4, "fontsize", 12)
+  xlabel( 'Tiempo' );
+  ylabel( 'Amplitud' );
+  title( 'Referencia (r) y error (b) - Ganancia fija y en desfase' );
+endif
 plt_5 = plot( amp_var, quo_s, "linewidth", 2, 'r' );
+subplot( rows, cols, rows - 1 ); ##
 grid on;
 hold
-plt_6 = plot( amp_var, quo_s_dp, "linewidth", 1, 'b' );
+plt_6 = plot( amp_var, quo_s_dp, "linewidth", 2, 'b' );
 grid on;
-# hlegend1 = legend( plt_5, "Relacion en fase", "Location", "SouthWest" );
-# new_handle = copyobj( hlegend1, hfigure );
-# legend( plt_4, "Relacion en desfase", "Location", "SouthEast" );
 set( gca, "linewidth", 4, "fontsize", 12)
-xlabel( 'Ganancia en error' );
-ylabel( 'Relacion' );
+xlabel( 'Ganancia del error' );
+ylabel( 'Relacion Err/Ref' );
 title( 'Relacion entre ambas señales, variando ganancia en error - Fase (r) y desfase (b)' );
-subplot( rows, cols, 4 ); ##
+subplot( rows, cols, rows ); ##
 plt_7 = semilogx( amp_var, quo_s, "linewidth", 2, 'r' );
 grid on;
 hold
-plt_8 = semilogx( amp_var, quo_s_dp, "linewidth", 1, 'b' );
+plt_8 = semilogx( amp_var, quo_s_dp, "linewidth", 2, 'b' );
 grid on;
-# hlegend1 = legend( plt_7, "Relacion en fase", "Location", "SouthWest" );
-# new_handle = copyobj( hlegend1, hfigure );
-# legend( plt_4, "Relacion en desfase", "Location", "SouthEast" );
 set( gca, "linewidth", 4, "fontsize", 12)
-xlabel( 'Ganancia en error' );
-ylabel( 'Relacion' );
+xlabel( 'Ganancia del error' );
+ylabel( 'Relacion Err/Ref' );
 title( 'Relacion (dB) entre ambas señales, variando ganancia en error - Fase (r) y desfase (b)' );

@@ -76,4 +76,4 @@ ylabel( 'Amplitude' );
 axis( [ -50e6, 50e6, -10, 25 ] );
 title( 'Frequency domain' );
 
-s = axes( 'visible', 'off', 'title', sprintf( 'Undersampling at %d GHz\n', fsu / 1e6 ) );
+s = axes( 'visible', 'off', 'title', sprintf( 'Undersampling at %d MHz\n', fsu / 1e6 ) );
