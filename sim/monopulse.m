@@ -39,7 +39,7 @@ quo_s     = ( amp_var .* err_s ) ./ ref_s;
 quo_s_dp  = ( amp_var .* err_s_dp ) ./ ref_s;
 
 %% plot
-all_plots = 0;
+all_plots = 1;
 hfigure = figure( 'Color', 'w' );
 cols    = 1;
 if( all_plots )

@@ -31,11 +31,13 @@ module processor #
      /*
                <--- IP Configuration --->
         Algorithm type  =   Radix2
-        Operand sign    =   Signed
+        Operand sign    =   Unigned
         Divider width   =   14
         Divisor width   =   14
         Raminder width  =   8
-        Remainder type  =   Fractional    
+        Remainder type  =   Fractional
+        Clocks p/d      =   1
+        Latency         =   1    
     */
     div_gen_0
     u_div_gen_0

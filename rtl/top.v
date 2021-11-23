@@ -257,7 +257,7 @@ module top
         .ZMOD_DATA_SIZE     ( ZMOD_DATA_SIZE    ),
         .SAMPLER_DATA_SIZE  ( SAMPLER_DATA_SIZE )
     )
-    u_data_conversor_ch1
+    u_data_conversor
     (
         .i_raw_reference    ( adc1410_ch1       ),
         .i_raw_error        ( adc1410_ch2       ),

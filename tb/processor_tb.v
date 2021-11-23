@@ -34,6 +34,16 @@ module processor_tb
         
         #100
         start       = 1'b0;  
+        
+        #100
+        reference   = 14'b00001000100111;
+        error       = 14'b11110000011010;
+        
+        #500
+        start       = 1'b1;
+        
+        #100
+        start       = 1'b0;
     end
     
     always begin
