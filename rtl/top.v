@@ -72,6 +72,7 @@ module top
     localparam UART_BAUDRATE        = 38400;
     localparam DEF_PHASE_COUNT      = 256;
     localparam PHASE_COUNT_SIZE     = 16;
+    localparam REMAINDER_SIZE       = 8;
     
     /* ########################################################### */
     /* CLOCK UNIT ################################################ */
@@ -313,7 +314,30 @@ module top
         .i_phase_count      ( iagc_phase_count  ),
         .o_in_phase         ( in_phase          )
     );
-   
+    
+    /* ########################################################### */
+    /* PROCESSOR ################################################# */
+    
+    wire [ ZMOD_DATA_SIZE - 1 : 0 ] processor_quotient;
+    wire [ REMAINDER_SIZE - 1 : 0 ] processor_remainder;
+    wire                            processor_valid;
+    
+    processor #
+    (
+        .DATA_SIZE          ( ZMOD_DATA_SIZE        ),
+        .REMAINDER_SIZE     ( REMAINDER_SIZE        )       
+    )
+    u_processor
+    (
+        .i_clock            ( sys_clock             ),
+        .i_reference        ( adc1410_ch1           ),
+        .i_error            ( adc1410_ch2           ),
+        .i_valid            ( decimator_sample      ),
+        .o_quotient         ( processor_quotient    ),
+        .o_remainder        ( processor_remainder   ),
+        .o_valid            ( processor_valid       )
+    ); 
+    
     /* ########################################################### */
     /* RAM ####################################################### */
     

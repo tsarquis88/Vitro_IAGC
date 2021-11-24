@@ -7,8 +7,8 @@ module processor_tb
     localparam SYS_CLOCK_PERIOD =   10;   
     
     localparam DATA_SIZE        =   14;
+    localparam IAGC_STATUS_SIZE =   4;
     localparam REMAINDER_SIZE   =   8;
-    localparam RESULT_SIZE      =   22;
     
     wire [ DATA_SIZE      - 1 : 0 ] div_quotient;
     wire [ REMAINDER_SIZE - 1 : 0 ] div_remainder;
@@ -16,34 +16,25 @@ module processor_tb
     reg  [ DATA_SIZE      - 1 : 0 ] reference;
     reg  [ DATA_SIZE      - 1 : 0 ] error;
     reg                             clock;
-    reg                             reset;
-    reg                             start;
+    wire                            start;
+    reg  [ IAGC_STATUS_SIZE - 1 : 0 ] iagc_status;
     
     initial begin
         clock       = 1'b0;
-        reset       = 1'b1;
+        iagc_status = 0;
         reference   = 14'b01000000110000;
         error       = 14'b10111111111000;
-        start       = 1'b0;
         
         #50
-        reset       =   1'b0;
+        iagc_status = 1;
         
-        #10
-        start       = 1'b1;
+        #50
+        iagc_status = 2;
         
-        #100
-        start       = 1'b0;  
-        
-        #100
+        #200
         reference   = 14'b00001000100111;
         error       = 14'b11110000011010;
         
-        #500
-        start       = 1'b1;
-        
-        #100
-        start       = 1'b0;
     end
     
     always begin
@@ -59,13 +50,26 @@ module processor_tb
     u_processor
     (
         .i_clock            ( clock             ),
-        .i_reset            ( reset             ),
         .i_reference        ( reference         ),
         .i_error            ( error             ),
         .i_start            ( start             ),
         .o_quotient         ( div_quotient      ),
         .o_remainder        ( div_remainder     ),
         .o_valid            ( div_valid         )
-    );     
+    ); 
+    
+    decimator # 
+    (
+        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  ),
+        .DECIMATOR_SIZE     ( 4'b0100           )
+    )
+    u_decimator
+    (
+        .i_clock            ( clock             ),
+        .i_gate             ( 1'b1              ),
+        .i_iagc_status      ( iagc_status       ),
+        .i_decimator        ( 4'b0100           ),
+        .o_sample           ( start             )
+    );
   
 endmodule
