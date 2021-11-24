@@ -208,8 +208,8 @@ module top
         .i_sys_clock        ( sys_clock         ),
         .i_dac_clock        ( dac_clock         ),
         .i_iagc_status      ( iagc_status       ),
-        .i_data_ch1         ( adc_sample_ch1    ),
-        .i_data_ch2         ( adc_sample_ch2    ),
+        .i_data_ch1         ( filtered_ref      ),
+        .i_data_ch2         ( filtered_err      ),
         .io_dac_sdio        ( io_dac_sdio       ),
         .o_dac_init_done    ( dac1411_init_done ),
         .o_dac_cs           ( o_dac_cs          ),
@@ -469,6 +469,42 @@ module top
         .o_led1_r           ( o_led1_r              ),
         .o_led1_g           ( o_led1_g              ),
         .o_led1_b           ( o_led1_b              )
+    );
+    
+    /* ########################################################### */
+    /* FILTERS ################################################### */
+    
+    wire [ ZMOD_DATA_SIZE - 1 : 0 ] filtered_ref;
+    wire [ ZMOD_DATA_SIZE - 1 : 0 ] filtered_err;
+    
+    lowpass_filter #
+    (
+        .NB_INPUT           ( ZMOD_DATA_SIZE    ),
+        .NB_OUTPUT          ( ZMOD_DATA_SIZE    ),
+        .NB_COEFF           ( ZMOD_DATA_SIZE    )
+    )
+    u_lowpass_filter_ref 
+    (
+        .o_os_data          ( filtered_ref      ),
+        .i_is_data          ( adc1410_ch1       ),
+        .i_en               ( decimator_sample  ),
+        .i_srst             ( sys_reset         ), 
+        .clk                ( sys_clock         )
+    );
+    
+    lowpass_filter #
+    (
+        .NB_INPUT           ( ZMOD_DATA_SIZE    ),
+        .NB_OUTPUT          ( ZMOD_DATA_SIZE    ),
+        .NB_COEFF           ( ZMOD_DATA_SIZE    )
+    )
+    u_lowpass_filter_err 
+    (
+        .o_os_data          ( filtered_err      ),
+        .i_is_data          ( adc1410_ch2       ),
+        .i_en               ( decimator_sample  ),
+        .i_srst             ( sys_reset         ), 
+        .clk                ( sys_clock         )
     );
         
 endmodule
