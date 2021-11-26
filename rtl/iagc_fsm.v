@@ -282,10 +282,11 @@ module iagc_fsm #
         endcase
     end
     
-    assign o_status         = status;
-    assign o_memory_size    = memory_size;
-    assign o_decimator      = decimator;
-    assign o_phase_count    = phase_count;
+    assign o_status             = status;
+    assign o_memory_size        = memory_size;
+    assign o_decimator          = decimator;
+    assign o_phase_count        = phase_count;
+    assign o_amplitude_count    = amplitude_count;
     
 endmodule
 

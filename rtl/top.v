@@ -14,7 +14,7 @@ module top
     output wire o_led1_r,
     output wire o_led1_b,
     
-    output wire o_tx,
+    // output wire o_tx,
     
     input  wire i_rx,
     
@@ -53,7 +53,9 @@ module top
     output wire [13:0] o_dac_data,
     output wire o_dac_set_fs_ch1,
     output wire o_dac_set_fs_ch2,
-    output wire o_dac_enable       
+    output wire o_dac_enable,
+    
+    output wire [13:0] o_relation
 );
 
     /* ########################################################### */
@@ -75,6 +77,8 @@ module top
     localparam DEF_AMPLITUDE_COUNT  = 256;
     localparam AMPLITUDE_COUNT_SIZE = 16;
     localparam REMAINDER_SIZE       = 8;
+    localparam AMPLITUDE_DATA_SIZE  = 13;
+    localparam PROCESSOR_DATA_SIZE  = 14;
     
     /* ########################################################### */
     /* CLOCK UNIT ################################################ */
@@ -324,13 +328,14 @@ module top
     /* ########################################################### */
     /* AMPLITUDE DETECTOR ######################################## */
     
-    wire [ SAMPLER_DATA_SIZE - 1 : 0 ]  ref_amplitude;
-    wire [ SAMPLER_DATA_SIZE - 1 : 0 ]  err_amplitude;
+    wire [ AMPLITUDE_DATA_SIZE - 1 : 0 ]  ref_amplitude;
+    wire [ AMPLITUDE_DATA_SIZE - 1 : 0 ]  err_amplitude;
+    wire                                  amplitude_valid;
     
     amplitude_detector #
     (
         .IAGC_STATUS_SIZE       ( IAGC_STATUS_SIZE      ),
-        .SAMPLER_DATA_SIZE      ( SAMPLER_DATA_SIZE     ),
+        .ZMOD_DATA_SIZE         ( ZMOD_DATA_SIZE        ),
         .AMPLITUDE_COUNT_SIZE   ( AMPLITUDE_COUNT_SIZE  )
     )
     u_amplitude_detector
@@ -338,34 +343,29 @@ module top
         .i_clock                ( sys_clock             ),
         .i_sample               ( decimator_sample      ),
         .i_iagc_status          ( iagc_status           ),
-        .i_reference            ( converted_ref         ),
-        .i_error                ( converted_err         ),
+        .i_reference            ( adc1410_ch1           ),
+        .i_error                ( adc1410_ch2           ),
         .i_amplitude_count      ( iagc_amplitude_count  ),
         .o_reference_amplitude  ( ref_amplitude         ),
-        .o_error_amplitude      ( err_amplitude         )
+        .o_error_amplitude      ( err_amplitude         ),
+        .o_valid                ( amplitude_valid       )
     );
     
     /* ########################################################### */
     /* PROCESSOR ################################################# */
-    
-    wire [ ZMOD_DATA_SIZE - 1 : 0 ] processor_quotient;
-    wire [ REMAINDER_SIZE - 1 : 0 ] processor_remainder;
-    wire                            processor_valid;
-    
+        
     processor #
     (
-        .DATA_SIZE          ( ZMOD_DATA_SIZE        ),
-        .REMAINDER_SIZE     ( REMAINDER_SIZE        )       
+        .AMPLITUDE_DATA_SIZE    ( AMPLITUDE_DATA_SIZE   ),
+        .RESULT_DATA_SIZE       ( PROCESSOR_DATA_SIZE   )       
     )
     u_processor
     (
-        .i_clock            ( sys_clock             ),
-        .i_reference        ( adc1410_ch1           ),
-        .i_error            ( adc1410_ch2           ),
-        .i_valid            ( decimator_sample      ),
-        .o_quotient         ( processor_quotient    ),
-        .o_remainder        ( processor_remainder   ),
-        .o_valid            ( processor_valid       )
+        .i_clock                ( sys_clock             ),
+        .i_reference            ( ref_amplitude         ),
+        .i_error                ( err_amplitude         ),
+        .i_valid                ( amplitude_valid       ),
+        .o_result               ( o_relation            )
     ); 
     
     /* ########################################################### */
@@ -440,7 +440,7 @@ module top
         .rst_n          ( ~sys_reset            ),
         .start_tx       ( dump_unit_valid       ),
         .data           ( dump_unit_data        ),
-        .tx_bit         ( o_tx                  ),
+        //.tx_bit         ( o_tx                  ),
         .ready          ( uart_tx_ready         ),
         .chipscope_clk  (                       )
     );

@@ -2,44 +2,35 @@
 
 module processor #
 (
-    parameter DATA_SIZE         =   14,
-    parameter REMAINDER_SIZE    =   8
+    parameter AMPLITUDE_DATA_SIZE   = 13,
+    parameter RESULT_DATA_SIZE      = 14
 )
 (
-    input                               i_clock,
-    input   [ DATA_SIZE      - 1 : 0 ]  i_reference,
-    input   [ DATA_SIZE      - 1 : 0 ]  i_error,
-    input                               i_valid,
-    output  [ DATA_SIZE      - 1 : 0 ]  o_quotient,
-    output  [ REMAINDER_SIZE - 1 : 0 ]  o_remainder,
-    output                              o_valid
+    input                                   i_clock,
+    input   [ AMPLITUDE_DATA_SIZE - 1 : 0 ] i_reference,
+    input   [ AMPLITUDE_DATA_SIZE - 1 : 0 ] i_error,
+    input                                   i_valid,
+    output  [ RESULT_DATA_SIZE    - 1 : 0 ] o_result
 );
-    reg     [ DATA_SIZE                      - 1 : 0 ]  reference;
-    reg     [ DATA_SIZE                      - 1 : 0 ]  error;
     
-    wire    [ DATA_SIZE + REMAINDER_SIZE + 2 - 1 : 0 ]  result;
-    reg     [ DATA_SIZE                      - 1 : 0 ]  quotient;
-    reg     [ REMAINDER_SIZE                 - 1 : 0 ]  remainder;
+    localparam DIV_RESULT_DATA_SIZE = 24;
+    
+    wire    [ DIV_RESULT_DATA_SIZE - 1 : 0 ]    div_result;
+    wire                                        div_valid;
+    reg     [ RESULT_DATA_SIZE     - 1 : 0 ]    result;
     
     always@( posedge i_clock ) begin
-        reference   <= i_valid ? i_reference : reference;
-        error       <= i_valid ? i_error     : error;
+        result <= div_valid ? div_result[ RESULT_DATA_SIZE - 1 : 0 ] : result;
     end
     
-    always@( result ) begin
-        quotient    =   result[ DATA_SIZE + REMAINDER_SIZE - 1 : REMAINDER_SIZE ];
-        remainder   =   result[ REMAINDER_SIZE             - 1 : 0              ];
-    end
-    
-    assign  o_quotient  =   quotient;
-    assign  o_remainder =   remainder;
+    assign  o_result = result;
     
      /*
                <--- IP Configuration --->
         Algorithm type  =   Radix2
-        Operand sign    =   Signed
-        Divider width   =   14
-        Divisor width   =   14
+        Operand sign    =   Unsigned
+        Divider width   =   13
+        Divisor width   =   13
         Raminder width  =   8
         Remainder type  =   Fractional
         Clocks p/d      =   1
@@ -56,11 +47,11 @@ module processor #
     (
         .aclk                       ( i_clock       ),
         .s_axis_dividend_tvalid     ( i_valid       ),
-        .s_axis_dividend_tdata      ( error         ),
+        .s_axis_dividend_tdata      ( i_error       ),
         .s_axis_divisor_tvalid      ( i_valid       ),
-        .s_axis_divisor_tdata       ( reference     ),
-        .m_axis_dout_tvalid         ( o_valid       ),
-        .m_axis_dout_tdata          ( result        )
+        .s_axis_divisor_tdata       ( i_reference   ),
+        .m_axis_dout_tvalid         ( div_valid     ),
+        .m_axis_dout_tdata          ( div_result    )
     );
 
 endmodule
