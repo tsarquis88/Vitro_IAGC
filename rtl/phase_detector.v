@@ -4,7 +4,7 @@
 module phase_detector #
 (
     parameter IAGC_STATUS_SIZE  = 4,
-    parameter SAMPLER_DATA_SIZE = 14,
+    parameter SAMPLER_DATA_SIZE = 16,
     parameter PHASE_COUNT_SIZE  = 16
 )
 (
@@ -86,23 +86,10 @@ module phase_detector #
     
     always@( * ) begin
         case( status )
-            
-            STATUS_INIT: begin
-                next_status <= i_iagc_status == IAGC_STATUS_RESET ? STATUS_INIT : STATUS_SAMPLE;
-            end
-            
-            STATUS_SAMPLE: begin
-                next_status <= samples >= i_phase_count ? STATUS_DETECT : STATUS_SAMPLE;
-            end
-            
-            STATUS_DETECT: begin
-                next_status <= STATUS_INIT;
-            end
-            
-            default: begin 
-                next_status <= STATUS_INIT;
-            end
-            
+            STATUS_INIT:    next_status = i_iagc_status == IAGC_STATUS_RESET ? STATUS_INIT : STATUS_SAMPLE;
+            STATUS_SAMPLE:  next_status = samples >= i_phase_count ? STATUS_DETECT : STATUS_SAMPLE;
+            STATUS_DETECT:  next_status = STATUS_INIT;
+            default:        next_status = STATUS_INIT;
         endcase
     end
     

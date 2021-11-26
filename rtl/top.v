@@ -72,6 +72,8 @@ module top
     localparam UART_BAUDRATE        = 38400;
     localparam DEF_PHASE_COUNT      = 256;
     localparam PHASE_COUNT_SIZE     = 16;
+    localparam DEF_AMPLITUDE_COUNT  = 256;
+    localparam AMPLITUDE_COUNT_SIZE = 16;
     localparam REMAINDER_SIZE       = 8;
     
     /* ########################################################### */
@@ -98,39 +100,43 @@ module top
     /* ########################################################### */
     /* GLOBAL FSM ################################################ */
     
-    wire    [ IAGC_STATUS_SIZE - 1 : 0 ]    iagc_status;
-    wire    [ ADDR_SIZE        - 1 : 0 ]    iagc_memory_size;
-    wire    [ DECIMATOR_SIZE   - 1 : 0 ]    iagc_decimator;
-    wire    [ PHASE_COUNT_SIZE - 1 : 0 ]    iagc_phase_count;
+    wire    [ IAGC_STATUS_SIZE     - 1 : 0 ]    iagc_status;
+    wire    [ ADDR_SIZE            - 1 : 0 ]    iagc_memory_size;
+    wire    [ DECIMATOR_SIZE       - 1 : 0 ]    iagc_decimator;
+    wire    [ PHASE_COUNT_SIZE     - 1 : 0 ]    iagc_phase_count;
+    wire    [ AMPLITUDE_COUNT_SIZE - 1 : 0 ]    iagc_amplitude_count;
     
     iagc_fsm #
     (
-        .STATUS_SIZE            ( IAGC_STATUS_SIZE  ),
-        .CMD_PARAM_SIZE         ( CMD_PARAM_SIZE    ),
-        .ADDR_SIZE              ( ADDR_SIZE         ),
-        .DECIMATOR_SIZE         ( DECIMATOR_SIZE    ),
-        .DEF_MEMORY_SIZE        ( DEF_MEMORY_SIZE   ),
-        .DEF_DECIMATOR          ( DEF_DECIMATOR     ),
-        .DEF_PHASE_COUNT        ( DEF_PHASE_COUNT   ),
-        .PHASE_COUNT_SIZE       ( PHASE_COUNT_SIZE  )
+        .STATUS_SIZE            ( IAGC_STATUS_SIZE      ),
+        .CMD_PARAM_SIZE         ( CMD_PARAM_SIZE        ),
+        .ADDR_SIZE              ( ADDR_SIZE             ),
+        .DECIMATOR_SIZE         ( DECIMATOR_SIZE        ),
+        .DEF_MEMORY_SIZE        ( DEF_MEMORY_SIZE       ),
+        .DEF_DECIMATOR          ( DEF_DECIMATOR         ),
+        .DEF_PHASE_COUNT        ( DEF_PHASE_COUNT       ),
+        .PHASE_COUNT_SIZE       ( PHASE_COUNT_SIZE      ),
+        .DEF_AMPLITUDE_COUNT    ( DEF_AMPLITUDE_COUNT   ),
+        .AMPLITUDE_COUNT_SIZE   ( AMPLITUDE_COUNT_SIZE  )
     )
     u_iagc_fsm
     (
-        .i_clock                ( sys_clock         ),
-        .i_reset                ( sys_reset         ),
-        .i_adc1410_init_done    ( adc1410_init_done ),
-        .i_dac1411_init_done    ( dac1411_init_done ),
-        .i_sample               ( i_sample          ),
-        .i_cmd_valid            ( uart_rx_valid     ),
-        .i_sample_end           ( sampler_end       ),
-        .i_dump_end             ( dump_unit_end     ),
-        .i_clean_end            ( memory_clean_end  ),
-        .i_cmd_operation        ( cmd_op            ),
-        .i_cmd_parameter        ( cmd_param         ),
-        .o_memory_size          ( iagc_memory_size  ),
-        .o_decimator            ( iagc_decimator    ),
-        .o_phase_count          ( iagc_phase_count  ),
-        .o_status               ( iagc_status       )
+        .i_clock                ( sys_clock             ),
+        .i_reset                ( sys_reset             ),
+        .i_adc1410_init_done    ( adc1410_init_done     ),
+        .i_dac1411_init_done    ( dac1411_init_done     ),
+        .i_sample               ( i_sample              ),
+        .i_cmd_valid            ( uart_rx_valid         ),
+        .i_sample_end           ( sampler_end           ),
+        .i_dump_end             ( dump_unit_end         ),
+        .i_clean_end            ( memory_clean_end      ),
+        .i_cmd_operation        ( cmd_op                ),
+        .i_cmd_parameter        ( cmd_param             ),
+        .o_memory_size          ( iagc_memory_size      ),
+        .o_decimator            ( iagc_decimator        ),
+        .o_phase_count          ( iagc_phase_count      ),
+        .o_amplitude_count      ( iagc_amplitude_count  ),
+        .o_status               ( iagc_status           )
     );
     
     /* ########################################################### */
@@ -313,6 +319,30 @@ module top
         .i_error            ( converted_err     ),
         .i_phase_count      ( iagc_phase_count  ),
         .o_in_phase         ( in_phase          )
+    );
+    
+    /* ########################################################### */
+    /* AMPLITUDE DETECTOR ######################################## */
+    
+    wire [ SAMPLER_DATA_SIZE - 1 : 0 ]  ref_amplitude;
+    wire [ SAMPLER_DATA_SIZE - 1 : 0 ]  err_amplitude;
+    
+    amplitude_detector #
+    (
+        .IAGC_STATUS_SIZE       ( IAGC_STATUS_SIZE      ),
+        .SAMPLER_DATA_SIZE      ( SAMPLER_DATA_SIZE     ),
+        .AMPLITUDE_COUNT_SIZE   ( AMPLITUDE_COUNT_SIZE  )
+    )
+    u_amplitude_detector
+    (
+        .i_clock                ( sys_clock             ),
+        .i_sample               ( decimator_sample      ),
+        .i_iagc_status          ( iagc_status           ),
+        .i_reference            ( converted_ref         ),
+        .i_error                ( converted_err         ),
+        .i_amplitude_count      ( iagc_amplitude_count  ),
+        .o_reference_amplitude  ( ref_amplitude         ),
+        .o_error_amplitude      ( err_amplitude         )
     );
     
     /* ########################################################### */

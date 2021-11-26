@@ -109,22 +109,10 @@ module adc_sampler #
     
     always@( * ) begin
         case( status )
-        
-            STATUS_INIT: begin
-                next_status = i_iagc_status == IAGC_STATUS_SAMPLE ? STATUS_WRITE : STATUS_INIT;
-            end
-            
-            STATUS_WRITE: begin
-                next_status = addr == i_memory_size - 1 ? STATUS_END : STATUS_WRITE;
-            end
-            
-            STATUS_END: begin
-                next_status = end_count >= 3 ? STATUS_INIT : STATUS_END;
-            end
-            
-            default: begin
-                next_status =   STATUS_INIT;
-            end
+            STATUS_INIT:    next_status = i_iagc_status == IAGC_STATUS_SAMPLE ? STATUS_WRITE : STATUS_INIT;
+            STATUS_WRITE:   next_status = addr == i_memory_size - 1 ? STATUS_END : STATUS_WRITE;
+            STATUS_END:     next_status = end_count >= 3 ? STATUS_INIT : STATUS_END;
+            default:        next_status = STATUS_INIT;
         endcase
     end
     
