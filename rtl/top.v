@@ -14,7 +14,7 @@ module top
     output wire o_led1_r,
     output wire o_led1_b,
     
-    // output wire o_tx,
+    output wire o_tx,
     
     input  wire i_rx,
     
@@ -53,9 +53,9 @@ module top
     output wire [13:0] o_dac_data,
     output wire o_dac_set_fs_ch1,
     output wire o_dac_set_fs_ch2,
-    output wire o_dac_enable,
+    output wire o_dac_enable
     
-    output wire [13:0] o_relation
+    // output wire [13:0] o_relation
 );
 
     /* ########################################################### */
@@ -353,7 +353,9 @@ module top
     
     /* ########################################################### */
     /* PROCESSOR ################################################# */
-        
+    
+    wire [ PROCESSOR_DATA_SIZE - 1 : 0 ] processor_result;
+    
     processor #
     (
         .AMPLITUDE_DATA_SIZE    ( AMPLITUDE_DATA_SIZE   ),
@@ -365,7 +367,7 @@ module top
         .i_reference            ( ref_amplitude         ),
         .i_error                ( err_amplitude         ),
         .i_valid                ( amplitude_valid       ),
-        .o_result               ( o_relation            )
+        .o_result               ( processor_result      )
     ); 
     
     /* ########################################################### */
@@ -396,12 +398,12 @@ module top
     
     /* ########################################################### */
     /* DUMP UNIT ################################################# */
-
+    
     wire                                dump_unit_valid;
     wire    [ ADDR_SIZE      - 1 : 0 ]  dump_unit_addr;
     wire                                dump_unit_end;
     wire    [ UART_DATA_SIZE - 1 : 0 ]  dump_unit_data;
-        
+    /*    
     dump_unit #
     (
         .ADDR_SIZE          ( ADDR_SIZE         ),
@@ -421,6 +423,30 @@ module top
         .o_valid            ( dump_unit_valid   ),
         .o_end              ( dump_unit_end     )
     );
+    */
+    
+    /* ########################################################### */
+    /* LOGGER #################################################### */
+    
+    wire [ UART_DATA_SIZE - 1 : 0 ] logger_data;
+    wire                            logger_start;
+    
+    logger #
+    (
+        .IAGC_STATUS_SIZE       ( IAGC_STATUS_SIZE      ),
+        .AMPLITUDE_DATA_SIZE    ( AMPLITUDE_DATA_SIZE   ),
+        .UART_DATA_SIZE         ( UART_DATA_SIZE        )
+    )
+    u_logger
+    (
+        .i_clock                ( sys_clock             ),
+        .i_iagc_status          ( iagc_status           ),
+        .i_reference_amplitude  ( ref_amplitude         ),
+        .i_error_amplitude      ( err_amplitude         ),
+        .i_tx_ready             ( uart_tx_ready         ),
+        .o_tx_data              ( logger_data           ),
+        .o_tx_start             ( logger_start          )
+    );
     
     /* ########################################################### */
     /* UARTS ##################################################### */
@@ -438,9 +464,9 @@ module top
     (
         .user_clk       ( sys_clock             ),
         .rst_n          ( ~sys_reset            ),
-        .start_tx       ( dump_unit_valid       ),
-        .data           ( dump_unit_data        ),
-        //.tx_bit         ( o_tx                  ),
+        .start_tx       ( logger_start          ),
+        .data           ( logger_data           ),
+        .tx_bit         ( o_tx                  ),
         .ready          ( uart_tx_ready         ),
         .chipscope_clk  (                       )
     );
