@@ -3,27 +3,32 @@
 module processor #
 (
     parameter AMPLITUDE_DATA_SIZE   = 13,
-    parameter RESULT_DATA_SIZE      = 14
+    parameter QUOTIENT_SIZE         = 8,
+    parameter FRACTIONAL_SIZE       = 8
 )
 (
     input                                   i_clock,
     input   [ AMPLITUDE_DATA_SIZE - 1 : 0 ] i_reference,
     input   [ AMPLITUDE_DATA_SIZE - 1 : 0 ] i_error,
     input                                   i_valid,
-    output  [ RESULT_DATA_SIZE    - 1 : 0 ] o_result
+    output  [ QUOTIENT_SIZE       - 1 : 0 ] o_quotient,
+    output  [ FRACTIONAL_SIZE     - 1 : 0 ] o_fractional
 );
     
     localparam DIV_RESULT_DATA_SIZE = 24;
     
     wire    [ DIV_RESULT_DATA_SIZE - 1 : 0 ]    div_result;
     wire                                        div_valid;
-    reg     [ RESULT_DATA_SIZE     - 1 : 0 ]    result;
+    reg     [ QUOTIENT_SIZE        - 1 : 0 ]    quotient;
+    reg     [ FRACTIONAL_SIZE      - 1 : 0 ]    fractional;
     
     always@( posedge i_clock ) begin
-        result <= div_valid ? div_result[ RESULT_DATA_SIZE - 1 : 0 ] : result;
+        quotient   <= div_valid ? div_result[ 15 : 8 ] : quotient;
+        fractional <= div_valid ? div_result[ 7  : 0 ] : fractional;
     end
     
-    assign  o_result = result;
+    assign o_quotient   = quotient;
+    assign o_fractional = fractional;
     
      /*
                <--- IP Configuration --->

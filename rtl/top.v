@@ -78,7 +78,8 @@ module top
     localparam AMPLITUDE_COUNT_SIZE = 16;
     localparam REMAINDER_SIZE       = 8;
     localparam AMPLITUDE_DATA_SIZE  = 13;
-    localparam PROCESSOR_DATA_SIZE  = 14;
+    localparam QUOTIENT_SIZE        = 8;
+    localparam FRACTIONAL_SIZE      = 8;
     
     /* ########################################################### */
     /* CLOCK UNIT ################################################ */
@@ -354,12 +355,14 @@ module top
     /* ########################################################### */
     /* PROCESSOR ################################################# */
     
-    wire [ PROCESSOR_DATA_SIZE - 1 : 0 ] processor_result;
+    wire [ QUOTIENT_SIZE   - 1 : 0 ] processor_quotient;
+    wire [ FRACTIONAL_SIZE - 1 : 0 ] processor_fractional;
     
     processor #
     (
         .AMPLITUDE_DATA_SIZE    ( AMPLITUDE_DATA_SIZE   ),
-        .RESULT_DATA_SIZE       ( PROCESSOR_DATA_SIZE   )       
+        .QUOTIENT_SIZE          ( QUOTIENT_SIZE         ),
+        .FRACTIONAL_SIZE        ( FRACTIONAL_SIZE       )       
     )
     u_processor
     (
@@ -367,7 +370,8 @@ module top
         .i_reference            ( ref_amplitude         ),
         .i_error                ( err_amplitude         ),
         .i_valid                ( amplitude_valid       ),
-        .o_result               ( processor_result      )
+        .o_quotient             ( processor_quotient    ),
+        .o_fractional           ( processor_fractional  )
     ); 
     
     /* ########################################################### */
@@ -443,6 +447,9 @@ module top
         .i_iagc_status          ( iagc_status           ),
         .i_reference_amplitude  ( ref_amplitude         ),
         .i_error_amplitude      ( err_amplitude         ),
+        .i_quotient             ( processor_quotient    ),
+        .i_fractional           ( processor_fractional  ),
+        .i_on_phase             ( in_phase              ),
         .i_tx_ready             ( uart_tx_ready         ),
         .o_tx_data              ( logger_data           ),
         .o_tx_start             ( logger_start          )

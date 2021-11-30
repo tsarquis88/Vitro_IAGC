@@ -1,5 +1,5 @@
 make:
-	gcc read.c -o read
+	gcc read.c -o read -lm
 clean:
 	rm -f -r *.txt *.log *.jou .Xil *.str
 plot:

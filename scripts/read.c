@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
+
+#define RECEPTION_SIZE 7
 
 int sigint;
 
@@ -11,6 +14,29 @@ void
 sig_term_handler( int signum, siginfo_t *info, void *ptr )
 {
     sigint = 1;
+}
+
+float
+fixedpoint_to_decimal( int fix_as_int )
+{
+	float fix_as_float;
+	int i, j, bin[ 8 ];
+
+	fix_as_float = 0.0;
+
+	for( i = 0; i < 8; i++ )
+		bin[ i ] = 0;
+
+	for( i = 0; fix_as_int > 0; i++ )
+	{
+		bin[ i ]   = fix_as_int % 2;
+		fix_as_int = fix_as_int / 2;
+	}
+
+	for( j = 0; j < 8; j++ )
+		fix_as_float = fix_as_float + bin[ 7 - j ] * pow( 2, -( j + 1 ) );
+
+	return fix_as_float;
 }
 
 int
@@ -31,9 +57,11 @@ main( int argc, char **argv )
 	sigaction(SIGINT, &_sigact, NULL);
 
 	FILE *device;
+	int  counter;
 
 	init:
-	device = fopen( argv[ 1 ], "r" );
+	device  = fopen( argv[ 1 ], "r" );
+	counter = 0;
 	if( device == NULL )
 	{
 		perror( "" );
@@ -43,9 +71,9 @@ main( int argc, char **argv )
 	while( sigint == 0 )
 	{
 		uint8_t buffer, i, ok;
-		int reception[ 5 ];
+		int reception[ RECEPTION_SIZE ];
 
-		for( i = 0; i < 4; i++ )
+		for( i = 0; i < RECEPTION_SIZE; i++ )
 		{
 			if( fread( ( void* ) &buffer, sizeof( buffer ), 1, device ) )
 				reception[ i ] = ( int ) buffer;
@@ -53,31 +81,26 @@ main( int argc, char **argv )
 				break;
 		}
 
-		if( i == 4 && reception[ 1 ] < 32 && reception[ 3 ] < 32 )
-		{	
-			char space[ 32 ];
-			int spaces, ref_amp, err_amp, rel;
+		if( i == RECEPTION_SIZE && reception[ 1 ] < 32 && reception[ 3 ] < 32 )
+		{
+			int   ref_amp, err_amp, quotient, fractional;
 			float ref_vol, err_vol;
+			char  on_phase[ 3 ];
 
-			ref_amp = reception[ 0 ] + ( reception[ 1 ] << 8 ); 
-			err_amp = reception[ 2 ] + ( reception[ 3 ] << 8 );
-			ref_vol = ( float ) ref_amp * 0.13e-3;
-			err_vol = ( float ) err_amp * 0.13e-3;
+			ref_amp    = reception[ 0 ] + ( reception[ 1 ] << 8 );
+			err_amp    = reception[ 2 ] + ( reception[ 3 ] << 8 );
+			ref_vol    = ( float ) ref_amp * 0.13e-3;
+			err_vol    = ( float ) err_amp * 0.13e-3;
+			quotient   = reception[ 4 ];
+			fractional = reception[ 5 ];
 
-			if( ref_amp >= 1000 )
-				spaces = 1;
-			else if( ref_amp >= 100 )
-				spaces = 2;
-			else if( ref_amp >= 10 )
-				spaces = 3;
+			if( reception[ 6 ] )
+				sprintf( on_phase, "%s", "SI" );
 			else
-				spaces = 4;
+				sprintf( on_phase, "%s", "NO" );
 
-			for( i = 0; i < spaces; i++ )
-				space[ i ] = ' ';
-			space[ spaces ] = '\0';
-
-			printf( "REFERENCIA = %d (%0.3f [V])%s| ERROR = %d (%0.3f [V])\n", ref_amp, ref_vol, space, err_amp, err_vol );
+			printf( "REFERENCIA = %d (%0.3f [V]) | ERROR = %d (%0.3f [V]) | RELACION = %0.3f | EN FASE: %s\n",
+				ref_amp, ref_vol, err_amp, err_vol, quotient + fixedpoint_to_decimal( fractional ), on_phase );
 		}
 		else
 		{
@@ -89,6 +112,15 @@ main( int argc, char **argv )
 				goto init;
 			}
 		}
+
+		if( counter > 10 )
+		{
+			fclose( device );
+			usleep( 250000 );
+			goto init;
+		}
+
+		counter++;
 	}
 
 	fclose( device );

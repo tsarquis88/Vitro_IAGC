@@ -12,6 +12,9 @@ module logger #
     input  wire [ IAGC_STATUS_SIZE    - 1 : 0 ] i_iagc_status,
     input  wire [ AMPLITUDE_DATA_SIZE - 1 : 0 ] i_reference_amplitude,
     input  wire [ AMPLITUDE_DATA_SIZE - 1 : 0 ] i_error_amplitude,
+    input  wire [ UART_DATA_SIZE      - 1 : 0 ] i_quotient,
+    input  wire [ UART_DATA_SIZE      - 1 : 0 ] i_fractional,
+    input  wire                                 i_on_phase,
     input  wire                                 i_tx_ready,
     output wire [ UART_DATA_SIZE      - 1 : 0 ] o_tx_data,
     output wire                                 o_tx_start
@@ -21,7 +24,7 @@ module logger #
     localparam IAGC_STATUS_INIT         = 4'b0001;
     localparam IAGC_STATUS_LOG          = 4'b1110;
    
-    localparam STATUS_SIZE          = 4;
+    localparam STATUS_SIZE    = 5;
         
     localparam STATUS_INIT    = 0;
     localparam STATUS_WAIT    = 1;
@@ -34,6 +37,12 @@ module logger #
     localparam STATUS_ERR_L_W = 8;
     localparam STATUS_ERR_H   = 9;
     localparam STATUS_ERR_H_W = 10;
+    localparam STATUS_QUO     = 11;
+    localparam STATUS_QUO_W   = 12;
+    localparam STATUS_FRA     = 13;
+    localparam STATUS_FRA_W   = 14;
+    localparam STATUS_PHA     = 15;
+    localparam STATUS_PHA_W   = 16;
     
     reg     [ STATUS_SIZE    - 1 : 0 ]  status;
     reg     [ STATUS_SIZE    - 1 : 0 ]  next_status;
@@ -116,6 +125,42 @@ module logger #
                 tx_start    <= 1'b0;
             end
             
+            STATUS_QUO: begin
+                counter     <= counter + 1;
+                tx_data     <= i_quotient;
+                tx_start    <= 1'b1;
+            end
+            
+            STATUS_QUO_W: begin
+                counter     <= 0;
+                tx_data     <= tx_data;
+                tx_start    <= 1'b0;
+            end
+            
+            STATUS_FRA: begin
+                counter     <= counter + 1;
+                tx_data     <= i_fractional;
+                tx_start    <= 1'b1;
+            end
+            
+            STATUS_FRA_W: begin
+                counter     <= 0;
+                tx_data     <= tx_data;
+                tx_start    <= 1'b0;
+            end
+            
+            STATUS_PHA: begin
+                counter     <= counter + 1;
+                tx_data     <= { UART_DATA_SIZE { 1'b0 } } + i_on_phase;
+                tx_start    <= 1'b1;
+            end
+            
+            STATUS_PHA_W: begin
+                counter     <= 0;
+                tx_data     <= tx_data;
+                tx_start    <= 1'b0;
+            end
+            
             default: begin
                 counter     <= 0;
                 tx_data     <= tx_data;
@@ -137,7 +182,13 @@ module logger #
             STATUS_ERR_L:   next_status = counter > 3         ? STATUS_ERR_L_W : STATUS_ERR_L;
             STATUS_ERR_L_W: next_status = i_tx_ready          ? STATUS_ERR_H   : STATUS_ERR_L_W;
             STATUS_ERR_H:   next_status = counter > 3         ? STATUS_ERR_H_W : STATUS_ERR_H;
-            STATUS_ERR_H_W: next_status = i_tx_ready          ? STATUS_INIT    : STATUS_ERR_H_W;
+            STATUS_ERR_H_W: next_status = i_tx_ready          ? STATUS_QUO     : STATUS_ERR_H_W;
+            STATUS_QUO:     next_status = counter > 3         ? STATUS_QUO_W   : STATUS_QUO;
+            STATUS_QUO_W:   next_status = i_tx_ready          ? STATUS_FRA     : STATUS_QUO_W;
+            STATUS_FRA:     next_status = counter > 3         ? STATUS_FRA_W   : STATUS_FRA;
+            STATUS_FRA_W:   next_status = i_tx_ready          ? STATUS_PHA     : STATUS_FRA_W;
+            STATUS_PHA:     next_status = counter > 3         ? STATUS_PHA_W   : STATUS_PHA;
+            STATUS_PHA_W:   next_status = i_tx_ready          ? STATUS_INIT    : STATUS_PHA_W;
             default:        next_status = STATUS_INIT;
         endcase
     end
