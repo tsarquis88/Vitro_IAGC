@@ -81,10 +81,10 @@ main( int argc, char **argv )
 				break;
 		}
 
-		if( i == RECEPTION_SIZE && reception[ 1 ] < 32 && reception[ 3 ] < 32 )
+		if( i == RECEPTION_SIZE && reception[ 1 ] < 32 && reception[ 3 ] < 32 && reception[ 4 ] < 3 )
 		{
 			int   ref_amp, err_amp, quotient, fractional;
-			float ref_vol, err_vol;
+			float ref_vol, err_vol, relation;
 			char  on_phase[ 3 ];
 
 			ref_amp    = reception[ 0 ] + ( reception[ 1 ] << 8 );
@@ -93,6 +93,7 @@ main( int argc, char **argv )
 			err_vol    = ( float ) err_amp * 0.13e-3;
 			quotient   = reception[ 4 ];
 			fractional = reception[ 5 ];
+			relation   = quotient + fixedpoint_to_decimal( fractional );
 
 			if( reception[ 6 ] )
 				sprintf( on_phase, "%s", "SI" );
@@ -100,7 +101,7 @@ main( int argc, char **argv )
 				sprintf( on_phase, "%s", "NO" );
 
 			printf( "REFERENCIA = %d (%0.3f [V]) | ERROR = %d (%0.3f [V]) | RELACION = %0.3f | EN FASE: %s\n",
-				ref_amp, ref_vol, err_amp, err_vol, quotient + fixedpoint_to_decimal( fractional ), on_phase );
+				ref_amp, ref_vol, err_amp, err_vol, relation, on_phase );
 		}
 		else
 		{

@@ -71,7 +71,7 @@ module top
     localparam SAMPLER_DATA_SIZE    = 16;
     localparam UART_DATA_SIZE       = 8;
     localparam UART_CLK_FREQ        = 100000000;
-    localparam UART_BAUDRATE        = 38400;
+    localparam UART_BAUDRATE        = 921600;
     localparam DEF_PHASE_COUNT      = 256;
     localparam PHASE_COUNT_SIZE     = 16;
     localparam DEF_AMPLITUDE_COUNT  = 256;
