@@ -87,6 +87,7 @@ module top
     wire    sys_clock;
     wire    sys_reset;
     wire    adc_clock;
+    wire    dac_in_clock;
     wire    dac_clock;
     
     clock_unit #
@@ -94,12 +95,13 @@ module top
     )
     u_clock_unit
     (
-        .i_clock        ( i_clock   ),
-        .i_reset        ( i_reset   ),
-        .o_sys_clock    ( sys_clock ),
-        .o_adc_clock    ( adc_clock ),
-        .o_dac_clock    ( dac_clock ),
-        .o_valid        ( sys_reset )
+        .i_clock        ( i_clock       ),
+        .i_reset        ( i_reset       ),
+        .o_sys_clock    ( sys_clock     ),
+        .o_adc_clock    ( adc_clock     ),
+        .o_dac_in_clock ( dac_in_clock  ),
+        .o_dac_clock    ( dac_clock     ),
+        .o_valid        ( sys_reset     )
     );
     
     /* ########################################################### */
@@ -217,10 +219,12 @@ module top
     u_dac1411
     (
         .i_sys_clock        ( sys_clock         ),
+        .i_dac_in_clock     ( dac_in_clock      ),
         .i_dac_clock        ( dac_clock         ),
+        .i_sample           ( decimator_sample  ),
         .i_iagc_status      ( iagc_status       ),
-        .i_data_ch1         ( filtered_ref      ),
-        .i_data_ch2         ( filtered_err      ),
+        .i_data_ch1         ( adc_sample_ch1    ),
+        .i_data_ch2         ( adc_sample_ch2    ),
         .io_dac_sdio        ( io_dac_sdio       ),
         .o_dac_init_done    ( dac1411_init_done ),
         .o_dac_cs           ( o_dac_cs          ),
