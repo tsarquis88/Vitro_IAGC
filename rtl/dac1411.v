@@ -31,7 +31,6 @@ module dac1411 #
 
     localparam IAGC_STATUS_RESET        = 4'b0000;
     
-    wire            init_done;
     wire            init_error;
     wire            reset;
     wire            enable;
@@ -49,7 +48,6 @@ module dac1411 #
     assign tdata[ 0       ] = 1'b0;
     assign test_mode        = 1'b0;
     
-    assign o_dac_init_done  = init_done;
     assign o_dac_clkin_n    = 1'b0;
     assign o_dac_clkio_n    = 1'b0;
     
@@ -64,33 +62,8 @@ module dac1411 #
         Ch1HgMultCoefStatic =   010000000000000000
         Ch2HgMultCoefStatic =   010000000000000000
         Ch1LgMultCoefStatic =   010000000000000000
-        Ch2LgMultCoefStatic =   010000000000000000   
-    */
-    /*
-    ZmodDAC1411_Controller_0
-    u_ZmodDAC1411_Controller_0
-    (
-        .SysClk         ( i_sys_clock       ),
-        .DacClk         ( i_dac_clock       ),
-        .sRst_n         ( reset             ),
-        .sInitDone_n    ( init_done         ),
-        .sCh1In         ( i_data_ch1        ),
-        .sCh2In         ( i_data_ch2        ),
-        .sDAC_EnIn      ( enable            ),
-        .sDAC_CS        ( o_dac_cs          ),
-        .sDAC_SCLK      ( o_dac_sclk        ),
-        .sDAC_SDIO      ( io_dac_sdio       ),
-        .sDAC_Reset     ( o_dac_reset       ),
-        .sDAC_ClkIO     ( o_dac_clkio_p     ),
-        .sDAC_Clkin     ( o_dac_clkin_p     ),
-        .sDAC_Data      ( o_dac_data        ),
-        .sDAC_SetFS1    ( o_dac_set_fs_ch1  ),
-        .sDAC_SetFS2    ( o_dac_set_fs_ch2  ),
-        .sDAC_EnOut     ( o_dac_enable      )
-    );
-    */
-    
-    /*
+        Ch2LgMultCoefStatic =   010000000000000000
+        
         Prefijo 's' -> sincrono a SysClk100
         Prefijo 'c' -> sincrono a DAC_InIO_Clk
         Prefijo 'd' -> sincrono a DAC_Clk (excepto dZmodDAC_Data, RTFM)
@@ -103,7 +76,7 @@ module dac1411 #
         .DAC_Clk            ( i_dac_clock       ),
         .aRst_n             ( reset             ),
         .sTestMode          ( test_mode         ),
-        .sInitDoneDAC       ( init_done         ),
+        .sInitDoneDAC       ( o_dac_init_done   ),
         .sConfigError       ( init_error        ),
         .cDataAxisTvalid    ( i_sample          ),
         .cDataAxisTready    ( tready            ),

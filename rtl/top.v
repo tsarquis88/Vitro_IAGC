@@ -86,7 +86,8 @@ module top
     
     wire    sys_clock;
     wire    sys_reset;
-    wire    adc_clock;
+    wire    adc_sampling_clock;
+    wire    adc_in_clock;
     wire    dac_in_clock;
     wire    dac_clock;
     
@@ -95,13 +96,14 @@ module top
     )
     u_clock_unit
     (
-        .i_clock        ( i_clock       ),
-        .i_reset        ( i_reset       ),
-        .o_sys_clock    ( sys_clock     ),
-        .o_adc_clock    ( adc_clock     ),
-        .o_dac_in_clock ( dac_in_clock  ),
-        .o_dac_clock    ( dac_clock     ),
-        .o_valid        ( sys_reset     )
+        .i_clock                ( i_clock               ),
+        .i_reset                ( i_reset               ),
+        .o_sys_clock            ( sys_clock             ),
+        .o_adc_sampling_clock   ( adc_sampling_clock    ),
+        .o_adc_in_clock         ( adc_in_clock          ),
+        .o_dac_in_clock         ( dac_in_clock          ),
+        .o_dac_clock            ( dac_clock             ),
+        .o_valid                ( sys_reset             )
     );
     
     /* ########################################################### */
@@ -180,8 +182,10 @@ module top
     u_adc1410
     (
         .i_sys_clock            ( sys_clock             ),
-        .i_adc_clock            ( adc_clock             ),
+        .i_adc_sampling_clock   ( adc_sampling_clock    ),
+        .i_adc_in_clock         ( adc_in_clock          ),
         .i_iagc_status          ( iagc_status           ),
+        .i_sample               ( decimator_sample      ),
         .i_adc_data             ( i_adc_data            ),
         .io_adc_sdio            ( io_adc_sdio           ),
         .i_adc_dco_clock_p      ( i_adc_dco_clock_p     ),

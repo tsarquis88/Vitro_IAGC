@@ -80,11 +80,11 @@ set_property DRIVE 4 [get_ports o_adc_sclk]
 set_property DRIVE 4 [get_ports o_adc_sync]
 set_property SLEW SLOW [get_ports o_adc_sync]
 set_property SLEW SLOW [get_ports -filter { name =~ o_adc_clock_in_* }]
-create_clock -period 10.000 -name i_adc_dco_clock_p -waveform {0.000 5.000} [get_ports i_adc_dco_clock_p]
-set_input_delay -clock [get_clocks i_adc_dco_clock_p] -clock_fall -min -add_delay 3.240 [get_ports {i_adc_data}]
-set_input_delay -clock [get_clocks i_adc_dco_clock_p] -clock_fall -max -add_delay 5.440 [get_ports {i_adc_data}]
-set_input_delay -clock [get_clocks i_adc_dco_clock_p] -min -add_delay 3.240 [get_ports {i_adc_data}]
-set_input_delay -clock [get_clocks i_adc_dco_clock_p] -max -add_delay 5.440 [get_ports {i_adc_data}]
+# create_clock -period 10.000 -name i_adc_dco_clock_p -waveform {0.000 5.000} [get_ports i_adc_dco_clock_p]
+# set_input_delay -clock [get_clocks i_adc_dco_clock_p] -clock_fall -min -add_delay 3.240 [get_ports {i_adc_data}]
+# set_input_delay -clock [get_clocks i_adc_dco_clock_p] -clock_fall -max -add_delay 5.440 [get_ports {i_adc_data}]
+# set_input_delay -clock [get_clocks i_adc_dco_clock_p] -min -add_delay 3.240 [get_ports {i_adc_data}]
+# set_input_delay -clock [get_clocks i_adc_dco_clock_p] -max -add_delay 5.440 [get_ports {i_adc_data}]
 
 ## Syzygy Port B -> DAC1411
 set_property -dict { PACKAGE_PIN Y16  IOSTANDARD LVCMOS18 } [get_ports { o_dac_clkin_n }]; #IO_L14N_T2_SRCC Sch=syzygy_b_c2p_clk_n
