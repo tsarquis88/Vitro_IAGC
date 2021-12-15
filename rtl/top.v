@@ -54,12 +54,10 @@ module top
     output wire o_dac_set_fs_ch1,
     output wire o_dac_set_fs_ch2,
     output wire o_dac_enable
-    
-    // output wire [13:0] o_relation
 );
 
     /* ########################################################### */
-    /* PARAMETERS ################################################ */
+    /* PARAMETERS & WIRES ######################################## */
     
     localparam IAGC_STATUS_SIZE     = 4;
     localparam ADDR_SIZE            = 13;
@@ -80,15 +78,76 @@ module top
     localparam AMPLITUDE_DATA_SIZE  = 13;
     localparam QUOTIENT_SIZE        = 8;
     localparam FRACTIONAL_SIZE      = 8;
+    localparam DUMP_UNIT_ENABLED    = 0;
+    localparam FILTER_ENABLED       = 0;
+    
+    wire                                    sys_clock;
+    wire                                    sys_reset;
+    wire                                    adc_clock;
+    wire                                    dac_in_clock;
+    wire                                    dac_clock;
+    
+    wire [ IAGC_STATUS_SIZE     - 1 : 0 ]   iagc_status;
+    wire [ ADDR_SIZE            - 1 : 0 ]   iagc_memory_size;
+    wire [ DECIMATOR_SIZE       - 1 : 0 ]   iagc_decimator;
+    wire [ PHASE_COUNT_SIZE     - 1 : 0 ]   iagc_phase_count;
+    wire [ AMPLITUDE_COUNT_SIZE - 1 : 0 ]   iagc_amplitude_count;
+    
+    wire                                    decimator_sample;
+    
+    wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   adc1410_ch1;
+    wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   adc1410_ch2;
+    wire                                    adc1410_init_done;
+    
+    wire                                    dac1411_init_done;
+    wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   dac1411_ch1_in;
+    wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   dac1411_ch2_in;
+    
+    wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   adc_sample_ch1;
+    wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   adc_sample_ch2;
+    
+    wire [ SAMPLER_DATA_SIZE    - 1 : 0 ]   converted_ref;
+    wire [ SAMPLER_DATA_SIZE    - 1 : 0 ]   converted_err;
+    
+    wire [ SAMPLER_DATA_SIZE    - 1 : 0 ]   sampled_ref;
+    wire [ SAMPLER_DATA_SIZE    - 1 : 0 ]   sampled_err;
+    wire                                    sampler_end;
+    wire [ ADDR_SIZE            - 1 : 0 ]   sampler_addr;
+    
+    wire                                    in_phase;
+    
+    wire [ AMPLITUDE_DATA_SIZE  - 1 : 0 ]   ref_amplitude;
+    wire [ AMPLITUDE_DATA_SIZE  - 1 : 0 ]   err_amplitude;
+    wire                                    amplitude_valid;
+    
+    wire [ QUOTIENT_SIZE        - 1 : 0 ]   processor_quotient;
+    wire [ FRACTIONAL_SIZE      - 1 : 0 ]   processor_fractional;
+    
+    wire [ SAMPLER_DATA_SIZE    - 1 : 0 ]   memory_data;
+    wire                                    memory_clean_end;
+    
+    wire                                    dump_unit_valid;
+    wire [ ADDR_SIZE            - 1 : 0 ]   dump_unit_addr;
+    wire                                    dump_unit_end;
+    wire [ UART_DATA_SIZE       - 1 : 0 ]   dump_unit_data;
+    
+    wire [ UART_DATA_SIZE       - 1 : 0 ]   logger_data;
+    wire                                    logger_valid;
+    
+    wire                                    uart_tx_ready;
+    wire                                    uart_tx_valid;
+    wire [ UART_DATA_SIZE       - 1 : 0 ]   uart_tx_data;
+    wire [ UART_DATA_SIZE       - 1 : 0 ]   uart_rx_data;
+    wire                                    uart_rx_valid;
+    
+    wire [ CMD_PARAM_SIZE       - 1 : 0 ]   cmd_param;
+    wire [ CMD_PARAM_SIZE       - 1 : 0 ]   cmd_op;
+    
+    wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   filtered_ref;
+    wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   filtered_err;
     
     /* ########################################################### */
     /* CLOCK UNIT ################################################ */
-    
-    wire    sys_clock;
-    wire    sys_reset;
-    wire    adc_clock;
-    wire    dac_in_clock;
-    wire    dac_clock;
     
     clock_unit #
     (
@@ -106,12 +165,6 @@ module top
     
     /* ########################################################### */
     /* GLOBAL FSM ################################################ */
-    
-    wire    [ IAGC_STATUS_SIZE     - 1 : 0 ]    iagc_status;
-    wire    [ ADDR_SIZE            - 1 : 0 ]    iagc_memory_size;
-    wire    [ DECIMATOR_SIZE       - 1 : 0 ]    iagc_decimator;
-    wire    [ PHASE_COUNT_SIZE     - 1 : 0 ]    iagc_phase_count;
-    wire    [ AMPLITUDE_COUNT_SIZE - 1 : 0 ]    iagc_amplitude_count;
     
     iagc_fsm #
     (
@@ -149,8 +202,6 @@ module top
     /* ########################################################### */
     /* DECIMATOR ################################################# */
     
-    wire decimator_sample;
-    
     decimator # 
     (
         .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  ),
@@ -167,10 +218,6 @@ module top
     
     /* ########################################################### */
     /* ADC1410 ################################################### */
-    
-    wire    [ ZMOD_DATA_SIZE - 1 : 0 ]  adc1410_ch1;
-    wire    [ ZMOD_DATA_SIZE - 1 : 0 ]  adc1410_ch2;
-    wire                                adc1410_init_done;
         
     adc1410 #
     (
@@ -209,7 +256,8 @@ module top
     /* ########################################################### */
     /* DAC1411 ################################################### */
     
-    wire        dac1411_init_done;
+    assign dac1411_ch1_in = FILTER_ENABLED ? filtered_ref : adc1410_ch1;
+    assign dac1411_ch2_in = FILTER_ENABLED ? filtered_err : adc1410_ch2;
     
     dac1411 #
     (
@@ -223,8 +271,8 @@ module top
         .i_dac_clock        ( dac_clock         ),
         .i_sample           ( decimator_sample  ),
         .i_iagc_status      ( iagc_status       ),
-        .i_data_ch1         ( adc_sample_ch1    ),
-        .i_data_ch2         ( adc_sample_ch2    ),
+        .i_data_ch1         ( dac1411_ch1_in    ),
+        .i_data_ch2         ( dac1411_ch2_in    ),
         .io_dac_sdio        ( io_dac_sdio       ),
         .o_dac_init_done    ( dac1411_init_done ),
         .o_dac_cs           ( o_dac_cs          ),
@@ -242,9 +290,6 @@ module top
     
     /* ########################################################### */
     /* DAC SAMPLER ############################################### */
-    
-    wire    [ ZMOD_DATA_SIZE - 1 : 0 ]  adc_sample_ch1;
-    wire    [ ZMOD_DATA_SIZE - 1 : 0 ]  adc_sample_ch2;
     
     dac_sampler # 
     (
@@ -265,9 +310,6 @@ module top
     /* ########################################################### */
     /* DATA CONVERSOR ############################################ */
     
-    wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   converted_ref;
-    wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   converted_err;
-    
     data_conversor #
     (
         .ZMOD_DATA_SIZE     ( ZMOD_DATA_SIZE    ),
@@ -283,11 +325,6 @@ module top
     
     /* ########################################################### */
     /* SAMPLER ################################################### */
-
-    wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampled_ref;
-    wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   sampled_err;
-    wire                                    sampler_end;
-    wire    [ ADDR_SIZE         - 1 : 0 ]   sampler_addr;
         
     adc_sampler #
     (
@@ -312,8 +349,6 @@ module top
     /* ########################################################### */
     /* PHASE DETECTOR ############################################ */
     
-    wire in_phase;
-    
     phase_detector #
     (
         .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  ),
@@ -332,10 +367,6 @@ module top
     
     /* ########################################################### */
     /* AMPLITUDE DETECTOR ######################################## */
-    
-    wire [ AMPLITUDE_DATA_SIZE - 1 : 0 ]  ref_amplitude;
-    wire [ AMPLITUDE_DATA_SIZE - 1 : 0 ]  err_amplitude;
-    wire                                  amplitude_valid;
     
     amplitude_detector #
     (
@@ -359,9 +390,6 @@ module top
     /* ########################################################### */
     /* PROCESSOR ################################################# */
     
-    wire [ QUOTIENT_SIZE   - 1 : 0 ] processor_quotient;
-    wire [ FRACTIONAL_SIZE - 1 : 0 ] processor_fractional;
-    
     processor #
     (
         .AMPLITUDE_DATA_SIZE    ( AMPLITUDE_DATA_SIZE   ),
@@ -380,9 +408,6 @@ module top
     
     /* ########################################################### */
     /* RAM ####################################################### */
-    
-    wire    [ SAMPLER_DATA_SIZE - 1 : 0 ]   memory_data;
-    wire                                    memory_clean_end;
     
     memory #
     (
@@ -406,12 +431,7 @@ module top
     
     /* ########################################################### */
     /* DUMP UNIT ################################################# */
-    
-    wire                                dump_unit_valid;
-    wire    [ ADDR_SIZE      - 1 : 0 ]  dump_unit_addr;
-    wire                                dump_unit_end;
-    wire    [ UART_DATA_SIZE - 1 : 0 ]  dump_unit_data;
-    /*    
+        
     dump_unit #
     (
         .ADDR_SIZE          ( ADDR_SIZE         ),
@@ -431,13 +451,9 @@ module top
         .o_valid            ( dump_unit_valid   ),
         .o_end              ( dump_unit_end     )
     );
-    */
     
     /* ########################################################### */
     /* LOGGER #################################################### */
-    
-    wire [ UART_DATA_SIZE - 1 : 0 ] logger_data;
-    wire                            logger_start;
     
     logger #
     (
@@ -456,16 +472,15 @@ module top
         .i_on_phase             ( in_phase              ),
         .i_tx_ready             ( uart_tx_ready         ),
         .o_tx_data              ( logger_data           ),
-        .o_tx_start             ( logger_start          )
+        .o_tx_valid             ( logger_valid          )
     );
     
     /* ########################################################### */
     /* UARTS ##################################################### */
-    
-    wire                                uart_tx_ready;
-    wire    [ UART_DATA_SIZE - 1 : 0 ]  uart_rx_data;
-    wire                                uart_rx_valid;
         
+    assign uart_tx_valid = DUMP_UNIT_ENABLED ? dump_unit_valid : logger_valid;
+    assign uart_tx_data  = DUMP_UNIT_ENABLED ? dump_unit_data  : logger_data;
+    
     uart_tx #
     (
         .CLK_FREQUENCY  ( UART_CLK_FREQ         ),
@@ -475,8 +490,8 @@ module top
     (
         .user_clk       ( sys_clock             ),
         .rst_n          ( ~sys_reset            ),
-        .start_tx       ( logger_start          ),
-        .data           ( logger_data           ),
+        .start_tx       ( uart_tx_valid         ),
+        .data           ( uart_tx_data          ),
         .tx_bit         ( o_tx                  ),
         .ready          ( uart_tx_ready         ),
         .chipscope_clk  (                       )
@@ -498,9 +513,6 @@ module top
     
     /* ########################################################### */
     /* COMMAND UNIT ############################################## */
-        
-    wire    [ CMD_PARAM_SIZE - 1 : 0 ]  cmd_param;
-    wire    [ CMD_PARAM_SIZE - 1 : 0 ]  cmd_op;
     
     command_unit #
     (
@@ -540,9 +552,6 @@ module top
     
     /* ########################################################### */
     /* FILTERS ################################################### */
-    
-    wire [ ZMOD_DATA_SIZE - 1 : 0 ] filtered_ref;
-    wire [ ZMOD_DATA_SIZE - 1 : 0 ] filtered_err;
     
     lowpass_filter #
     (

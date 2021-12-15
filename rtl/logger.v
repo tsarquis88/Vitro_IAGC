@@ -17,7 +17,7 @@ module logger #
     input  wire                                 i_on_phase,
     input  wire                                 i_tx_ready,
     output wire [ UART_DATA_SIZE      - 1 : 0 ] o_tx_data,
-    output wire                                 o_tx_start
+    output wire                                 o_tx_valid
 );
 
     localparam IAGC_STATUS_RESET        = 4'b0000;
@@ -47,7 +47,7 @@ module logger #
     reg     [ STATUS_SIZE    - 1 : 0 ]  status;
     reg     [ STATUS_SIZE    - 1 : 0 ]  next_status;
     reg     [ UART_DATA_SIZE - 1 : 0 ]  tx_data;
-    reg                                 tx_start;    
+    reg                                 tx_valid;    
     integer                             counter;
     
     always@( posedge i_clock ) begin
@@ -62,109 +62,109 @@ module logger #
             STATUS_INIT: begin
                 counter     <= 0;
                 tx_data     <= { UART_DATA_SIZE { 1'b0 } };
-                tx_start    <= 1'b0;
+                tx_valid    <= 1'b0;
             end
             
             STATUS_WAIT: begin
                 counter     <= counter + 1;
                 tx_data     <= tx_data;
-                tx_start    <= 1'b0;
+                tx_valid    <= 1'b0;
             end
             
             STATUS_LOG: begin
                 counter     <= 0;
                 tx_data     <= tx_data;
-                tx_start    <= 1'b0;
+                tx_valid    <= 1'b0;
             end
             
             STATUS_REF_L: begin
                 counter     <= counter + 1;
                 tx_data     <= i_reference_amplitude[ UART_DATA_SIZE - 1 : 0 ];
-                tx_start    <= 1'b1;
+                tx_valid    <= 1'b1;
             end
             
             STATUS_REF_L_W: begin
                 counter     <= 0;
                 tx_data     <= tx_data;
-                tx_start    <= 1'b0;
+                tx_valid    <= 1'b0;
             end
             
             STATUS_REF_H: begin
                 counter     <= counter + 1;
                 tx_data     <= i_reference_amplitude[ AMPLITUDE_DATA_SIZE - 1 : UART_DATA_SIZE ] + { UART_DATA_SIZE { 1'b0 } };
-                tx_start    <= 1'b1;
+                tx_valid    <= 1'b1;
             end
             
             STATUS_REF_H_W: begin
                 counter     <= 0;
                 tx_data     <= tx_data;
-                tx_start    <= 1'b0;
+                tx_valid    <= 1'b0;
             end
             
             STATUS_ERR_L: begin
                 counter     <= counter + 1;
                 tx_data     <= i_error_amplitude[ UART_DATA_SIZE - 1 : 0 ];
-                tx_start    <= 1'b1;
+                tx_valid    <= 1'b1;
             end
             
             STATUS_ERR_L_W: begin
                 counter     <= 0;
                 tx_data     <= tx_data;
-                tx_start    <= 1'b0;
+                tx_valid    <= 1'b0;
             end
             
             STATUS_ERR_H: begin
                 counter     <= counter + 1;
                 tx_data     <= i_error_amplitude[ AMPLITUDE_DATA_SIZE - 1 : UART_DATA_SIZE ] + { UART_DATA_SIZE { 1'b0 } };
-                tx_start    <= 1'b1;
+                tx_valid    <= 1'b1;
             end
             
             STATUS_ERR_H_W: begin
                 counter     <= 0;
                 tx_data     <= tx_data;
-                tx_start    <= 1'b0;
+                tx_valid    <= 1'b0;
             end
             
             STATUS_QUO: begin
                 counter     <= counter + 1;
                 tx_data     <= i_quotient;
-                tx_start    <= 1'b1;
+                tx_valid    <= 1'b1;
             end
             
             STATUS_QUO_W: begin
                 counter     <= 0;
                 tx_data     <= tx_data;
-                tx_start    <= 1'b0;
+                tx_valid    <= 1'b0;
             end
             
             STATUS_FRA: begin
                 counter     <= counter + 1;
                 tx_data     <= i_fractional;
-                tx_start    <= 1'b1;
+                tx_valid    <= 1'b1;
             end
             
             STATUS_FRA_W: begin
                 counter     <= 0;
                 tx_data     <= tx_data;
-                tx_start    <= 1'b0;
+                tx_valid    <= 1'b0;
             end
             
             STATUS_PHA: begin
                 counter     <= counter + 1;
                 tx_data     <= { UART_DATA_SIZE { 1'b0 } } + i_on_phase;
-                tx_start    <= 1'b1;
+                tx_valid    <= 1'b1;
             end
             
             STATUS_PHA_W: begin
                 counter     <= 0;
                 tx_data     <= tx_data;
-                tx_start    <= 1'b0;
+                tx_valid    <= 1'b0;
             end
             
             default: begin
                 counter     <= 0;
                 tx_data     <= tx_data;
-                tx_start    <= 1'b0;
+                tx_valid    <= 1'b0;
             end
                 
         endcase
@@ -194,7 +194,7 @@ module logger #
     end
     
     assign o_tx_data  = tx_data;
-    assign o_tx_start = tx_start;
+    assign o_tx_valid = tx_valid;
         
 endmodule
 

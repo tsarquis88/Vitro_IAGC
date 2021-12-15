@@ -12,28 +12,28 @@ module clock_unit
     output wire o_valid
 );
     
-    wire        locked;
+    wire locked;
     
-    assign  o_valid =   ~locked;
+    assign o_valid = ~locked;
 
     /*
                <--- IP Configuration --->
-        clk_in1     =   125 MHz
-        clk_out1    =   100 MHz
-        clk_out2    =   400 MHz
-        clk_out4    =   100 MHz
-        clk_out3    =   100 MHz (shifted 90)
+        clk_in1      =   125 MHz
+        sys_clock    =   100 MHz
+        adc_clock    =   400 MHz
+        dac_clock    =   100 MHz
+        dac_in_clock =   100 MHz (shifted 90)
     */
     clk_wiz_0
     u_clk_wiz_0
     (
-        .clk_out1           ( o_sys_clock       ),
-        .clk_out2           ( o_adc_clock       ),
-        .clk_out3           ( o_dac_in_clock    ),
-        .clk_out4           ( o_dac_clock       ),
-        .reset              ( i_reset           ),
-        .locked             ( locked            ),
-        .clk_in1            ( i_clock           )
+        .sys_clock      ( o_sys_clock       ),
+        .adc_clock      ( o_adc_clock       ),
+        .dac_clock      ( o_dac_in_clock    ),
+        .dac_in_clock   ( o_dac_clock       ),
+        .reset          ( i_reset           ),
+        .locked         ( locked            ),
+        .clk_in1        ( i_clock           )
     );
     
 endmodule

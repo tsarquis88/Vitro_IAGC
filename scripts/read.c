@@ -107,7 +107,6 @@ main( int argc, char **argv )
 		{
 			if( sigint == 0 )
 			{
-				// printf( "ERROR EN LA RECEPCION\n" );
 				fclose( device );
 				usleep( 250000 );
 				goto init;
