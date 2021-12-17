@@ -79,7 +79,7 @@ module top
     localparam QUOTIENT_SIZE        = 8;
     localparam FRACTIONAL_SIZE      = 8;
     localparam DUMP_UNIT_ENABLED    = 0;
-    localparam FILTER_ENABLED       = 0;
+    localparam FILTER_ENABLED       = 1;
     
     wire                                    sys_clock;
     wire                                    sys_reset;
@@ -114,10 +114,14 @@ module top
     wire                                    sampler_end;
     wire [ ADDR_SIZE            - 1 : 0 ]   sampler_addr;
     
-    wire                                    in_phase;
+    wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   phase_ref_in;
+    wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   phase_err_in;
+    wire                                    phase_in_phase;
     
-    wire [ AMPLITUDE_DATA_SIZE  - 1 : 0 ]   ref_amplitude;
-    wire [ AMPLITUDE_DATA_SIZE  - 1 : 0 ]   err_amplitude;
+    wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   amplitude_ref_in;
+    wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   amplitude_err_in;
+    wire [ AMPLITUDE_DATA_SIZE  - 1 : 0 ]   amplitude_ref_out;
+    wire [ AMPLITUDE_DATA_SIZE  - 1 : 0 ]   amplitude_err_out;
     wire                                    amplitude_valid;
     
     wire [ QUOTIENT_SIZE        - 1 : 0 ]   processor_quotient;
@@ -349,41 +353,49 @@ module top
     /* ########################################################### */
     /* PHASE DETECTOR ############################################ */
     
+    assign phase_ref_in = FILTER_ENABLED ? filtered_ref : converted_ref;
+    assign phase_err_in = FILTER_ENABLED ? filtered_err : converted_err;
+    
     phase_detector #
     (
         .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  ),
-        .SAMPLER_DATA_SIZE  ( SAMPLER_DATA_SIZE )
+        .ZMOD_DATA_SIZE     ( ZMOD_DATA_SIZE    ),
+        .PHASE_COUNT_SIZE   ( PHASE_COUNT_SIZE  )
     )
     u_phase_detector
     (
         .i_clock            ( sys_clock         ),
         .i_iagc_status      ( iagc_status       ),
         .i_sample           ( decimator_sample  ),
-        .i_reference        ( converted_ref     ),
-        .i_error            ( converted_err     ),
+        .i_reference        ( phase_ref_in      ),
+        .i_error            ( phase_err_in      ),
         .i_phase_count      ( iagc_phase_count  ),
-        .o_in_phase         ( in_phase          )
+        .o_in_phase         ( phase_in_phase    )
     );
     
     /* ########################################################### */
     /* AMPLITUDE DETECTOR ######################################## */
     
+    assign amplitude_ref_in = FILTER_ENABLED ? filtered_ref : adc1410_ch1;
+    assign amplitude_err_in = FILTER_ENABLED ? filtered_err : adc1410_ch2;
+    
     amplitude_detector #
     (
         .IAGC_STATUS_SIZE       ( IAGC_STATUS_SIZE      ),
         .ZMOD_DATA_SIZE         ( ZMOD_DATA_SIZE        ),
-        .AMPLITUDE_COUNT_SIZE   ( AMPLITUDE_COUNT_SIZE  )
+        .AMPLITUDE_COUNT_SIZE   ( AMPLITUDE_COUNT_SIZE  ),
+        .AMPLITUDE_DATA_SIZE    ( AMPLITUDE_DATA_SIZE   )
     )
     u_amplitude_detector
     (
         .i_clock                ( sys_clock             ),
         .i_sample               ( decimator_sample      ),
         .i_iagc_status          ( iagc_status           ),
-        .i_reference            ( adc1410_ch1           ),
-        .i_error                ( adc1410_ch2           ),
+        .i_reference            ( amplitude_ref_in      ),
+        .i_error                ( amplitude_err_in      ),
         .i_amplitude_count      ( iagc_amplitude_count  ),
-        .o_reference_amplitude  ( ref_amplitude         ),
-        .o_error_amplitude      ( err_amplitude         ),
+        .o_reference_amplitude  ( amplitude_ref_out     ),
+        .o_error_amplitude      ( amplitude_err_out     ),
         .o_valid                ( amplitude_valid       )
     );
     
@@ -399,8 +411,8 @@ module top
     u_processor
     (
         .i_clock                ( sys_clock             ),
-        .i_reference            ( ref_amplitude         ),
-        .i_error                ( err_amplitude         ),
+        .i_reference            ( amplitude_ref_out     ),
+        .i_error                ( amplitude_err_out     ),
         .i_valid                ( amplitude_valid       ),
         .o_quotient             ( processor_quotient    ),
         .o_fractional           ( processor_fractional  )
@@ -465,11 +477,11 @@ module top
     (
         .i_clock                ( sys_clock             ),
         .i_iagc_status          ( iagc_status           ),
-        .i_reference_amplitude  ( ref_amplitude         ),
-        .i_error_amplitude      ( err_amplitude         ),
+        .i_reference_amplitude  ( amplitude_ref_out     ),
+        .i_error_amplitude      ( amplitude_err_out     ),
         .i_quotient             ( processor_quotient    ),
         .i_fractional           ( processor_fractional  ),
-        .i_on_phase             ( in_phase              ),
+        .i_on_phase             ( phase_in_phase        ),
         .i_tx_ready             ( uart_tx_ready         ),
         .o_tx_data              ( logger_data           ),
         .o_tx_valid             ( logger_valid          )
@@ -541,7 +553,7 @@ module top
         .i_clock            ( sys_clock             ),
         .i_reset            ( sys_reset             ),
         .i_iagc_status      ( iagc_status           ),
-        .i_in_phase         ( in_phase              ),
+        .i_in_phase         ( phase_in_phase        ),
         .o_led0_r           ( o_led0_r              ),
         .o_led0_g           ( o_led0_g              ),
         .o_led0_b           ( o_led0_b              ),

@@ -4,23 +4,23 @@
 module phase_detector #
 (
     parameter IAGC_STATUS_SIZE  = 4,
-    parameter SAMPLER_DATA_SIZE = 16,
+    parameter ZMOD_DATA_SIZE    = 14,
     parameter PHASE_COUNT_SIZE  = 16
 )
 (
-    input  wire                                 i_clock,
-    input  wire                                 i_sample,
-    input  wire [ IAGC_STATUS_SIZE  - 1 : 0 ]   i_iagc_status,
-    input  wire [ SAMPLER_DATA_SIZE - 1 : 0 ]   i_reference,
-    input  wire [ SAMPLER_DATA_SIZE - 1 : 0 ]   i_error,
-    input  wire [ PHASE_COUNT_SIZE  - 1 : 0 ]   i_phase_count,
-    output wire                                 o_in_phase
+    input  wire                                         i_clock,
+    input  wire                                         i_sample,
+    input  wire        [ IAGC_STATUS_SIZE  - 1 : 0 ]    i_iagc_status,
+    input  wire signed [ ZMOD_DATA_SIZE    - 1 : 0 ]    i_reference,
+    input  wire signed [ ZMOD_DATA_SIZE    - 1 : 0 ]    i_error,
+    input  wire        [ PHASE_COUNT_SIZE  - 1 : 0 ]    i_phase_count,
+    output wire                                         o_in_phase
 );
 
     localparam IAGC_STATUS_RESET    = 4'b0000;
     localparam IAGC_STATUS_INIT     = 4'b0001;
     
-    localparam STATUS_SIZE  = 2;
+    localparam STATUS_SIZE      = 2;
     
     localparam STATUS_INIT      = 0;
     localparam STATUS_SAMPLE    = 1;
@@ -49,9 +49,9 @@ module phase_detector #
             
             STATUS_SAMPLE: begin
                 if( i_sample ) begin
-                    if( i_reference[ 13 ] && i_error[ 13 ] )
+                    if( i_reference >= 0 && i_error >= 0 )
                         phase_counter       <= phase_counter + 1;
-                    else if( ~i_reference[ 13 ] && ~i_error[ 13 ] )
+                    else if( i_reference < 0 && i_error < 0 )
                         phase_counter       <= phase_counter + 1;
                     else
                         no_phase_counter    <= no_phase_counter + 1;

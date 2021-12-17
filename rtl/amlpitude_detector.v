@@ -23,7 +23,7 @@ module amplitude_detector #
     localparam IAGC_STATUS_RESET    = 4'b0000;
     localparam IAGC_STATUS_INIT     = 4'b0001;
     
-    localparam STATUS_SIZE  = 2;
+    localparam STATUS_SIZE      = 2;
     
     localparam STATUS_INIT      = 0;
     localparam STATUS_SAMPLE    = 1;
