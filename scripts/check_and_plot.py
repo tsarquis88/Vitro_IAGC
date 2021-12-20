@@ -41,8 +41,10 @@ if ref_exists:
 	            break
 	    else:
 	        if( broken == 0 ):
-	            ref[ j ] = ref_raw[ i - 2 ] * 256 + ref_raw[ i - 1 ]
-	            j = j + 1
+                    ref[ j ] = ref_raw[ i - 2 ] * 256 + ref_raw[ i - 1 ]
+                    if( ref[ j ] >= ( 1 << 15 ) ):
+                        ref[ j ] = ref[ j ] - ( 1 << 16 )
+                    j = j + 1
 	        broken = 0
 	        i = i + 3
 
@@ -93,11 +95,13 @@ if( err_exists ):
 	            error = 1
 	            break
 	    else:
-	        if( broken == 0 ):
-	            err[ j ] = err_raw[ i - 2 ] * 256 + err_raw[ i - 1 ]
-	            j = j + 1
-	        broken = 0
-	        i = i + 3
+                if( broken == 0 ):
+                    err[ j ] = err_raw[ i - 2 ] * 256 + err_raw[ i - 1 ]
+                    if( err[ j ] >= ( 1 << 15 ) ):
+                        err[ j ] = err[ j ] - ( 1 << 16 )
+                    j = j + 1
+                broken = 0
+                i = i + 3
 
 	if( error ):
 		print( "Error en etapa de chequeo" )
@@ -128,7 +132,7 @@ if ref_exists:
 	axis_font  = { 'weight': 'bold', 'size': 10, }
 
 	# Y axis step
-	step = ( ref.max() - 8192 ) / 4
+	step = 1000
 
 	plt.figure( figsize = ( 16, 8 ) )
 	plt.plot( ref, 'b', label = 'Reference signal' )
@@ -139,11 +143,11 @@ if ref_exists:
 	plt.legend()
 	plt.title( title, fontdict = title_font )
 	plt.grid( 'black' )
-	plt.xlim( 0, ref_len )
-	plt.ylim( 4000, 13000 )
+	# plt.xlim( 0, ref_len )
+	# plt.ylim( 4000, 13000 )
 	ax = plt.gca()
 	ax.set_facecolor( 'tab:gray' )
 
-	plt.yticks( np.arange( 4000, 13000, step = step ) )
+	plt.yticks( np.arange( -9000, 9000, step = step ) )
 
 	plt.show()

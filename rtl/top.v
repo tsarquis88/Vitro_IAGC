@@ -78,7 +78,7 @@ module top
     localparam AMPLITUDE_DATA_SIZE  = 14;
     localparam QUOTIENT_SIZE        = 8;
     localparam FRACTIONAL_SIZE      = 8;
-    localparam DUMP_UNIT_ENABLED    = 0;
+    localparam DUMP_UNIT_ENABLED    = 1;
     localparam FILTER_ENABLED       = 0;
     
     wire                                    sys_clock;
@@ -103,8 +103,8 @@ module top
     wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   dac1411_ch1_in;
     wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   dac1411_ch2_in;
     
-    wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   adc_sample_ch1;
-    wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   adc_sample_ch2;
+    wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   adc_sampler_ref_in;
+    wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   adc_sampler_err_in;
     
     wire [ SAMPLER_DATA_SIZE    - 1 : 0 ]   sampled_ref;
     wire [ SAMPLER_DATA_SIZE    - 1 : 0 ]   sampled_err;
@@ -290,45 +290,30 @@ module top
     );
     
     /* ########################################################### */
-    /* DAC SAMPLER ############################################### */
-    
-    dac_sampler # 
-    (
-        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  ),
-        .ZMOD_DATA_SIZE     ( ZMOD_DATA_SIZE    )
-    )
-    u_dac_sampler
-    (
-        .i_clock            ( sys_clock         ),
-        .i_iagc_status      ( iagc_status       ),
-        .i_data_ch1         ( adc1410_ch1       ),
-        .i_data_ch2         ( adc1410_ch2       ),
-        .i_sample           ( decimator_sample  ), 
-        .o_data_ch1         ( adc_sample_ch1    ),
-        .o_data_ch2         ( adc_sample_ch2    )
-    );
-    
-    /* ########################################################### */
     /* SAMPLER ################################################### */
         
+    assign adc_sampler_ref_in = FILTER_ENABLED ? filtered_ref : adc1410_ch1;
+    assign adc_sampler_err_in = FILTER_ENABLED ? filtered_err : adc1410_ch2;
+    
     adc_sampler #
     (
-        .DATA_SIZE          ( SAMPLER_DATA_SIZE ),
-        .ADDR_SIZE          ( ADDR_SIZE         ),
-        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  )
+        .ZMOD_DATA_SIZE     ( ZMOD_DATA_SIZE        ),
+        .SAMPLER_DATA_SIZE  ( SAMPLER_DATA_SIZE     ),
+        .ADDR_SIZE          ( ADDR_SIZE             ),
+        .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE      )
     )
     u_adc_sampler
     (
-        .i_clock            ( sys_clock         ),
-        .i_iagc_status      ( iagc_status       ),
-        .i_reference        ( adc1410_ch1       ),
-        .i_error            ( adc1410_ch2       ),
-        .i_memory_size      ( iagc_memory_size  ),
-        .i_sample           ( decimator_sample  ),
-        .o_reference_sample ( sampled_ref       ),
-        .o_error_sample     ( sampled_err       ),
-        .o_addr             ( sampler_addr      ),
-        .o_end              ( sampler_end       )
+        .i_clock            ( sys_clock             ),
+        .i_iagc_status      ( iagc_status           ),
+        .i_reference        ( adc_sampler_ref_in    ),
+        .i_error            ( adc_sampler_err_in    ),
+        .i_memory_size      ( iagc_memory_size      ),
+        .i_sample           ( decimator_sample      ),
+        .o_reference_sample ( sampled_ref           ),
+        .o_error_sample     ( sampled_err           ),
+        .o_addr             ( sampler_addr          ),
+        .o_end              ( sampler_end           )
     );
     
     /* ########################################################### */

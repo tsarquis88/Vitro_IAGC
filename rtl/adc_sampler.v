@@ -3,20 +3,21 @@
 
 module adc_sampler # 
 (
-    parameter DATA_SIZE         = 16,
+    parameter ZMOD_DATA_SIZE    = 14,
+    parameter SAMPLER_DATA_SIZE = 16,
     parameter ADDR_SIZE         = 12,
     parameter IAGC_STATUS_SIZE  = 4
 )
 (
     input  wire                                 i_clock,
-    input  wire [ DATA_SIZE        - 1 : 0 ]    i_reference,
-    input  wire [ DATA_SIZE        - 1 : 0 ]    i_error,
-    input  wire [ IAGC_STATUS_SIZE - 1 : 0 ]    i_iagc_status,
-    input  wire [ ADDR_SIZE        - 1 : 0 ]    i_memory_size,
+    input  wire [ ZMOD_DATA_SIZE    - 1 : 0 ]   i_reference,
+    input  wire [ ZMOD_DATA_SIZE    - 1 : 0 ]   i_error,
+    input  wire [ IAGC_STATUS_SIZE  - 1 : 0 ]   i_iagc_status,
+    input  wire [ ADDR_SIZE         - 1 : 0 ]   i_memory_size,
     input  wire                                 i_sample,
-    output wire [ ADDR_SIZE        - 1 : 0 ]    o_addr, 
-    output wire [ DATA_SIZE        - 1 : 0 ]    o_reference_sample,
-    output wire [ DATA_SIZE        - 1 : 0 ]    o_error_sample,
+    output wire [ ADDR_SIZE         - 1 : 0 ]   o_addr, 
+    output wire [ SAMPLER_DATA_SIZE - 1 : 0 ]   o_reference_sample,
+    output wire [ SAMPLER_DATA_SIZE - 1 : 0 ]   o_error_sample,
     output wire                                 o_end
 );
 
@@ -40,11 +41,11 @@ module adc_sampler #
     localparam STATUS_WRITE     =   1;
     localparam STATUS_END       =   2;
     
-    reg     [ STATUS_SIZE   - 1 : 0 ]   status;
-    reg     [ STATUS_SIZE   - 1 : 0 ]   next_status;
-    reg     [ ADDR_SIZE     - 1 : 0 ]   addr;
-    reg     [ DATA_SIZE     - 1 : 0 ]   ref_sample;
-    reg     [ DATA_SIZE     - 1 : 0 ]   err_sample;
+    reg     [ STATUS_SIZE    - 1 : 0 ]   status;
+    reg     [ STATUS_SIZE    - 1 : 0 ]   next_status;
+    reg     [ ADDR_SIZE      - 1 : 0 ]   addr;
+    reg     [ ZMOD_DATA_SIZE - 1 : 0 ]   ref_sample;
+    reg     [ ZMOD_DATA_SIZE - 1 : 0 ]   err_sample;
     
     integer                             end_count;
     reg                                 first_write;
@@ -65,8 +66,8 @@ module adc_sampler #
                 STATUS_INIT: begin
                     addr            <= { ADDR_SIZE { 1'b0 } };
                     first_write     <= 1'b1;
-                    ref_sample      <= { DATA_SIZE { 1'b0 } };
-                    err_sample      <= { DATA_SIZE { 1'b0 } };
+                    ref_sample      <= { SAMPLER_DATA_SIZE { 1'b0 } };
+                    err_sample      <= { SAMPLER_DATA_SIZE { 1'b0 } };
                     end_count       <= 0; 
                 end
                 
@@ -90,16 +91,16 @@ module adc_sampler #
                 STATUS_END: begin
                     addr            <= { ADDR_SIZE { 1'b0 } };
                     first_write     <= 1'b1;
-                    ref_sample      <= { DATA_SIZE { 1'b0 } };
-                    err_sample      <= { DATA_SIZE { 1'b0 } };
+                    ref_sample      <= { SAMPLER_DATA_SIZE { 1'b0 } };
+                    err_sample      <= { SAMPLER_DATA_SIZE { 1'b0 } };
                     end_count       <= end_count + 1;
                 end
             
                 default: begin
                     addr            <= { ADDR_SIZE { 1'b0 } };
                     first_write     <= 1'b1;
-                    ref_sample      <= { DATA_SIZE { 1'b0 } };
-                    err_sample      <= { DATA_SIZE { 1'b0 } };
+                    ref_sample      <= { SAMPLER_DATA_SIZE { 1'b0 } };
+                    err_sample      <= { SAMPLER_DATA_SIZE { 1'b0 } };
                     end_count       <= 0;
                 end
                 
@@ -116,9 +117,29 @@ module adc_sampler #
         endcase
     end
     
+    sign_extensor #
+    (
+        .IN_DATA_SIZE   ( ZMOD_DATA_SIZE        ),
+        .OUT_DATA_SIZE  ( SAMPLER_DATA_SIZE     )
+    )
+    u_sign_extensor_ref
+    (   
+        .data_in        ( ref_sample            ),
+        .data_out       ( o_reference_sample    )
+    );
+    
+    sign_extensor #
+    (
+        .IN_DATA_SIZE   ( ZMOD_DATA_SIZE        ),
+        .OUT_DATA_SIZE  ( SAMPLER_DATA_SIZE     )
+    )
+    u_sign_extensor_err
+    (   
+        .data_in        ( err_sample            ),
+        .data_out       ( o_error_sample        )
+    );
+    
     assign o_end                = status == STATUS_END;
-    assign o_reference_sample   = ref_sample;
-    assign o_error_sample       = err_sample;
     assign o_addr               = addr;   
     
 endmodule
