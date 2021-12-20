@@ -75,11 +75,11 @@ module top
     localparam DEF_AMPLITUDE_COUNT  = 256;
     localparam AMPLITUDE_COUNT_SIZE = 16;
     localparam REMAINDER_SIZE       = 8;
-    localparam AMPLITUDE_DATA_SIZE  = 13;
+    localparam AMPLITUDE_DATA_SIZE  = 14;
     localparam QUOTIENT_SIZE        = 8;
     localparam FRACTIONAL_SIZE      = 8;
     localparam DUMP_UNIT_ENABLED    = 0;
-    localparam FILTER_ENABLED       = 1;
+    localparam FILTER_ENABLED       = 0;
     
     wire                                    sys_clock;
     wire                                    sys_reset;
@@ -105,9 +105,6 @@ module top
     
     wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   adc_sample_ch1;
     wire [ ZMOD_DATA_SIZE       - 1 : 0 ]   adc_sample_ch2;
-    
-    wire [ SAMPLER_DATA_SIZE    - 1 : 0 ]   converted_ref;
-    wire [ SAMPLER_DATA_SIZE    - 1 : 0 ]   converted_err;
     
     wire [ SAMPLER_DATA_SIZE    - 1 : 0 ]   sampled_ref;
     wire [ SAMPLER_DATA_SIZE    - 1 : 0 ]   sampled_err;
@@ -312,22 +309,6 @@ module top
     );
     
     /* ########################################################### */
-    /* DATA CONVERSOR ############################################ */
-    
-    data_conversor #
-    (
-        .ZMOD_DATA_SIZE     ( ZMOD_DATA_SIZE    ),
-        .SAMPLER_DATA_SIZE  ( SAMPLER_DATA_SIZE )
-    )
-    u_data_conversor
-    (
-        .i_raw_reference    ( adc1410_ch1       ),
-        .i_raw_error        ( adc1410_ch2       ),
-        .o_reference        ( converted_ref     ),
-        .o_error            ( converted_err     )
-    );
-    
-    /* ########################################################### */
     /* SAMPLER ################################################### */
         
     adc_sampler #
@@ -340,8 +321,8 @@ module top
     (
         .i_clock            ( sys_clock         ),
         .i_iagc_status      ( iagc_status       ),
-        .i_reference        ( converted_ref     ),
-        .i_error            ( converted_err     ),
+        .i_reference        ( adc1410_ch1       ),
+        .i_error            ( adc1410_ch2       ),
         .i_memory_size      ( iagc_memory_size  ),
         .i_sample           ( decimator_sample  ),
         .o_reference_sample ( sampled_ref       ),
@@ -353,8 +334,8 @@ module top
     /* ########################################################### */
     /* PHASE DETECTOR ############################################ */
     
-    assign phase_ref_in = FILTER_ENABLED ? filtered_ref : converted_ref;
-    assign phase_err_in = FILTER_ENABLED ? filtered_err : converted_err;
+    assign phase_ref_in = FILTER_ENABLED ? filtered_ref : adc1410_ch1;
+    assign phase_err_in = FILTER_ENABLED ? filtered_err : adc1410_ch2;
     
     phase_detector #
     (

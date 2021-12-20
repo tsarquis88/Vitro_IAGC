@@ -5,7 +5,7 @@ module amplitude_detector #
 (
     parameter IAGC_STATUS_SIZE      = 4,
     parameter ZMOD_DATA_SIZE        = 14,
-    parameter AMPLITUDE_DATA_SIZE   = 13,
+    parameter AMPLITUDE_DATA_SIZE   = 14,
     parameter AMPLITUDE_COUNT_SIZE  = 16
 )
 (
@@ -73,8 +73,8 @@ module amplitude_detector #
             STATUS_DETECT: begin
                 max_reference       <= max_reference;
                 max_error           <= max_error;
-                reference_amplitude <= max_reference[ AMPLITUDE_DATA_SIZE - 1 : 0 ];
-                error_amplitude     <= max_error[ AMPLITUDE_DATA_SIZE - 1 : 0 ];
+                reference_amplitude <= max_reference;
+                error_amplitude     <= max_error;
                 samples             <= samples;
             end
             
