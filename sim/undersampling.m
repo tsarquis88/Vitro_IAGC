@@ -6,7 +6,7 @@ pkg load control;
 
 %% constants
 fs        = 10e9;               % sample frequency
-fsu       = 100e6 / 1;              % undersample frequency
+fsu       = 25e6 / 1;              % undersample frequency
 t1        = 1.562400e-3;
 t2        = 1.563100e-3;
 s_amp     = 1;                  % signal amplitude

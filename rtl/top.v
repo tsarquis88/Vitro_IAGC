@@ -78,7 +78,7 @@ module top
     localparam AMPLITUDE_DATA_SIZE  = 14;
     localparam QUOTIENT_SIZE        = 8;
     localparam FRACTIONAL_SIZE      = 8;
-    localparam DUMP_UNIT_ENABLED    = 1;
+    localparam DUMP_UNIT_ENABLED    = 0;
     localparam FILTER_ENABLED       = 0;
     
     wire                                    sys_clock;

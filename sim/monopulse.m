@@ -16,6 +16,7 @@ ref_fre   = 30e6;
 err_fre   = 30e6;
 p_fre     = 640;                % pulse frequency
 p_dut     = 0.032;              % pulse duty: Ton = 0.5 us
+relation  = 0.3;
 
 %% dependent constants
 T         = ( 1 / p_fre ) * 2; 
@@ -43,7 +44,7 @@ all_plots = 1;
 hfigure = figure( 'Color', 'w' );
 cols    = 1;
 if( all_plots )
-  rows  = 4;
+  rows  = 2;
 else
   rows  = 2;
 endif
@@ -52,7 +53,7 @@ if( all_plots )
   plt_1 = plot( t, ref_s, "linewidth", 2, 'r' );
   grid on;
   hold;
-  plt_2 = plot( t, err_s .* 0.8, "linewidth", 2, 'b' );
+  plt_2 = plot( t, err_s .* relation, "linewidth", 2, 'b' );
   set( gca, "linewidth", 4, "fontsize", 12)
   xlabel( 'Tiempo' );
   ylabel( 'Amplitud' );
@@ -61,12 +62,13 @@ if( all_plots )
   plt_3 = plot( t, ref_s, "linewidth", 2, 'r' );
   grid on;
   hold;
-  plt_4 = plot( t, err_s_dp .* 0.8 , "linewidth", 2, 'b' );
+  plt_4 = plot( t, err_s_dp .* relation, "linewidth", 2, 'b' );
   set( gca, "linewidth", 4, "fontsize", 12)
   xlabel( 'Tiempo' );
   ylabel( 'Amplitud' );
   title( 'Referencia (r) y error (b) - Ganancia fija y en desfase' );
 endif
+return
 plt_5 = plot( amp_var, quo_s, "linewidth", 2, 'r' );
 subplot( rows, cols, rows - 1 ); ##
 grid on;

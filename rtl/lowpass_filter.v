@@ -58,43 +58,11 @@ module lowpass_filter
    end
  end
 
-  //! ShiftRegister model
-  //  integer ptr1;
-  //  integer ptr2;
-  //  always @(posedge clk) begin:shiftRegister
-  //    if (i_srst == 1'b1) begin
-  //      for(ptr1=1;ptr1<4;ptr1=ptr1+1) begin:init
-  //        register[1] <= {NB_INPUT{1'b0}};
-  //        register[2] <= {NB_INPUT{1'b0}};
-  //        register[3] <= {NB_INPUT{1'b0}};    
-  //      end
-  //    end else begin
-  //      if (i_en == 1'b1) begin
-  //        for(ptr2=1;ptr2<4;ptr2=ptr2+1) begin:srmove
-  //          if(ptr2==1)
-  //            register[ptr2] <= i_is_data;
-  //          else
-  //            register[ptr2] <= register[ptr2-1];
-  //         end   
-  //      end
-  //    end
-  //  end
-
   //! Products
  assign prod[0] = coeff[0] * i_is_data;
  assign prod[1] = coeff[1] * register[1];
  assign prod[2] = coeff[2] * register[2];
  assign prod[3] = coeff[3] * register[3];
-
-  //  generate
-  //    genvar ptr;
-  //    for(ptr=0;ptr<4;ptr=ptr+1) begin:mult
-  //      if (ptr==0) 
-  //        assign prod[ptr] = coeff[ptr] * i_is_data;
-  //      else
-  //        assign prod[ptr] = coeff[ptr] * register[ptr];
-  //    end
-  //  endgenerate
 
   //! Declaration
  wire signed [NB_INPUT+NB_COEFF-1:0] sum      [3:1]; //! Add samples
@@ -105,18 +73,5 @@ module lowpass_filter
  // Output
  assign o_os_data = ( ~|sum[3][NB_ADD-1 -: NB_SAT+1] || &sum[3][NB_ADD-1 -: NB_SAT+1]) ? sum[3][NB_ADD-(NBI_ADD-NBI_OUTPUT) - 1 -: NB_OUTPUT] :
                     (sum[3][NB_ADD-1]) ? {{1'b1},{NB_OUTPUT-1{1'b0}}} : {{1'b0},{NB_OUTPUT-1{1'b1}}};
-
-  //  integer ptr3;
-  //  reg signed [NB_ADD-1:0] sum;
-  //  always @(*) begin:accum
-  //    sum = {NB_ADD{1'b0}};
-  //    for(ptr3=0;ptr3<4;ptr3=ptr3+1) begin:adder 
-  //      sum = sum + prod[ptr3];
-  //    end
-  //  end
-  // // Output
-  // assign o_os_data = ( ~|sum[NB_ADD-1 -: NB_SAT+1] || &sum[NB_ADD-1 -: NB_SAT+1]) ? sum[NB_ADD-(NBI_ADD-NBI_OUTPUT) - 1 -: NB_OUTPUT] :
-  //                    (sum[NB_ADD-1]) ? {{1'b1},{NB_OUTPUT-1{1'b0}}} : {{1'b0},{NB_OUTPUT-1{1'b1}}};
-
 
 endmodule
