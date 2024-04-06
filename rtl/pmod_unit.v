@@ -7,7 +7,7 @@ module pmod_unit #
 )
 (
     input  wire                                 i_clock,
-    input  wire                                 i_reset,
+    input  wire                                 i_nReset,
     input  wire [ IAGC_STATUS_SIZE - 1 : 0 ]    i_iagc_status,
     input  wire                                 i_in_phase,
     output wire                                 o_led0_r,
@@ -49,7 +49,7 @@ module pmod_unit #
     
     /* PWM generation */
     always@( posedge i_clock ) begin
-        if( i_reset ) begin
+        if( ~i_nReset ) begin
             led_pwm_counter <= 0;
         end
         else begin
@@ -65,7 +65,7 @@ module pmod_unit #
     end 
     
     always@( posedge i_clock ) begin
-        if( i_reset ) begin
+        if( ~i_nReset ) begin
             sec_counter <= 0;
         end
         else begin
