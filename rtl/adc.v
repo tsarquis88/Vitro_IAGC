@@ -1,13 +1,13 @@
 `timescale 1ns / 1ps `default_nettype none
 
 module adc #(
-    parameter ZMOD_DATA_SIZE = 14,
-    parameter AXIS_DATA_SIZE = 32,
+    parameter ZMOD_DATA_SIZE   = 14,
+    parameter AXIS_DATA_SIZE   = 32,
     parameter IAGC_STATUS_SIZE = 4
 ) (
     input wire i_sys_clock,
     input wire i_adc_clock,
-    input  wire [ IAGC_STATUS_SIZE  - 1 : 0 ]   i_iagc_status,
+    input wire [IAGC_STATUS_SIZE  - 1 : 0] i_iagc_status,
     input wire [ZMOD_DATA_SIZE-1:0] i_adc_data,
     inout wire io_adc_sdio,
     input wire i_adc_dco_clock_p,
@@ -32,7 +32,9 @@ module adc #(
     output wire o_adc_init_done
 );
 
-  reg reset = i_iagc_status == IAGC_STATUS_RESET ? 0 : 1;
+  localparam IAGC_STATUS_RESET = 4'b0000;
+
+  reg  reset = i_iagc_status == IAGC_STATUS_RESET ? 0 : 1;
   reg  test_mode = 0;
   reg  enable_acquisition = 1;
   reg  ready = 1;
