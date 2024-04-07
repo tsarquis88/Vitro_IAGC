@@ -68,8 +68,8 @@ module top #(
   localparam DEF_DECIMATOR = 4;
   localparam SAMPLER_DATA_SIZE = 16;
   localparam UART_DATA_SIZE = 8;
-  localparam UART_CLK_FREQ = 100000000;
-  localparam UART_BAUDRATE = 921600;
+  localparam UART_CLK_FREQ = 100_000_000;
+  localparam UART_BAUDRATE = 9_200;
   localparam PHASE_COUNT = 256;
   localparam AMPLITUDE_COUNT = 256;
   localparam REMAINDER_SIZE = 8;
@@ -301,9 +301,9 @@ module top #(
   /* ########################################################### */
   /* AMPLITUDE DETECTOR ######################################## */
 
-  wire reference_amplitude;
-  wire error_amplitude;
-  wire amplitude_valid;
+  wire referenceAmplitude;
+  wire errorAmplitude;
+  wire amplitudeValid;
 
   amplitude_detector #(
       .IAGC_STATUS_SIZE   (IAGC_STATUS_SIZE),
@@ -315,9 +315,9 @@ module top #(
       .i_sample             (sample_valid),
       .i_iagc_status        (iagc_status),
       .i_data               (adc_data),
-      .o_reference_amplitude(reference_amplitude),
-      .o_error_amplitude    (error_amplitude),
-      .o_valid              (amplitude_valid)
+      .o_reference_amplitude(referenceAmplitude),
+      .o_error_amplitude    (errorAmplitude),
+      .o_valid              (amplitudeValid)
   );
 
 
@@ -390,24 +390,24 @@ module top #(
   /* ########################################################### */
   /* LOGGER #################################################### */
 
-  wire [UART_DATA_SIZE       - 1 : 0] logger_data;
-  wire                                logger_valid;
+  wire [UART_DATA_SIZE-1:0] logger_data;
+  wire logger_valid;
 
   logger #(
       .IAGC_STATUS_SIZE   (IAGC_STATUS_SIZE),
       .AMPLITUDE_DATA_SIZE(AMPLITUDE_DATA_SIZE),
       .UART_DATA_SIZE     (UART_DATA_SIZE)
   ) u_logger (
-      .i_clock              (clock0),
-      .i_iagc_status        (iagc_status),
-      .i_reference_amplitude(reference_amplitude),
-      .i_error_amplitude    (error_amplitude),
-      .i_quotient           (0),
-      .i_fractional         (0),
-      .i_on_phase           (phase_in_phase),
-      .i_tx_ready           (uart_tx_ready),
-      .o_tx_data            (logger_data),
-      .o_tx_valid           (logger_valid)
+      .i_clock(clock0),
+      .i_iagcStatus(iagc_status),
+      .i_referenceAmplitude(referenceAmplitude),
+      .i_errorAmplitude(errorAmplitude),
+      .i_quotient(8'b0000_0000),
+      .i_fractional(8'b0000_0000),
+      .i_onPhase(phase_in_phase),
+      .i_txReady(uart_tx_ready),
+      .o_txData(logger_data),
+      .o_txValid(logger_valid)
   );
 
   /* ########################################################### */
