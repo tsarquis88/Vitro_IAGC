@@ -205,6 +205,7 @@ module top #(
 
   wire [AMPLITUDE_DATA_SIZE-1:0] referenceAmplitude;
   wire [AMPLITUDE_DATA_SIZE-1:0] errorAmplitude;
+  wire amplitudeDetectorUpdate;
 
   amplitude_detector #(
       .IAGC_STATUS_SIZE       (IAGC_STATUS_SIZE),
@@ -217,29 +218,27 @@ module top #(
       .i_iagcStatus(iagcStatus),
       .i_data(adc_data),
       .o_referenceAmplitude(referenceAmplitude),
-      .o_errorAmplitude(errorAmplitude)
+      .o_errorAmplitude(errorAmplitude),
+      .o_update(amplitudeDetectorUpdate)
   );
 
   /* ########################################################### */
   /* PROCESSOR ################################################# */
 
-  // wire [QUOTIENT_SIZE        - 1 : 0] processor_quotient;
-  // wire [FRACTIONAL_SIZE      - 1 : 0] processor_fractional;
-  // processor #
-  // (
-  //     .AMPLITUDE_DATA_SIZE    ( AMPLITUDE_DATA_SIZE   ),
-  //     .QUOTIENT_SIZE          ( QUOTIENT_SIZE         ),
-  //     .FRACTIONAL_SIZE        ( FRACTIONAL_SIZE       )
-  // )
-  // u_processor
-  // (
-  //     .i_clock                ( clock0             ),
-  //     .i_reference            ( amplitude_ref_out     ),
-  //     .i_error                ( amplitude_err_out     ),
-  //     .i_valid                ( amplitude_valid       ),
-  //     .o_quotient             ( processor_quotient    ),
-  //     .o_fractional           ( processor_fractional  )
-  // );
+  wire [  QUOTIENT_SIZE-1:0] processorQuotient;
+  wire [FRACTIONAL_SIZE-1:0] processorFractional;
+  processor #(
+      .AMPLITUDE_DATA_SIZE(AMPLITUDE_DATA_SIZE),
+      .QUOTIENT_SIZE(QUOTIENT_SIZE),
+      .FRACTIONAL_SIZE(FRACTIONAL_SIZE)
+  ) u_processor (
+      .i_clock(clock0),
+      .i_reference(referenceAmplitude),
+      .i_error(errorAmplitude),
+      .i_valid(amplitudeDetectorUpdate),
+      .o_quotient(processorQuotient),
+      .o_fractional(processorFractional)
+  );
 
   /* ########################################################### */
   /* LOGGER #################################################### */
@@ -256,8 +255,8 @@ module top #(
       .i_iagcStatus(iagcStatus),
       .i_referenceAmplitude(referenceAmplitude),
       .i_errorAmplitude(errorAmplitude),
-      .i_quotient(8'b0000_0000),
-      .i_fractional(8'b0000_0000),
+      .i_quotient(processorQuotient),
+      .i_fractional(processorFractional),
       .i_onPhase(phase_in_phase),
       .i_txReady(uart_tx_ready),
       .o_txData(logger_data),

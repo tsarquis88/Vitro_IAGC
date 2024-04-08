@@ -22,7 +22,7 @@ module amplitude_detector #(
   localparam STATUS_INIT = 0;
   localparam STATUS_SAMPLE = 1;
   localparam STATUS_DETECT = 2;
-  localparam STATUS_MAINTAIN = 3;
+  localparam STATUS_UPDATE = 3;
   reg [STATUS_SIZE-1:0] status;
   reg [STATUS_SIZE-1:0] nextStatus;
 
@@ -75,6 +75,13 @@ module amplitude_detector #(
         errorAmplitude <= maxError;
         samples <= samples;
       end
+      STATUS_UPDATE: begin
+        maxReference <= maxReference;
+        maxError <= maxError;
+        referenceAmplitude <= referenceAmplitude;
+        errorAmplitude <= errorAmplitude;
+        samples <= samples;
+      end
       default: begin
         maxReference <= {AMPLITUDE_DATA_SIZE{1'b0}};
         maxError <= {AMPLITUDE_DATA_SIZE{1'b0}};
@@ -91,14 +98,15 @@ module amplitude_detector #(
       nextStatus = (i_iagcStatus == IAGC_STATUS_RESET || i_iagcStatus == IAGC_STATUS_INIT) ? STATUS_INIT : STATUS_SAMPLE;
       STATUS_SAMPLE:
       nextStatus = samples >= AMPLITUDE_SAMPLES_COUNT ? STATUS_DETECT : STATUS_SAMPLE;
-      STATUS_DETECT: nextStatus = STATUS_INIT;
+      STATUS_DETECT: nextStatus = STATUS_UPDATE;
+      STATUS_UPDATE: nextStatus = STATUS_INIT;
       default: nextStatus = STATUS_INIT;
     endcase
   end
 
   assign o_referenceAmplitude = referenceAmplitude;
   assign o_errorAmplitude = errorAmplitude;
-  assign o_update = (status == STATUS_DETECT);
+  assign o_update = (status == STATUS_UPDATE);
 
 endmodule
 
