@@ -4,112 +4,101 @@ module amplitude_detector #(
     parameter IAGC_STATUS_SIZE = 4,
     parameter AXIS_DATA_SIZE = 32,
     parameter AMPLITUDE_DATA_SIZE = (AXIS_DATA_SIZE / 2),
-    parameter AMPLITUDE_COUNT = 256
+    parameter AMPLITUDE_SAMPLES_COUNT = 256
 ) (
     input wire i_clock,
     input wire i_sample,
-    input wire [IAGC_STATUS_SIZE-1:0] i_iagc_status,
+    input wire [IAGC_STATUS_SIZE-1:0] i_iagcStatus,
     input wire [AXIS_DATA_SIZE-1:0] i_data,
-    output wire [AMPLITUDE_DATA_SIZE-1:0] o_reference_amplitude,
-    output wire [AMPLITUDE_DATA_SIZE-1:0] o_error_amplitude,
-    output wire o_valid
+    output wire [AMPLITUDE_DATA_SIZE-1:0] o_referenceAmplitude,
+    output wire [AMPLITUDE_DATA_SIZE-1:0] o_errorAmplitude,
+    output wire o_update
 );
 
   localparam IAGC_STATUS_RESET = 4'b0000;
   localparam IAGC_STATUS_INIT = 4'b0001;
 
   localparam STATUS_SIZE = 2;
-
   localparam STATUS_INIT = 0;
   localparam STATUS_SAMPLE = 1;
   localparam STATUS_DETECT = 2;
-  localparam STATUS_VALID = 3;
-
+  localparam STATUS_MAINTAIN = 3;
   reg [STATUS_SIZE-1:0] status;
-  reg [STATUS_SIZE-1:0] next_status;
-  reg [AMPLITUDE_DATA_SIZE-1:0] max_reference;
-  reg [AMPLITUDE_DATA_SIZE-1:0] max_error;
-  reg [AMPLITUDE_DATA_SIZE-1:0] reference_amplitude;
-  reg [AMPLITUDE_DATA_SIZE-1:0] error_amplitude;
+  reg [STATUS_SIZE-1:0] nextStatus;
+
+  reg signed [AMPLITUDE_DATA_SIZE-1:0] maxReference;
+  reg signed [AMPLITUDE_DATA_SIZE-1:0] maxError;
+  reg signed [AMPLITUDE_DATA_SIZE-1:0] referenceAmplitude;
+  reg signed [AMPLITUDE_DATA_SIZE-1:0] errorAmplitude;
 
   integer samples;
 
-  wire [(AXIS_DATA_SIZE/2)-1:0] mask = 16'b0111111111111111;
-  wire [(AXIS_DATA_SIZE/2)-1:0] unsigned_reference = i_data[AXIS_DATA_SIZE-1:(AXIS_DATA_SIZE/2)] & mask;
-  wire [(AXIS_DATA_SIZE/2)-1:0] unsigned_error = i_data[(AXIS_DATA_SIZE/2)-1:0] & mask;
+  wire signed [(AXIS_DATA_SIZE/2)-1:0] referenceSignal = i_data[(AXIS_DATA_SIZE/2)-1:0];
+  wire signed [(AXIS_DATA_SIZE/2)-1:0] errorSignal = i_data[AXIS_DATA_SIZE-1:(AXIS_DATA_SIZE/2)];
 
   always @(posedge i_clock) begin
-
-    status <= i_iagc_status == IAGC_STATUS_RESET ? STATUS_INIT : next_status;
+    if (i_iagcStatus == IAGC_STATUS_RESET || i_iagcStatus == IAGC_STATUS_INIT) begin
+      status <= STATUS_INIT;
+      referenceAmplitude <= {AMPLITUDE_DATA_SIZE{1'b0}};
+      errorAmplitude <= {AMPLITUDE_DATA_SIZE{1'b0}};
+    end else begin
+      status <= nextStatus;
+    end
 
     case (status)
-
       STATUS_INIT: begin
-        max_reference       <= {AMPLITUDE_DATA_SIZE{1'b0}};
-        max_error           <= {AMPLITUDE_DATA_SIZE{1'b0}};
-        reference_amplitude <= {AMPLITUDE_DATA_SIZE{1'b0}};
-        ;
-        error_amplitude <= {AMPLITUDE_DATA_SIZE{1'b0}};
-        ;
+        maxReference <= {AMPLITUDE_DATA_SIZE{1'b0}};
+        maxError <= {AMPLITUDE_DATA_SIZE{1'b0}};
+        referenceAmplitude <= referenceAmplitude;
+        errorAmplitude <= errorAmplitude;
         samples <= 0;
       end
-
       STATUS_SAMPLE: begin
         if (i_sample) begin
-          max_reference <= unsigned_reference > max_reference ? unsigned_reference : max_reference;
-          max_error <= unsigned_error > max_error ? unsigned_error : max_error;
-          reference_amplitude <= reference_amplitude;
-          error_amplitude <= error_amplitude;
+          maxReference <= referenceSignal > maxReference ? referenceSignal : maxReference;
+          maxError <= errorSignal > maxError ? errorSignal : maxError;
+          referenceAmplitude <= referenceAmplitude;
+          errorAmplitude <= errorAmplitude;
           samples <= samples + 1;
         end else begin
-          max_reference       <= max_reference;
-          max_error           <= max_error;
-          reference_amplitude <= reference_amplitude;
-          error_amplitude     <= error_amplitude;
-          samples             <= samples;
+          maxReference <= maxReference;
+          maxError <= maxError;
+          referenceAmplitude <= referenceAmplitude;
+          errorAmplitude <= errorAmplitude;
+          samples <= samples;
         end
       end
-
       STATUS_DETECT: begin
-        max_reference       <= max_reference;
-        max_error           <= max_error;
-        reference_amplitude <= max_reference;
-        error_amplitude     <= max_error;
-        samples             <= samples;
+        maxReference <= maxReference;
+        maxError <= maxError;
+        referenceAmplitude <= maxReference;
+        errorAmplitude <= maxError;
+        samples <= samples;
       end
-
-      STATUS_VALID: begin
-        max_reference       <= max_reference;
-        max_error           <= max_error;
-        reference_amplitude <= reference_amplitude;
-        error_amplitude     <= error_amplitude;
-        samples             <= samples;
-      end
-
       default: begin
-        max_reference       <= {AMPLITUDE_DATA_SIZE{1'b0}};
-        max_error           <= {AMPLITUDE_DATA_SIZE{1'b0}};
-        reference_amplitude <= reference_amplitude;
-        error_amplitude     <= error_amplitude;
-        samples             <= 0;
+        maxReference <= {AMPLITUDE_DATA_SIZE{1'b0}};
+        maxError <= {AMPLITUDE_DATA_SIZE{1'b0}};
+        referenceAmplitude <= {AMPLITUDE_DATA_SIZE{1'b0}};
+        errorAmplitude <= {AMPLITUDE_DATA_SIZE{1'b0}};
+        samples <= 0;
       end
-
     endcase
   end
 
   always @(*) begin
     case (status)
-      STATUS_INIT:   next_status = i_iagc_status == IAGC_STATUS_RESET ? STATUS_INIT : STATUS_SAMPLE;
-      STATUS_SAMPLE: next_status = samples >= AMPLITUDE_COUNT ? STATUS_DETECT : STATUS_SAMPLE;
-      STATUS_DETECT: next_status = STATUS_VALID;
-      STATUS_VALID:  next_status = STATUS_INIT;
-      default:       next_status = STATUS_INIT;
+      STATUS_INIT:
+      nextStatus = (i_iagcStatus == IAGC_STATUS_RESET || i_iagcStatus == IAGC_STATUS_INIT) ? STATUS_INIT : STATUS_SAMPLE;
+      STATUS_SAMPLE:
+      nextStatus = samples >= AMPLITUDE_SAMPLES_COUNT ? STATUS_DETECT : STATUS_SAMPLE;
+      STATUS_DETECT: nextStatus = STATUS_INIT;
+      default: nextStatus = STATUS_INIT;
     endcase
   end
 
-  assign o_reference_amplitude = reference_amplitude;
-  assign o_error_amplitude     = error_amplitude;
-  assign o_valid               = status == STATUS_VALID;
+  assign o_referenceAmplitude = referenceAmplitude;
+  assign o_errorAmplitude = errorAmplitude;
+  assign o_update = (status == STATUS_DETECT);
 
 endmodule
 

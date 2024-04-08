@@ -30,7 +30,6 @@ module pmod_unit #(
   localparam IAGC_STATUS_HALT = 4'b1100;
 
   localparam LED_PWM_TICKS = 50;
-  localparam SEC_TICKS = 100000000;
 
   reg     led_pwm;
   integer led_pwm_counter;
@@ -41,8 +40,6 @@ module pmod_unit #(
   reg     led1_g;
   reg     led1_b;
   reg     led1_r;
-
-  integer sec_counter;
 
   /* PWM generation */
   always @(posedge i_clock) begin
@@ -55,18 +52,6 @@ module pmod_unit #(
       end else begin
         led_pwm         <= 1'b0;
         led_pwm_counter <= led_pwm_counter + 1;
-      end
-    end
-  end
-
-  always @(posedge i_clock) begin
-    if (~i_nReset) begin
-      sec_counter <= 0;
-    end else begin
-      if (sec_counter == 0) begin
-        sec_counter <= i_iagc_status == IAGC_STATUS_CMD_ERROR ? 1 : 0;
-      end else begin
-        sec_counter <= sec_counter >= SEC_TICKS ? 0 : sec_counter + 1;
       end
     end
   end

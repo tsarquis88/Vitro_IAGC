@@ -61,66 +61,22 @@ module top #(
 
   localparam AXIS_DATA_SIZE = 32;
   localparam IAGC_STATUS_SIZE = 4;
-  localparam ADDR_SIZE = 13;
-  localparam CMD_PARAM_SIZE = 4;
-  localparam DECIMATOR_SIZE = 4;
-  localparam DEF_MEMORY_SIZE = 1024;
-  localparam DEF_DECIMATOR = 4;
-  localparam SAMPLER_DATA_SIZE = 16;
   localparam UART_DATA_SIZE = 8;
   localparam UART_CLK_FREQ = 100_000_000;
   localparam UART_BAUDRATE = 9_200;
-  localparam PHASE_COUNT = 256;
-  localparam AMPLITUDE_COUNT = 256;
-  localparam REMAINDER_SIZE = 8;
+  localparam PHASE_COUNT = 1500;
+  localparam AMPLITUDE_SAMPLES_COUNT = 1500;
   localparam AMPLITUDE_DATA_SIZE = AXIS_DATA_SIZE / 2;
   localparam QUOTIENT_SIZE = 8;
   localparam FRACTIONAL_SIZE = 8;
-  localparam DUMP_UNIT_ENABLED = 0;
-  localparam FILTER_ENABLED = 0;
-
-  wire [IAGC_STATUS_SIZE     - 1 : 0] iagc_status;
-  wire [ADDR_SIZE            - 1 : 0] iagc_memory_size;
-  wire [DECIMATOR_SIZE       - 1 : 0] iagc_decimator;
-
-  wire                                decimator_sample;
-
-  wire [ZMOD_DATA_SIZE       - 1 : 0] adc_sampler_ref_in;
-  wire [ZMOD_DATA_SIZE       - 1 : 0] adc_sampler_err_in;
-
-  wire [SAMPLER_DATA_SIZE    - 1 : 0] sampled_ref;
-  wire [SAMPLER_DATA_SIZE    - 1 : 0] sampled_err;
-  wire                                sampler_end;
-  wire [ADDR_SIZE            - 1 : 0] sampler_addr;
-
-  wire [QUOTIENT_SIZE        - 1 : 0] processor_quotient;
-  wire [FRACTIONAL_SIZE      - 1 : 0] processor_fractional;
-
-  wire [SAMPLER_DATA_SIZE    - 1 : 0] memory_data;
-  wire                                memory_clean_end;
-
-  wire                                dump_unit_valid;
-  wire [ADDR_SIZE            - 1 : 0] dump_unit_addr;
-  wire                                dump_unit_end;
-  wire [UART_DATA_SIZE       - 1 : 0] dump_unit_data;
-
-  wire [UART_DATA_SIZE       - 1 : 0] uart_tx_data;
-  wire [UART_DATA_SIZE       - 1 : 0] uart_rx_data;
-  wire                                uart_rx_valid;
-
-  wire [CMD_PARAM_SIZE       - 1 : 0] cmd_param;
-  wire [CMD_PARAM_SIZE       - 1 : 0] cmd_op;
-
-  wire [ZMOD_DATA_SIZE       - 1 : 0] filtered_ref;
-  wire [ZMOD_DATA_SIZE       - 1 : 0] filtered_err;
 
   /* ########################################################### */
   /* CLOCK UNIT ################################################ */
 
-  wire                                clock0;  // 100 MHz.
-  wire                                clock1;  // 100 MHz - Shifted 90°.
-  wire                                clock2;  // 400 MHz.
-  wire                                clocks_valid;  // Up once the clocks are ready.
+  wire clock0;  // 100 MHz.
+  wire clock1;  // 100 MHz - Shifted 90°.
+  wire clock2;  // 400 MHz.
+  wire clocksValid;  // Up once the clocks are ready.
 
   clock_unit #() u_clock_unit (
       .i_clock (i_clock),
@@ -128,52 +84,23 @@ module top #(
       .o_clock0(clock0),
       .o_clock1(clock1),
       .o_clock2(clock2),
-      .o_valid (clocks_valid)
+      .o_valid (clocksValid)
   );
 
   /* ########################################################### */
   /* GLOBAL FSM ################################################ */
 
+  wire [IAGC_STATUS_SIZE-1:0] iagcStatus;
+
   iagc_fsm #(
-      .STATUS_SIZE    (IAGC_STATUS_SIZE),
-      .CMD_PARAM_SIZE (CMD_PARAM_SIZE),
-      .ADDR_SIZE      (ADDR_SIZE),
-      .DECIMATOR_SIZE (DECIMATOR_SIZE),
-      .DEF_MEMORY_SIZE(DEF_MEMORY_SIZE),
-      .DEF_DECIMATOR  (DEF_DECIMATOR)
+      .STATUS_SIZE(IAGC_STATUS_SIZE)
   ) u_iagc_fsm (
-      .i_clock        (clock0),
-      .i_nReset       (clocks_valid),
-      .i_adc_init_done(adc_init_done),
-      .i_dac_init_done(dac_init_done),
-      .i_sample       (i_sample),
-      .i_cmd_valid    (uart_rx_valid),
-      .i_sample_end   (sampler_end),
-      .i_dump_end     (dump_unit_end),
-      .i_clean_end    (memory_clean_end),
-      .i_cmd_operation(cmd_op),
-      .i_cmd_parameter(cmd_param),
-      .o_memory_size  (iagc_memory_size),
-      .o_decimator    (iagc_decimator),
-      .o_status       (iagc_status)
+      .i_clock(clock0),
+      .i_nReset(clocksValid),
+      .i_adcInitDone(adc_init_done),
+      .i_dacInitDone(dac_init_done),
+      .o_status(iagcStatus)
   );
-
-  /* ########################################################### */
-  /* DECIMATOR ################################################# */
-
-  // decimator #
-  // (
-  //     .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  ),
-  //     .DECIMATOR_SIZE     ( DECIMATOR_SIZE    )
-  // )
-  // u_decimator
-  // (
-  //     .i_clock            ( clock0         ),
-  //     .i_gate             ( i_gate            ),
-  //     .i_iagc_status      ( iagc_status       ),
-  //     .i_decimator        ( iagc_decimator    ),
-  //     .o_sample           ( decimator_sample  )
-  // );
 
   /* ########################################################### */
   /* ADC1410 ################################################### */
@@ -188,7 +115,7 @@ module top #(
   ) u_adc (
       .i_sys_clock(clock0),
       .i_adc_clock(clock2),
-      .i_iagc_status(iagc_status),
+      .i_iagc_status(iagcStatus),
       .i_adc_data(i_adc_data),
       .io_adc_sdio(io_adc_sdio),
       .i_adc_dco_clock_p(i_adc_dco_clock_p),
@@ -213,11 +140,14 @@ module top #(
       .o_adc_init_done(adc_init_done)
   );
 
+  /* ########################################################### */
+  /* SAMPLE TRIGGER ############################################ */
+
   wire sample_valid;
 
   sample_trigger u_sample_trigger (
       .i_clock(clock0),
-      .i_iagc_status(iagc_status),
+      .i_iagc_status(iagcStatus),
       .i_adc_data_valid(adc_data_valid),
       .i_gate(i_gate),
       .o_valid(sample_valid)
@@ -235,7 +165,7 @@ module top #(
       .i_sys_clock(clock0),
       .i_dac_in_clock(clock0),
       .i_dac_clock(clock1),
-      .i_iagc_status(iagc_status),
+      .i_iagc_status(iagcStatus),
       .i_data(adc_data),
       .i_data_valid(adc_data_valid),
       .io_dac_sdio(io_dac_sdio),
@@ -253,34 +183,6 @@ module top #(
       .o_dac_enable(o_dac_enable)
   );
 
-
-  /* ########################################################### */
-  /* SAMPLER ################################################### */
-
-  // assign adc_sampler_ref_in = FILTER_ENABLED ? filtered_ref : adc1410_ch1;
-  // assign adc_sampler_err_in = FILTER_ENABLED ? filtered_err : adc1410_ch2;
-
-  // adc_sampler #
-  // (
-  //     .ZMOD_DATA_SIZE     ( ZMOD_DATA_SIZE        ),
-  //     .SAMPLER_DATA_SIZE  ( SAMPLER_DATA_SIZE     ),
-  //     .ADDR_SIZE          ( ADDR_SIZE             ),
-  //     .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE      )
-  // )
-  // u_adc_sampler
-  // (
-  //     .i_clock            ( clock0             ),
-  //     .i_iagc_status      ( iagc_status           ),
-  //     .i_reference        ( adc_sampler_ref_in    ),
-  //     .i_error            ( adc_sampler_err_in    ),
-  //     .i_memory_size      ( iagc_memory_size      ),
-  //     .i_sample           ( decimator_sample      ),
-  //     .o_reference_sample ( sampled_ref           ),
-  //     .o_error_sample     ( sampled_err           ),
-  //     .o_addr             ( sampler_addr          ),
-  //     .o_end              ( sampler_end           )
-  // );
-
   /* ########################################################### */
   /* PHASE DETECTOR ############################################ */
 
@@ -292,7 +194,7 @@ module top #(
       .PHASE_COUNT(PHASE_COUNT)
   ) u_phase_detector (
       .i_clock      (clock0),
-      .i_iagc_status(iagc_status),
+      .i_iagc_status(iagcStatus),
       .i_sample     (sample_valid),
       .i_data       (adc_data),
       .o_in_phase   (phase_in_phase)
@@ -301,30 +203,28 @@ module top #(
   /* ########################################################### */
   /* AMPLITUDE DETECTOR ######################################## */
 
-  wire referenceAmplitude;
-  wire errorAmplitude;
-  wire amplitudeValid;
+  wire [AMPLITUDE_DATA_SIZE-1:0] referenceAmplitude;
+  wire [AMPLITUDE_DATA_SIZE-1:0] errorAmplitude;
 
   amplitude_detector #(
-      .IAGC_STATUS_SIZE   (IAGC_STATUS_SIZE),
-      .AXIS_DATA_SIZE     (AXIS_DATA_SIZE),
-      .AMPLITUDE_COUNT    (AMPLITUDE_COUNT),
-      .AMPLITUDE_DATA_SIZE(AMPLITUDE_DATA_SIZE)
+      .IAGC_STATUS_SIZE       (IAGC_STATUS_SIZE),
+      .AXIS_DATA_SIZE         (AXIS_DATA_SIZE),
+      .AMPLITUDE_SAMPLES_COUNT(AMPLITUDE_SAMPLES_COUNT),
+      .AMPLITUDE_DATA_SIZE    (AMPLITUDE_DATA_SIZE)
   ) u_amplitude_detector (
-      .i_clock              (clock0),
-      .i_sample             (sample_valid),
-      .i_iagc_status        (iagc_status),
-      .i_data               (adc_data),
-      .o_reference_amplitude(referenceAmplitude),
-      .o_error_amplitude    (errorAmplitude),
-      .o_valid              (amplitudeValid)
+      .i_clock(clock0),
+      .i_sample(sample_valid),
+      .i_iagcStatus(iagcStatus),
+      .i_data(adc_data),
+      .o_referenceAmplitude(referenceAmplitude),
+      .o_errorAmplitude(errorAmplitude)
   );
-
-
 
   /* ########################################################### */
   /* PROCESSOR ################################################# */
 
+  // wire [QUOTIENT_SIZE        - 1 : 0] processor_quotient;
+  // wire [FRACTIONAL_SIZE      - 1 : 0] processor_fractional;
   // processor #
   // (
   //     .AMPLITUDE_DATA_SIZE    ( AMPLITUDE_DATA_SIZE   ),
@@ -342,52 +242,6 @@ module top #(
   // );
 
   /* ########################################################### */
-  /* RAM ####################################################### */
-
-  // memory #
-  // (
-  //     .DATA_SIZE         ( SAMPLER_DATA_SIZE  ),
-  //     .ADDR_SIZE         ( ADDR_SIZE          ),
-  //     .DEF_MEMORY_SIZE   ( DEF_MEMORY_SIZE    ),
-  //     .IAGC_STATUS_SIZE  ( IAGC_STATUS_SIZE   )
-  // )
-  // u_memory
-  // (
-  //     .i_clock            ( clock0         ),
-  //     .i_iagc_status      ( iagc_status       ),
-  //     .i_waddr            ( sampler_addr      ),
-  //     .i_raddr            ( dump_unit_addr    ),
-  //     .i_reference_sample ( sampled_ref       ),
-  //     .i_error_sample     ( sampled_err       ),
-  //     .i_memory_size      ( iagc_memory_size  ),
-  //     .o_clean_end        ( memory_clean_end  ),
-  //     .o_data             ( memory_data       )
-  // );
-
-  /* ########################################################### */
-  /* DUMP UNIT ################################################# */
-
-  // dump_unit #
-  // (
-  //     .ADDR_SIZE          ( ADDR_SIZE         ),
-  //     .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE  ),
-  //     .SAMPLER_DATA_SIZE  ( SAMPLER_DATA_SIZE ),
-  //     .UART_DATA_SIZE     ( UART_DATA_SIZE    )
-  // )
-  // u_dump_unit
-  // (
-  //     .i_clock            ( clock0         ),
-  //     .i_ready            ( uart_tx_ready     ),
-  //     .i_iagc_status      ( iagc_status       ),
-  //     .i_memory_size      ( iagc_memory_size  ),
-  //     .i_memory_data      ( memory_data       ),
-  //     .o_data             ( dump_unit_data    ),
-  //     .o_addr             ( dump_unit_addr    ),
-  //     .o_valid            ( dump_unit_valid   ),
-  //     .o_end              ( dump_unit_end     )
-  // );
-
-  /* ########################################################### */
   /* LOGGER #################################################### */
 
   wire [UART_DATA_SIZE-1:0] logger_data;
@@ -399,7 +253,7 @@ module top #(
       .UART_DATA_SIZE     (UART_DATA_SIZE)
   ) u_logger (
       .i_clock(clock0),
-      .i_iagcStatus(iagc_status),
+      .i_iagcStatus(iagcStatus),
       .i_referenceAmplitude(referenceAmplitude),
       .i_errorAmplitude(errorAmplitude),
       .i_quotient(8'b0000_0000),
@@ -420,45 +274,13 @@ module top #(
       .UART_FREQUENCY(UART_BAUDRATE)
   ) u_uart_tx (
       .user_clk     (clock0),
-      .rst_n        (clocks_valid),
+      .rst_n        (clocksValid),
       .start_tx     (logger_valid),
       .data         (logger_data),
       .tx_bit       (o_tx),
       .ready        (uart_tx_ready),
       .chipscope_clk()
   );
-
-  //uart_rx #
-  //(
-  //  .CLK_FREQUENCY  ( UART_CLK_FREQ         ),
-  //   .UART_FREQUENCY ( UART_BAUDRATE         )
-  //)
-  //u_uart_rx
-  //(
-  //  .clk            ( clock0             ),
-  //   .rst_n          ( clocks_valid            ),
-  //  .data           ( uart_rx_data          ),
-  //    .rx             ( i_rx                  ),
-  //    .valid          ( uart_rx_valid         )
-  // );
-
-  /* ########################################################### */
-  /* COMMAND UNIT ############################################## */
-
-  // command_unit #
-  // (
-  //     .IAGC_STATUS_SIZE   ( IAGC_STATUS_SIZE      ),
-  //     .DATA_SIZE          ( UART_DATA_SIZE        ),
-  //     .CMD_PARAM_SIZE     ( CMD_PARAM_SIZE        )
-  // )
-  // u_command_unit
-  // (
-  //     .i_clock            ( clock0             ),
-  //     .i_iagc_status      ( iagc_status           ),
-  //     .i_cmd              ( uart_rx_data          ),
-  //     .o_cmd_op           ( cmd_op                ),
-  //     .o_cmd_param        ( cmd_param             )
-  // );
 
   /* ########################################################### */
   /* PMOD UNIT ################################################# */
@@ -467,8 +289,8 @@ module top #(
       .IAGC_STATUS_SIZE(IAGC_STATUS_SIZE)
   ) u_pmod_unit (
       .i_clock      (clock0),
-      .i_nReset     (clocks_valid),
-      .i_iagc_status(iagc_status),
+      .i_nReset     (clocksValid),
+      .i_iagc_status(iagcStatus),
       .i_in_phase   (phase_in_phase),
       .o_led0_r     (o_led0_r),
       .o_led0_g     (o_led0_g),
@@ -477,39 +299,6 @@ module top #(
       .o_led1_g     (o_led1_g),
       .o_led1_b     (o_led1_b)
   );
-
-  /* ########################################################### */
-  /* FILTERS ################################################### */
-
-  // lowpass_filter #
-  // (
-  //     .NB_INPUT           ( ZMOD_DATA_SIZE    ),
-  //     .NB_OUTPUT          ( ZMOD_DATA_SIZE    ),
-  //     .NB_COEFF           ( ZMOD_DATA_SIZE    )
-  // )
-  // u_lowpass_filter_ref
-  // (
-  //     .o_os_data          ( filtered_ref      ),
-  //     .i_is_data          ( adc1410_ch1       ),
-  //     .i_en               ( decimator_sample  ),
-  //     .i_srst             ( sys_reset         ),
-  //     .clk                ( clock0         )
-  // );
-
-  // lowpass_filter #
-  // (
-  //     .NB_INPUT           ( ZMOD_DATA_SIZE    ),
-  //     .NB_OUTPUT          ( ZMOD_DATA_SIZE    ),
-  //     .NB_COEFF           ( ZMOD_DATA_SIZE    )
-  // )
-  // u_lowpass_filter_err
-  // (
-  //     .o_os_data          ( filtered_err      ),
-  //     .i_is_data          ( adc1410_ch2       ),
-  //     .i_en               ( decimator_sample  ),
-  //     .i_srst             ( sys_reset         ),
-  //     .clk                ( clock0         )
-  // );
 
 endmodule
 

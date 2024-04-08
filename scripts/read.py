@@ -1,33 +1,40 @@
+import json
+
+# 1 - Reference raw amplitude low
+# 2 - Reference raw amplitude high
+# 3 - Error raw amplitude low
+# 4 - Error raw amplitude high
+# 5 - Quotient
+# 6 - Fractional
+# 7 - In phase
+DATA_AMOUNT = 7
+
 class IagcData:
 
-    amp_ref: int
-    amp_err: int
-    vol_ref: float
-    vol_err: float
-    quotient : int
-    fractional : int
-    in_phase : int
+    json_data: json
 
     def __init__(self, raw_data) -> None:
-        self.amp_ref = raw_data[0] + (raw_data[1] << 8)
-        self.amp_err = raw_data[2] + (raw_data[3] << 8)
-        self.vol_ref = self.amp_ref * 0.13e-3
-        self.vol_err = self.amp_err * 0.13e-3
-        self.quotient = raw_data[4]
-        self.fractional = raw_data[5]
-        self.in_phase = raw_data[6]
+        data = {}
+        data['reference_amplitude'] = (raw_data[0] >> 2) + (raw_data[1] << 6)
+        data['error_amplitude'] = (raw_data[2] >> 2) + (raw_data[3] << 6)
+        data['reference_voltage'] = data['reference_amplitude'] * 0.13e-3
+        data['error_voltage'] = data['error_amplitude'] * 0.13e-3
+        data['quotient'] = raw_data[4]
+        data['fractional'] = raw_data[5]
+        data['in_phase'] = True if raw_data[6] == 1 else False
+
+        self.json_data = json.dumps(data, sort_keys=True, indent=4)
     
     def print(self) -> None:
-        print("REF: " + str(self.amp_ref))
-        print("ERR: " + str(self.amp_err))
-        print("REF [V]: " + str(self.vol_ref))
-        print("ERR [V]: " + str(self.vol_err))
-        print("QUOTIENT: " + str(self.quotient))
-        print("FRACTIONAL: " + str(self.fractional))
-        print("PHASE: " + str(self.in_phase))
+        print(self.json_data)
 
 file = open("/dev/ttyUSB0", "rb")
 
 while(True):
-    content = file.read(7)
+    content = file.read(DATA_AMOUNT)
     IagcData(content).print()
+
+
+
+
+
