@@ -64,7 +64,7 @@ module top #(
   localparam UART_DATA_SIZE = 8;
   localparam UART_CLK_FREQ = 100_000_000;
   localparam UART_BAUDRATE = 9_200;
-  localparam PHASE_COUNT = 1500;
+  localparam PHASE_SAMPLES_COUNT = 1500;
   localparam AMPLITUDE_SAMPLES_COUNT = 1500;
   localparam AMPLITUDE_DATA_SIZE = AXIS_DATA_SIZE / 2;
   localparam QUOTIENT_SIZE = 8;
@@ -105,7 +105,7 @@ module top #(
   /* ########################################################### */
   /* ADC1410 ################################################### */
 
-  wire [AXIS_DATA_SIZE-1:0] adc_data;
+  wire [AXIS_DATA_SIZE-1:0] adcData;
   wire adc_init_done;
   wire adc_data_valid;
 
@@ -135,7 +135,7 @@ module top #(
       .o_adc_relay_com_h(o_adc_relay_com_h),
       .o_adc_cs(o_adc_cs),
       .o_adc_sync(o_adc_sync),
-      .o_adc_data(adc_data),
+      .o_adc_data(adcData),
       .o_adc_data_valid(adc_data_valid),
       .o_adc_init_done(adc_init_done)
   );
@@ -143,14 +143,13 @@ module top #(
   /* ########################################################### */
   /* SAMPLE TRIGGER ############################################ */
 
-  wire sample_valid;
+  wire st_valid;
 
   sample_trigger u_sample_trigger (
       .i_clock(clock0),
       .i_iagc_status(iagcStatus),
-      .i_adc_data_valid(adc_data_valid),
       .i_gate(i_gate),
-      .o_valid(sample_valid)
+      .o_valid(st_valid)
   );
 
   /* ########################################################### */
@@ -166,7 +165,7 @@ module top #(
       .i_dac_in_clock(clock0),
       .i_dac_clock(clock1),
       .i_iagc_status(iagcStatus),
-      .i_data(adc_data),
+      .i_data(adcData),
       .i_data_valid(adc_data_valid),
       .io_dac_sdio(io_dac_sdio),
       .o_dac_init_done(dac_init_done),
@@ -184,60 +183,33 @@ module top #(
   );
 
   /* ########################################################### */
-  /* PHASE DETECTOR ############################################ */
-
-  wire phase_in_phase;
-
-  phase_detector #(
-      .IAGC_STATUS_SIZE(IAGC_STATUS_SIZE),
-      .AXIS_DATA_SIZE(AXIS_DATA_SIZE),
-      .PHASE_COUNT(PHASE_COUNT)
-  ) u_phase_detector (
-      .i_clock      (clock0),
-      .i_iagc_status(iagcStatus),
-      .i_sample     (sample_valid),
-      .i_data       (adc_data),
-      .o_in_phase   (phase_in_phase)
-  );
-
-  /* ########################################################### */
-  /* AMPLITUDE DETECTOR ######################################## */
-
-  wire [AMPLITUDE_DATA_SIZE-1:0] referenceAmplitude;
-  wire [AMPLITUDE_DATA_SIZE-1:0] errorAmplitude;
-  wire amplitudeDetectorUpdate;
-
-  amplitude_detector #(
-      .IAGC_STATUS_SIZE       (IAGC_STATUS_SIZE),
-      .AXIS_DATA_SIZE         (AXIS_DATA_SIZE),
-      .AMPLITUDE_SAMPLES_COUNT(AMPLITUDE_SAMPLES_COUNT),
-      .AMPLITUDE_DATA_SIZE    (AMPLITUDE_DATA_SIZE)
-  ) u_amplitude_detector (
-      .i_clock(clock0),
-      .i_sample(sample_valid),
-      .i_iagcStatus(iagcStatus),
-      .i_data(adc_data),
-      .o_referenceAmplitude(referenceAmplitude),
-      .o_errorAmplitude(errorAmplitude),
-      .o_update(amplitudeDetectorUpdate)
-  );
-
-  /* ########################################################### */
   /* PROCESSOR ################################################# */
 
-  wire [  QUOTIENT_SIZE-1:0] processorQuotient;
-  wire [FRACTIONAL_SIZE-1:0] processorFractional;
+  wire p_inPhase;
+  wire [AMPLITUDE_DATA_SIZE-1:0] p_referenceAmplitude;
+  wire [AMPLITUDE_DATA_SIZE-1:0] p_errorAmplitude;
+  wire [QUOTIENT_SIZE-1:0] p_quotient;
+  wire [FRACTIONAL_SIZE-1:0] p_fractional;
+  
   processor #(
+      .IAGC_STATUS_SIZE(IAGC_STATUS_SIZE),
+      .AXIS_DATA_SIZE(AXIS_DATA_SIZE),
       .AMPLITUDE_DATA_SIZE(AMPLITUDE_DATA_SIZE),
+      .ZMOD_DATA_SIZE(ZMOD_DATA_SIZE),
       .QUOTIENT_SIZE(QUOTIENT_SIZE),
-      .FRACTIONAL_SIZE(FRACTIONAL_SIZE)
+      .FRACTIONAL_SIZE(FRACTIONAL_SIZE),
+      .PHASE_SAMPLES_COUNT(PHASE_SAMPLES_COUNT),
+      .AMPLITUDE_SAMPLES_COUNT(AMPLITUDE_SAMPLES_COUNT)
   ) u_processor (
       .i_clock(clock0),
-      .i_reference(referenceAmplitude),
-      .i_error(errorAmplitude),
-      .i_valid(amplitudeDetectorUpdate),
-      .o_quotient(processorQuotient),
-      .o_fractional(processorFractional)
+      .i_iagcStatus(iagcStatus),
+      .i_adcData(adcData),
+      .i_valid(st_valid),
+      .o_inPhase(p_inPhase),
+      .o_referenceAmplitude(p_referenceAmplitude),
+      .o_errorAmplitude(p_errorAmplitude),
+      .o_quotient(p_quotient),
+      .o_fractional(p_fractional)
   );
 
   /* ########################################################### */
@@ -253,11 +225,11 @@ module top #(
   ) u_logger (
       .i_clock(clock0),
       .i_iagcStatus(iagcStatus),
-      .i_referenceAmplitude(referenceAmplitude),
-      .i_errorAmplitude(errorAmplitude),
-      .i_quotient(processorQuotient),
-      .i_fractional(processorFractional),
-      .i_onPhase(phase_in_phase),
+      .i_referenceAmplitude(p_referenceAmplitude),
+      .i_errorAmplitude(p_errorAmplitude),
+      .i_quotient(p_quotient),
+      .i_fractional(p_fractional),
+      .i_onPhase(p_inPhase),
       .i_txReady(uart_tx_ready),
       .o_txData(logger_data),
       .o_txValid(logger_valid)
@@ -290,7 +262,7 @@ module top #(
       .i_clock      (clock0),
       .i_nReset     (clocksValid),
       .i_iagc_status(iagcStatus),
-      .i_in_phase   (phase_in_phase),
+      .i_in_phase   (p_inPhase),
       .o_led0_r     (o_led0_r),
       .o_led0_g     (o_led0_g),
       .o_led0_b     (o_led0_b),

@@ -2,40 +2,68 @@
 
 module processor_tb ();
 
-  localparam SYS_CLOCK_PERIOD = 10;
-
-  reg  [12 : 0] ref_amplitude;
-  reg  [12 : 0] err_amplitude;
-  reg           clock;
-  reg           amplitude_valid;
-  wire [ 7 : 0] processor_quotient;
-  wire [ 7 : 0] processor_fractional;
-
+  localparam SYS_CLOCK_PERIOD = 8;
+  localparam AXIS_DATA_SIZE = 32;
+  localparam IAGC_STATUS_SIZE = 4;
+  localparam PHASE_SAMPLES_COUNT = 20;
+  localparam AMPLITUDE_SAMPLES_COUNT = 20;
+  localparam AMPLITUDE_DATA_SIZE = AXIS_DATA_SIZE / 2;
+  localparam QUOTIENT_SIZE = 8;
+  localparam FRACTIONAL_SIZE = 8;
+  localparam IAGC_STATUS_RESET = 4'b0000;
+  localparam IAGC_STATUS_INIT = 4'b0001;
+  localparam IAGC_STATUS_IDLE = 4'b0010;
+  
+  reg clock;
+  reg [IAGC_STATUS_SIZE-1:0] iagcStatus;
+  reg [AXIS_DATA_SIZE-1:0] adcData;
+  reg adcDataValid;
+  
   initial begin
-    clock           = 1'b0;
-    amplitude_valid = 1'b0;
-    ref_amplitude   = 3900;
-    err_amplitude   = 3740;
-
-    #500 amplitude_valid = 1'b1;
-    #20 amplitude_valid = 1'b0;
+    clock = 1'b0;
+    adcDataValid = 1'b0;
+    adcData = 32'b1000_0000_1111_0000_0000_1111_0000_0000;
+    iagcStatus = IAGC_STATUS_RESET;
+    
+    #100
+    iagcStatus = IAGC_STATUS_INIT;
+    
+    #100
+    iagcStatus = IAGC_STATUS_IDLE;
   end
 
   always begin
     #(SYS_CLOCK_PERIOD / 2) clock = ~clock;
   end
+  
+  always begin
+    #(SYS_CLOCK_PERIOD * 2) adcDataValid = ~adcDataValid;
+  end
 
+  wire inPhase;
+  wire [AMPLITUDE_DATA_SIZE-1:0] referenceAmplitude;
+  wire [AMPLITUDE_DATA_SIZE-1:0] errorAmplitude;
+  wire [QUOTIENT_SIZE-1:0] quotient;
+  wire [FRACTIONAL_SIZE-1:0] fractional;
+  
   processor #(
-      .AMPLITUDE_DATA_SIZE(13),
-      .QUOTIENT_SIZE      (8),
-      .FRACTIONAL_SIZE    (8)
+      .IAGC_STATUS_SIZE(IAGC_STATUS_SIZE),
+      .AXIS_DATA_SIZE(AXIS_DATA_SIZE),
+      .AMPLITUDE_DATA_SIZE(AMPLITUDE_DATA_SIZE),
+      .QUOTIENT_SIZE(QUOTIENT_SIZE),
+      .FRACTIONAL_SIZE(FRACTIONAL_SIZE),
+      .PHASE_SAMPLES_COUNT(PHASE_SAMPLES_COUNT),
+      .AMPLITUDE_SAMPLES_COUNT(AMPLITUDE_SAMPLES_COUNT)
   ) u_processor (
-      .i_clock     (clock),
-      .i_reference (ref_amplitude),
-      .i_error     (err_amplitude),
-      .i_valid     (amplitude_valid),
-      .o_quotient  (processor_quotient),
-      .o_fractional(processor_fractional)
+      .i_clock(clock),
+      .i_iagcStatus(iagcStatus),
+      .i_adcData(adcData),
+      .i_valid(adcDataValid),
+      .o_inPhase(inPhase),
+      .o_referenceAmplitude(referenceAmplitude),
+      .o_errorAmplitude(errorAmplitude),
+      .o_quotient(quotient),
+      .o_fractional(fractional)
   );
 
 endmodule

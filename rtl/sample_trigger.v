@@ -6,7 +6,6 @@ module sample_trigger #(
 ) (
     input wire i_clock,
     input wire [IAGC_STATUS_SIZE-1:0] i_iagc_status,
-    input wire i_adc_data_valid,
     input wire i_gate,
     output wire o_valid
 );
@@ -22,7 +21,7 @@ module sample_trigger #(
   end
 
   always @(posedge i_clock) begin
-    valid = i_adc_data_valid && i_gate && counter == (DECIMATOR - 1);
+    valid = i_gate && counter == (DECIMATOR - 1);
   end
 
   assign o_valid = valid;

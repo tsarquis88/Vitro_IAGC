@@ -15,10 +15,10 @@ class IagcData:
 
     def __init__(self, raw_data) -> None:
         data = {}
-        data['reference_amplitude'] = (raw_data[0] >> 2) + (raw_data[1] << 6)
-        data['error_amplitude'] = (raw_data[2] >> 2) + (raw_data[3] << 6)
-        data['reference_voltage'] = data['reference_amplitude'] * 0.13e-3
-        data['error_voltage'] = data['error_amplitude'] * 0.13e-3
+        data['reference_amplitude'] = raw_data[0] + (raw_data[1] << 8)
+        data['error_amplitude'] = raw_data[2] + (raw_data[3] << 8)
+        data['reference_voltage'] = float("{:.5f}".format(data['reference_amplitude'] * 0.13e-3))
+        data['error_voltage'] = float("{:.5f}".format(data['error_amplitude'] * 0.13e-3))
         data['quotient'] = raw_data[4]
         data['fractional'] = raw_data[5]
         data['in_phase'] = True if raw_data[6] == 1 else False
