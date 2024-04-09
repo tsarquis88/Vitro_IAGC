@@ -1,4 +1,6 @@
 import json
+import traceback
+import sys
 
 # 1 - Reference raw amplitude low
 # 2 - Reference raw amplitude high
@@ -28,11 +30,19 @@ class IagcData:
     def print(self) -> None:
         print(self.json_data)
 
-file = open("/dev/ttyUSB0", "rb")
+def main():
+    try:
+        while(True):
+            content = open("/dev/ttyUSB0", "rb").read(DATA_AMOUNT)
+            IagcData(content).print()
+    except KeyboardInterrupt:
+        pass
+    except Exception:
+        traceback.print_exc(file=sys.stdout)
+    sys.exit(0)
 
-while(True):
-    content = file.read(DATA_AMOUNT)
-    IagcData(content).print()
+if __name__ == "__main__":
+    main()
 
 
 
