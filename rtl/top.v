@@ -190,7 +190,7 @@ module top #(
   wire [AMPLITUDE_DATA_SIZE-1:0] p_errorAmplitude;
   wire [QUOTIENT_SIZE-1:0] p_quotient;
   wire [FRACTIONAL_SIZE-1:0] p_fractional;
-  
+
   processor #(
       .IAGC_STATUS_SIZE(IAGC_STATUS_SIZE),
       .AXIS_DATA_SIZE(AXIS_DATA_SIZE),

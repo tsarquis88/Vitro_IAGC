@@ -37,26 +37,20 @@ module amplitude_detector #(
   wire signed [(AXIS_DATA_SIZE/2)-1:0] referenceSignal;
   wire signed [(AXIS_DATA_SIZE/2)-1:0] errorSignal;
 
-  sign_extensor #
-  (
-    .INPUT_DATA_SIZE(ZMOD_DATA_SIZE),
-    .OUTPUT_DATA_SIZE(AMPLITUDE_DATA_SIZE)
-  )
-  u_sign_extensor_reference
-  (
-    .inputData(i_data[(AXIS_DATA_SIZE/2)-1:2]),
-    .outputData(referenceSignal)
+  sign_extensor #(
+      .INPUT_DATA_SIZE (ZMOD_DATA_SIZE),
+      .OUTPUT_DATA_SIZE(AMPLITUDE_DATA_SIZE)
+  ) u_sign_extensor_reference (
+      .inputData (i_data[(AXIS_DATA_SIZE/2)-1:2]),
+      .outputData(referenceSignal)
   );
-  
-   sign_extensor #
-  (
-    .INPUT_DATA_SIZE(ZMOD_DATA_SIZE),
-    .OUTPUT_DATA_SIZE(AMPLITUDE_DATA_SIZE)
-  )
-  u_sign_extensor_error
-  (
-    .inputData(i_data[AXIS_DATA_SIZE-1:(AXIS_DATA_SIZE/2)+2]),
-    .outputData(errorSignal)
+
+  sign_extensor #(
+      .INPUT_DATA_SIZE (ZMOD_DATA_SIZE),
+      .OUTPUT_DATA_SIZE(AMPLITUDE_DATA_SIZE)
+  ) u_sign_extensor_error (
+      .inputData (i_data[AXIS_DATA_SIZE-1:(AXIS_DATA_SIZE/2)+2]),
+      .outputData(errorSignal)
   );
 
   always @(posedge i_clock) begin

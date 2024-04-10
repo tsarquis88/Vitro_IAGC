@@ -3,7 +3,7 @@
 module processor #(
     parameter IAGC_STATUS_SIZE = 4,
     parameter AXIS_DATA_SIZE = 32,
-    parameter AMPLITUDE_DATA_SIZE = AXIS_DATA_SIZE/2,
+    parameter AMPLITUDE_DATA_SIZE = AXIS_DATA_SIZE / 2,
     parameter ZMOD_DATA_SIZE = 14,
     parameter QUOTIENT_SIZE = 8,
     parameter FRACTIONAL_SIZE = 8,
@@ -19,7 +19,7 @@ module processor #(
     output [AMPLITUDE_DATA_SIZE-1:0] o_errorAmplitude,
     output [QUOTIENT_SIZE-1:0] o_quotient,
     output [FRACTIONAL_SIZE-1:0] o_fractional
-);  
+);
   /* ########################################################### */
   /* PHASE DETECTOR ############################################ */
 
@@ -47,7 +47,7 @@ module processor #(
       .AXIS_DATA_SIZE         (AXIS_DATA_SIZE),
       .AMPLITUDE_SAMPLES_COUNT(AMPLITUDE_SAMPLES_COUNT),
       .AMPLITUDE_DATA_SIZE    (AMPLITUDE_DATA_SIZE),
-      .ZMOD_DATA_SIZE (ZMOD_DATA_SIZE)
+      .ZMOD_DATA_SIZE         (ZMOD_DATA_SIZE)
   ) u_amplitude_detector (
       .i_clock(i_clock),
       .i_sample(i_valid),
@@ -57,26 +57,24 @@ module processor #(
       .o_errorAmplitude(ad_errorAmplitude),
       .o_update(ad_amplitudeDetectorUpdate)
   );
-  
+
   assign o_referenceAmplitude = ad_referenceAmplitude;
   assign o_errorAmplitude = ad_errorAmplitude;
 
   /* ########################################################### */
   /* DIVIDER ################################################### */
-  
-  divider #
-  (
-    .AMPLITUDE_DATA_SIZE(AMPLITUDE_DATA_SIZE),
-    .QUOTIENT_SIZE(QUOTIENT_SIZE),
-    .FRACTIONAL_SIZE(FRACTIONAL_SIZE)
-  )u_divider
-  (
-    .i_clock(i_clock),
-    .i_reference(ad_referenceAmplitude),
-    .i_error(ad_errorAmplitude),
-    .i_valid(ad_amplitudeDetectorUpdate),
-    .o_quotient(o_quotient),
-    .o_fractional(o_fractional)
+
+  divider #(
+      .AMPLITUDE_DATA_SIZE(AMPLITUDE_DATA_SIZE),
+      .QUOTIENT_SIZE(QUOTIENT_SIZE),
+      .FRACTIONAL_SIZE(FRACTIONAL_SIZE)
+  ) u_divider (
+      .i_clock(i_clock),
+      .i_reference(ad_referenceAmplitude),
+      .i_error(ad_errorAmplitude),
+      .i_valid(ad_amplitudeDetectorUpdate),
+      .o_quotient(o_quotient),
+      .o_fractional(o_fractional)
   );
 
 endmodule
