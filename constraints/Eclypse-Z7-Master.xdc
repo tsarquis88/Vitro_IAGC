@@ -9,7 +9,7 @@ create_clock -add -name sys_clk_pin -period 8.00 -waveform {0 4} [get_ports { i_
 
 ## Buttons
 set_property -dict { PACKAGE_PIN C17   IOSTANDARD LVCMOS33 } [get_ports { i_reset }]; #IO_L11P_T1_SRCC Sch=btn[0]
-set_property -dict { PACKAGE_PIN C18   IOSTANDARD LVCMOS33 } [get_ports { i_sample }]; #IO_L11N_T1_SRCC Sch=btn[1]
+#set_property -dict { PACKAGE_PIN C18   IOSTANDARD LVCMOS33 } [get_ports { i_sample }]; #IO_L11N_T1_SRCC Sch=btn[1]
 
 ## RGB LEDs
 set_property -dict { PACKAGE_PIN A17   IOSTANDARD LVCMOS33 } [get_ports { o_led0_b }]; #IO_L9N_T1_DQS_AD3N Sch=led0_b
@@ -36,7 +36,7 @@ set_property -dict { PACKAGE_PIN A19   IOSTANDARD LVCMOS33 } [get_ports { o_led1
 #set_property -dict { PACKAGE_PIN E18   IOSTANDARD LVCMOS33 } [get_ports { o_relation[11] }]; #IO_L5P_T0_AD9P Sch=jb4_fpga
 #set_property -dict { PACKAGE_PIN F18   IOSTANDARD LVCMOS33 } [get_ports { o_relation[12] }]; #IO_L6N_T0_VREF Sch=jb7_fpga
 set_property -dict { PACKAGE_PIN G17   IOSTANDARD LVCMOS33 } [get_ports { o_tx }]; #IO_L6P_T0 Sch=jb8_fpga
-set_property -dict { PACKAGE_PIN H18   IOSTANDARD LVCMOS33 } [get_ports { i_rx }]; #IO_L7N_T1_AD2N Sch=jb9_fpga
+#set_property -dict { PACKAGE_PIN H18   IOSTANDARD LVCMOS33 } [get_ports { i_rx }]; #IO_L7N_T1_AD2N Sch=jb9_fpga
 set_property -dict { PACKAGE_PIN H17   IOSTANDARD LVCMOS33 } [get_ports { i_gate }]; #IO_L7P_T1_AD2P Sch=jb10_fpga
 
 ## Syzygy Port A -> ADC1410

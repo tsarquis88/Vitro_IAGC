@@ -1,10 +1,18 @@
 `timescale 1ns / 1ns
 
+`define assertEq(signal, value) \
+        if (signal !== value) begin \
+            $display("ASSERTION FAILED in %m: signal != value"); \
+            $finish; \
+        end
+
 module logger_tb ();
 
   localparam AMPLITUDE_DATA_SIZE = 16;
   localparam UART_DATA_SIZE = 8;
   localparam IAGC_STATUS_SIZE = 4;
+  localparam UART_CLK_FREQ = 100_000_000;
+  localparam UART_BAUDRATE = 9_200;
 
   reg clock;
   reg nReset;
@@ -15,15 +23,15 @@ module logger_tb ();
   reg [UART_DATA_SIZE-1:0] fractional;
   reg onPhase;
 
-  wire txReady;
-  wire loggerValid;
-  wire tx;
-  wire [UART_DATA_SIZE-1:0] txData;
+  wire txBit;
+  integer counter;
+  reg [UART_DATA_SIZE-1:0] expectedValues[6:0];
 
   localparam IAGC_STATUS_RESET = 4'b0000;
   localparam IAGC_STATUS_INIT = 4'b0001;
 
   initial begin
+    counter = 0;
     clock = 1'b0;
     nReset = 1'b1;
     iagcStatus = IAGC_STATUS_RESET;
@@ -32,6 +40,13 @@ module logger_tb ();
     quotient = 8'b0101_0000;
     fractional = 8'b0000_0101;
     onPhase = 1'b1;
+    expectedValues[0] = referenceAmplitude[7:0];
+    expectedValues[1] = referenceAmplitude[15:8];
+    expectedValues[2] = errorAmplitude[7:0];
+    expectedValues[3] = errorAmplitude[15:8];
+    expectedValues[4] = quotient;
+    expectedValues[5] = fractional;
+    expectedValues[6] = onPhase;
 
     #100 nReset = 1'b1;
     iagcStatus = IAGC_STATUS_INIT;
@@ -44,7 +59,14 @@ module logger_tb ();
     #(SYS_CLOCK_PERIOD / 2) clock = ~clock;
   end
 
+  always @(posedge rxDataValid) begin
+    `assertEq(rxData, expectedValues[counter]);
+    counter <= (counter < 6) ? counter + 1 : 0;
+  end
+
   logger #(
+      .CLK_FREQUENCY(UART_CLK_FREQ),
+      .UART_FREQUENCY(UART_BAUDRATE),
       .TICKS(300000)
   ) u_logger (
       .i_clock(clock),
@@ -54,22 +76,21 @@ module logger_tb ();
       .i_quotient(quotient),
       .i_fractional(fractional),
       .i_onPhase(onPhase),
-      .i_txReady(txReady),
-      .o_txData(txData),
-      .o_txValid(loggerValid)
+      .o_txBit(txBit)
   );
 
-  uart_tx #(
-      .CLK_FREQUENCY (100_000_000),
-      .UART_FREQUENCY(9200)
-  ) u_uart_tx (
-      .user_clk     (clock),
-      .rst_n        (nReset),
-      .start_tx     (loggerValid),
-      .data         (txData),
-      .tx_bit       (tx),
-      .ready        (txReady),
-      .chipscope_clk()
+  wire [UART_DATA_SIZE-1:0] rxData;
+  wire rxDataValid;
+
+  uart_rx #(
+      .CLK_FREQUENCY (UART_CLK_FREQ),
+      .UART_FREQUENCY(UART_BAUDRATE)
+  ) u_uart_rx (
+      .clk(clock),
+      .rst_n(nReset),
+      .rx(txBit),
+      .valid(rxDataValid),
+      .data(rxData)
   );
 
 endmodule

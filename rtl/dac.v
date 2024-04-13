@@ -28,14 +28,15 @@ module dac #(
 
   localparam IAGC_STATUS_RESET = 4'b0000;
 
-  reg  reset = i_iagc_status == IAGC_STATUS_RESET ? 0 : 1;
-  reg  enable = 1;
-  reg  test_mode = 0;
-  wire init_error;
-  wire ready;
+  wire enable = 1;
+  wire test_mode = 0;
+  wire initError;
+  wire reset = (i_iagc_status == IAGC_STATUS_RESET) ? 1'b0 : 1'b1;
+  wire dacInitDone;
 
-  assign o_dac_clkin_n = 1'b0;
-  assign o_dac_clkio_n = 1'b0;
+  assign o_dac_clkin_n   = 1'b0;
+  assign o_dac_clkio_n   = 1'b0;
+  assign o_dac_init_done = (dacInitDone && !initError);
 
   ZmodAWGController_0 u_ZmodAWGController_0 (
       .SysClk100(i_sys_clock),
@@ -43,10 +44,10 @@ module dac #(
       .DAC_Clk(i_dac_clock),
       .aRst_n(reset),
       .sTestMode(test_mode),
-      .sInitDoneDAC(o_dac_init_done),
-      .sConfigError(init_error),
+      .sInitDoneDAC(dacInitDone),
+      .sConfigError(initError),
       .cDataAxisTvalid(i_data_valid),
-      .cDataAxisTready(ready),
+      .cDataAxisTready(),
       .cDataAxisTdata(i_data),
       .sDAC_EnIn(enable),
       .sZmodDAC_CS(o_dac_cs),

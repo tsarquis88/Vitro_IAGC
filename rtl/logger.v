@@ -1,6 +1,8 @@
 `timescale 1ns / 1ps `default_nettype none
 
 module logger #(
+    parameter UART_CLK_FREQ = 100_000_000,
+    parameter UART_BAUDRATE = 9_200,
     parameter IAGC_STATUS_SIZE = 4,
     parameter AMPLITUDE_DATA_SIZE = 16,
     parameter UART_DATA_SIZE = 8,
@@ -13,9 +15,7 @@ module logger #(
     input wire [UART_DATA_SIZE-1:0] i_quotient,
     input wire [UART_DATA_SIZE-1:0] i_fractional,
     input wire i_onPhase,
-    input wire i_txReady,
-    output wire [UART_DATA_SIZE-1:0] o_txData,
-    output wire o_txValid
+    output wire o_txBit
 );
 
   localparam DATA_LEN = 7;
@@ -24,6 +24,7 @@ module logger #(
   reg txValid;
   integer dataAddr;
   integer counter;
+  wire txReady;
 
   localparam STATE_SIZE = 3;
   localparam STATE_RESET = 3'b000;
@@ -113,7 +114,7 @@ module logger #(
         nextState = (i_iagcStatus == IAGC_STATUS_RESET || i_iagcStatus == IAGC_STATUS_INIT) ? STATE_RESET : STATE_IDLE;
       end
       STATE_IDLE: begin
-        nextState = ((counter >= TICKS) && i_txReady) ? STATE_SET : STATE_IDLE;
+        nextState = ((counter >= TICKS) && txReady) ? STATE_SET : STATE_IDLE;
       end
       STATE_SET: begin
         nextState = STATE_START;
@@ -122,10 +123,10 @@ module logger #(
         nextState = STATE_START_WAIT;
       end
       STATE_START_WAIT: begin
-        nextState = (i_txReady) ? STATE_START_WAIT : STATE_WAIT;
+        nextState = (txReady) ? STATE_START_WAIT : STATE_WAIT;
       end
       STATE_WAIT: begin
-        nextState = (i_txReady) ? STATE_INCREASE : STATE_WAIT;
+        nextState = (txReady) ? STATE_INCREASE : STATE_WAIT;
       end
       STATE_INCREASE: begin
         nextState = STATE_DONE;
@@ -139,8 +140,18 @@ module logger #(
     endcase
   end
 
-  assign o_txData  = txData;
-  assign o_txValid = txValid;
+  uart_tx #(
+      .CLK_FREQUENCY (UART_CLK_FREQ),
+      .UART_FREQUENCY(UART_BAUDRATE)
+  ) u_uart_tx (
+      .user_clk     (i_clock),
+      .rst_n        (state != STATE_RESET),
+      .start_tx     (txValid),
+      .data         (txData),
+      .tx_bit       (o_txBit),
+      .ready        (txReady),
+      .chipscope_clk()
+  );
 
 endmodule
 

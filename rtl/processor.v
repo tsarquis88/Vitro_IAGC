@@ -65,11 +65,13 @@ module processor #(
   /* DIVIDER ################################################### */
 
   divider #(
+      .IAGC_STATUS_SIZE(IAGC_STATUS_SIZE),
       .AMPLITUDE_DATA_SIZE(AMPLITUDE_DATA_SIZE),
       .QUOTIENT_SIZE(QUOTIENT_SIZE),
       .FRACTIONAL_SIZE(FRACTIONAL_SIZE)
   ) u_divider (
       .i_clock(i_clock),
+      .i_iagcStatus(i_iagcStatus),
       .i_reference(ad_referenceAmplitude),
       .i_error(ad_errorAmplitude),
       .i_valid(ad_amplitudeDetectorUpdate),

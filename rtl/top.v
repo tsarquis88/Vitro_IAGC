@@ -16,10 +16,6 @@ module top #(
 
     output wire o_tx,
 
-    input wire i_rx,
-
-    input wire i_sample,
-
     input wire i_gate,
 
     input wire [ZMOD_DATA_SIZE-1:0] i_adc_data,
@@ -64,8 +60,8 @@ module top #(
   localparam UART_DATA_SIZE = 8;
   localparam UART_CLK_FREQ = 100_000_000;
   localparam UART_BAUDRATE = 9_200;
-  localparam PHASE_SAMPLES_COUNT = 1500;
-  localparam AMPLITUDE_SAMPLES_COUNT = 1500;
+  localparam PHASE_SAMPLES_COUNT = 2000;
+  localparam AMPLITUDE_SAMPLES_COUNT = 10_000;
   localparam AMPLITUDE_DATA_SIZE = AXIS_DATA_SIZE / 2;
   localparam QUOTIENT_SIZE = 8;
   localparam FRACTIONAL_SIZE = 8;
@@ -215,13 +211,12 @@ module top #(
   /* ########################################################### */
   /* LOGGER #################################################### */
 
-  wire [UART_DATA_SIZE-1:0] logger_data;
-  wire logger_valid;
-
   logger #(
-      .IAGC_STATUS_SIZE   (IAGC_STATUS_SIZE),
+      .UART_CLK_FREQ(UART_CLK_FREQ),
+      .UART_BAUDRATE(UART_BAUDRATE),
+      .IAGC_STATUS_SIZE(IAGC_STATUS_SIZE),
       .AMPLITUDE_DATA_SIZE(AMPLITUDE_DATA_SIZE),
-      .UART_DATA_SIZE     (UART_DATA_SIZE)
+      .UART_DATA_SIZE(UART_DATA_SIZE)
   ) u_logger (
       .i_clock(clock0),
       .i_iagcStatus(iagcStatus),
@@ -230,27 +225,7 @@ module top #(
       .i_quotient(p_quotient),
       .i_fractional(p_fractional),
       .i_onPhase(p_inPhase),
-      .i_txReady(uart_tx_ready),
-      .o_txData(logger_data),
-      .o_txValid(logger_valid)
-  );
-
-  /* ########################################################### */
-  /* UARTS ##################################################### */
-
-  wire uart_tx_ready;
-
-  uart_tx #(
-      .CLK_FREQUENCY (UART_CLK_FREQ),
-      .UART_FREQUENCY(UART_BAUDRATE)
-  ) u_uart_tx (
-      .user_clk     (clock0),
-      .rst_n        (clocksValid),
-      .start_tx     (logger_valid),
-      .data         (logger_data),
-      .tx_bit       (o_tx),
-      .ready        (uart_tx_ready),
-      .chipscope_clk()
+      .o_txBit(o_tx)
   );
 
   /* ########################################################### */

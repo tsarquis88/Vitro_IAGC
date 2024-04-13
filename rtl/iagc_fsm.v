@@ -37,6 +37,9 @@ module iagc_fsm #(
       IAGC_STATUS_IDLE: begin
         nextStatus = IAGC_STATUS_IDLE;
       end
+      default: begin
+        nextStatus = IAGC_STATUS_RESET;
+      end
     endcase
   end
 endmodule

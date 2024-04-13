@@ -34,10 +34,10 @@ module adc #(
 
   localparam IAGC_STATUS_RESET = 4'b0000;
 
-  reg  reset = i_iagc_status == IAGC_STATUS_RESET ? 0 : 1;
   reg  test_mode = 0;
   reg  enable_acquisition = 1;
   reg  ready = 1;
+  wire reset = (i_iagc_status == IAGC_STATUS_RESET) ? 1'b0 : 1'b1;
   wire data_overflow;
   wire init_done_relay;
   wire init_done_adc;
@@ -45,7 +45,7 @@ module adc #(
   wire reset_busy;
 
   assign o_adc_dco_clock_n = 1'b0;
-  assign o_adc_init_done   = init_done_adc && init_done_relay;
+  assign o_adc_init_done = (init_done_adc && init_done_relay && !config_error && !data_overflow && !reset_busy);
 
   ZmodScopeController_0 u_ZmodScopeController_0 (
       .SysClk100(i_sys_clock),
