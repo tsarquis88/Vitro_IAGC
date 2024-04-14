@@ -97,6 +97,20 @@ module top #(
   );
 
   /* ########################################################### */
+  /* WATCHDOG ################################################## */
+
+  wire wd_valid;
+
+  watchdog #(
+      .IAGC_STATUS_SIZE(IAGC_STATUS_SIZE)
+  ) u_watchdog (
+      .i_clock(clock0),
+      .i_iagcStatus(iagcStatus),
+      .i_gate(i_gate),
+      .o_valid(wd_valid)
+  );
+
+  /* ########################################################### */
   /* ADC1410 ################################################### */
 
   wire [AXIS_DATA_SIZE-1:0] adcData;
@@ -222,6 +236,7 @@ module top #(
       .i_quotient(p_quotient),
       .i_fractional(p_fractional),
       .i_onPhase(p_inPhase),
+      .i_wdValid(wd_valid),
       .o_txBit(o_tx)
   );
 
@@ -234,7 +249,7 @@ module top #(
       .i_clock      (clock0),
       .i_nReset     (clocksValid),
       .i_iagc_status(iagcStatus),
-      .i_in_phase   (p_inPhase),
+      .i_wdValid    (wd_valid),
       .o_led0_r     (o_led0_r),
       .o_led0_g     (o_led0_g),
       .o_led0_b     (o_led0_b),

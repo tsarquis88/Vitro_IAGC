@@ -6,7 +6,7 @@ module pmod_unit #(
     input  wire                            i_clock,
     input  wire                            i_nReset,
     input  wire [IAGC_STATUS_SIZE - 1 : 0] i_iagc_status,
-    input  wire                            i_in_phase,
+    input  wire                            i_wdValid,
     output wire                            o_led0_r,
     output wire                            o_led0_g,
     output wire                            o_led0_b,
@@ -98,7 +98,7 @@ module pmod_unit #(
 
     endcase
 
-    if (i_in_phase) begin
+    if (i_wdValid) begin
       led1_r = 1'b0;
       led1_g = led_pwm;
       led1_b = 1'b0;

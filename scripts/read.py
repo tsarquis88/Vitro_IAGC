@@ -4,6 +4,16 @@
 import traceback
 import sys
 
+
+def getBit(byte, bitPosFromLsb):
+    binData = bin(byte)
+    bit = binData[len(binData) - bitPosFromLsb - 1]
+    if bit == 'b':
+        return 0
+    else:
+        return int(bit)
+
+
 def parseFixedPoint(data):
     binStr = bin(data)
     idx = len(binStr) - 1
@@ -15,15 +25,18 @@ def parseFixedPoint(data):
         powIdx -= 1
     return floatValue
 
+
 def parseIagcData(raw_data):
     return {
         # Valores analogicos se obtienen multiplicando por 0.13e-3
-        'reference_amplitude': raw_data[0] + (raw_data[1] << 8),
-        'error_amplitude': raw_data[2] + (raw_data[3] << 8),
+        'reference': raw_data[0] + (raw_data[1] << 8),
+        'error': raw_data[2] + (raw_data[3] << 8),
 
         'relation': raw_data[4] + parseFixedPoint(raw_data[5]),
-        'in_phase': True if raw_data[6] == 1 else False,
+        'inPhase': True if getBit(raw_data[6], 0) == 1 else False,
+        'valid': True if getBit(raw_data[6], 1) == 1 else False
     }
+
 
 def readIagcData(device):
     # 1 - Amplitud referencia L
@@ -32,9 +45,10 @@ def readIagcData(device):
     # 4 - Amplitude error H
     # 5 - Cociente
     # 6 - Fraccional
-    # 7 - Fase
+    # 7 - Fase (LSB) y data valid (LSB-1)
     DATA_AMOUNT = 7
     return open(device, "rb").read(DATA_AMOUNT)
+
 
 def main():
     try:

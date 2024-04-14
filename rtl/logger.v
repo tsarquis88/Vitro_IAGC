@@ -15,6 +15,7 @@ module logger #(
     input wire [UART_DATA_SIZE-1:0] i_quotient,
     input wire [UART_DATA_SIZE-1:0] i_fractional,
     input wire i_onPhase,
+    input wire i_wdValid,
     output wire o_txBit
 );
 
@@ -50,13 +51,13 @@ module logger #(
 
     case (state)
       STATE_RESET: begin
-        data[0] = i_referenceAmplitude[(AMPLITUDE_DATA_SIZE/2)-1:0];
-        data[1] = i_referenceAmplitude[AMPLITUDE_DATA_SIZE-1:AMPLITUDE_DATA_SIZE/2];
-        data[2] = i_errorAmplitude[(AMPLITUDE_DATA_SIZE/2)-1:0];
-        data[3] = i_errorAmplitude[AMPLITUDE_DATA_SIZE-1:AMPLITUDE_DATA_SIZE/2];
-        data[4] = i_quotient;
-        data[5] = i_fractional;
-        data[6] = {UART_DATA_SIZE{1'b0}} + i_onPhase;
+        data[0]  <= i_referenceAmplitude[(AMPLITUDE_DATA_SIZE/2)-1:0];
+        data[1]  <= i_referenceAmplitude[AMPLITUDE_DATA_SIZE-1:AMPLITUDE_DATA_SIZE/2];
+        data[2]  <= i_errorAmplitude[(AMPLITUDE_DATA_SIZE/2)-1:0];
+        data[3]  <= i_errorAmplitude[AMPLITUDE_DATA_SIZE-1:AMPLITUDE_DATA_SIZE/2];
+        data[4]  <= i_quotient;
+        data[5]  <= i_fractional;
+        data[6]  <= {UART_DATA_SIZE{1'b0}} + i_onPhase + (i_wdValid << 1);
 
         txValid  <= 1'b0;
         txData   <= 8'b00000000;

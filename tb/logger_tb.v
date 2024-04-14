@@ -22,6 +22,7 @@ module logger_tb ();
   reg [UART_DATA_SIZE-1:0] quotient;
   reg [UART_DATA_SIZE-1:0] fractional;
   reg onPhase;
+  reg wdValid;
 
   wire txBit;
   integer counter;
@@ -39,14 +40,15 @@ module logger_tb ();
     errorAmplitude = 16'b0000_0000_1111_0000;
     quotient = 8'b0101_0000;
     fractional = 8'b0000_0101;
-    onPhase = 1'b1;
+    onPhase = 1'b0;
+    wdValid = 1'b1;
     expectedValues[0] = referenceAmplitude[7:0];
     expectedValues[1] = referenceAmplitude[15:8];
     expectedValues[2] = errorAmplitude[7:0];
     expectedValues[3] = errorAmplitude[15:8];
     expectedValues[4] = quotient;
     expectedValues[5] = fractional;
-    expectedValues[6] = onPhase;
+    expectedValues[6] = onPhase + (wdValid << 1);
 
     #100 nReset = 1'b1;
     iagcStatus = IAGC_STATUS_INIT;
@@ -76,6 +78,7 @@ module logger_tb ();
       .i_quotient(quotient),
       .i_fractional(fractional),
       .i_onPhase(onPhase),
+      .i_wdValid(wdValid),
       .o_txBit(txBit)
   );
 
