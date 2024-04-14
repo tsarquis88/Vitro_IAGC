@@ -60,8 +60,8 @@ module top #(
   localparam UART_DATA_SIZE = 8;
   localparam UART_CLK_FREQ = 100_000_000;
   localparam UART_BAUDRATE = 9_200;
-  localparam PHASE_SAMPLES_COUNT = 2000;
-  localparam AMPLITUDE_SAMPLES_COUNT = 10_000;
+  localparam PHASE_SAMPLES_COUNT = 1000;
+  localparam AMPLITUDE_SAMPLES_COUNT = 1000;
   localparam AMPLITUDE_DATA_SIZE = AXIS_DATA_SIZE / 2;
   localparam QUOTIENT_SIZE = 8;
   localparam FRACTIONAL_SIZE = 8;
@@ -71,7 +71,6 @@ module top #(
 
   wire clock0;  // 100 MHz.
   wire clock1;  // 100 MHz - Shifted 90°.
-  wire clock2;  // 400 MHz.
   wire clocksValid;  // Up once the clocks are ready.
 
   clock_unit #() u_clock_unit (
@@ -79,7 +78,6 @@ module top #(
       .i_reset (i_reset),
       .o_clock0(clock0),
       .o_clock1(clock1),
-      .o_clock2(clock2),
       .o_valid (clocksValid)
   );
 
@@ -110,7 +108,6 @@ module top #(
       .AXIS_DATA_SIZE(AXIS_DATA_SIZE)
   ) u_adc (
       .i_sys_clock(clock0),
-      .i_adc_clock(clock2),
       .i_iagc_status(iagcStatus),
       .i_adc_data(i_adc_data),
       .io_adc_sdio(io_adc_sdio),

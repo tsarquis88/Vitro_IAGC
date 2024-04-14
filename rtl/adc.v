@@ -6,7 +6,6 @@ module adc #(
     parameter IAGC_STATUS_SIZE = 4
 ) (
     input wire i_sys_clock,
-    input wire i_adc_clock,
     input wire [IAGC_STATUS_SIZE  - 1 : 0] i_iagc_status,
     input wire [ZMOD_DATA_SIZE-1:0] i_adc_data,
     inout wire io_adc_sdio,
@@ -50,7 +49,7 @@ module adc #(
   ZmodScopeController_0 u_ZmodScopeController_0 (
       .SysClk100(i_sys_clock),
       .ADC_SamplingClk(i_sys_clock),
-      .ADC_InClk(i_adc_clock),
+      .ADC_InClk(i_sys_clock),
       .aRst_n(reset),
       .sEnableAcquisition(enable_acquisition),
       .sTestMode(test_mode),
