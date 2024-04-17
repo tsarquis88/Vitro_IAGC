@@ -46,6 +46,14 @@ module adc #(
   assign o_adc_dco_clock_n = 1'b0;
   assign o_adc_init_done = (init_done_adc && init_done_relay && !config_error && !data_overflow && !reset_busy);
 
+  /*
+        <--- IP Configuration --->
+        Sampling Clock Period = 10000 ps.
+        ADC Data Width = 14
+        ADC Clock Divide Ratio = 1
+        Coupling Static = AC
+        Gain Static = High
+    */
   ZmodScopeController_0 u_ZmodScopeController_0 (
       .SysClk100(i_sys_clock),
       .ADC_SamplingClk(i_sys_clock),

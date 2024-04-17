@@ -26,26 +26,35 @@ def parseFixedPoint(data):
     return floatValue
 
 
-def parseIagcData(raw_data):
-    return {
-        # Valores analogicos se obtienen multiplicando por 0.13e-3
-        'reference': raw_data[0] + (raw_data[1] << 8),
-        'error': raw_data[2] + (raw_data[3] << 8),
+def parseIagcData(raw_data, verbose=False):
+    BYTE_REF_AMP_L = 0
+    BYTE_REF_AMP_H = 1
+    BYTE_ERR_AMP_L = 2
+    BYTE_ERR_AMP_H = 3
+    BYTE_QUOTIENT = 4
+    BYTE_FRACTIONAL = 5
+    BYTE_MISC = 6
 
-        'relation': raw_data[4] + parseFixedPoint(raw_data[5]),
-        'inPhase': True if getBit(raw_data[6], 0) == 1 else False,
-        'valid': True if getBit(raw_data[6], 1) == 1 else False
-    }
+    if verbose:
+        return {
+            # Valores analogicos se obtienen multiplicando por 0.13e-3
+            'reference': (raw_data[BYTE_REF_AMP_L] + (raw_data[BYTE_REF_AMP_H] << 8)) * 0.13e-3,
+            'error': (raw_data[BYTE_ERR_AMP_L] + (raw_data[BYTE_ERR_AMP_H] << 8)) * 0.13e-3,
+
+            'relation': raw_data[BYTE_QUOTIENT] + parseFixedPoint(raw_data[BYTE_FRACTIONAL]),
+            'inPhase': True if getBit(raw_data[BYTE_MISC], 0) == 1 else False,
+            'valid': True if getBit(raw_data[BYTE_MISC], 1) == 1 else False
+        }
+    else:
+        inPhaseCoeficient = 1 if getBit(raw_data[BYTE_MISC], 0) == 1 else -1
+        return {
+
+            'relation': (raw_data[BYTE_QUOTIENT] + parseFixedPoint(raw_data[BYTE_FRACTIONAL])) * inPhaseCoeficient,
+            'valid': True if getBit(raw_data[BYTE_MISC], 1) == 1 else False
+        }
 
 
 def readIagcData(device):
-    # 1 - Amplitud referencia L
-    # 2 - Amplitud referencia H
-    # 3 - Amplitude error L
-    # 4 - Amplitude error H
-    # 5 - Cociente
-    # 6 - Fraccional
-    # 7 - Fase (LSB) y data valid (LSB-1)
     DATA_AMOUNT = 7
     return open(device, "rb").read(DATA_AMOUNT)
 
@@ -58,7 +67,7 @@ def main():
         device = sys.argv[1]
 
         while(True):
-            print(parseIagcData(readIagcData(device)))
+            print(parseIagcData(readIagcData(device), True))
     except KeyboardInterrupt:
         pass
     except Exception:

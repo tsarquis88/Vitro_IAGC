@@ -18,18 +18,7 @@ module pmod_unit #(
   localparam IAGC_STATUS_RESET = 4'b0000;
   localparam IAGC_STATUS_INIT = 4'b0001;
   localparam IAGC_STATUS_IDLE = 4'b0010;
-  localparam IAGC_STATUS_SAMPLE = 4'b0011;
-  localparam IAGC_STATUS_CMD_PARSE = 4'b0100;
-  localparam IAGC_STATUS_CMD_READ = 4'b0101;
-  localparam IAGC_STATUS_CMD_ERROR = 4'b0110;
-  localparam IAGC_STATUS_DUMP_REF = 4'b0111;
-  localparam IAGC_STATUS_DUMP_ERR = 4'b1000;
-  localparam IAGC_STATUS_CLEAN_MEM = 4'b1001;
-  localparam IAGC_STATUS_SET_MEM = 4'b1010;
-  localparam IAGC_STATUS_SET_DEC = 4'b1011;
-  localparam IAGC_STATUS_HALT = 4'b1100;
-
-  localparam LED_PWM_TICKS = 50;
+  localparam LED_PWM_TICKS = 100;
 
   reg     led_pwm;
   integer led_pwm_counter;
@@ -68,24 +57,6 @@ module pmod_unit #(
 
       IAGC_STATUS_IDLE: begin
         led0_r = 1'b0;
-        led0_g = led_pwm;
-        led0_b = 1'b0;
-      end
-
-      IAGC_STATUS_SAMPLE: begin
-        led0_r = 1'b0;
-        led0_g = 1'b0;
-        led0_b = led_pwm;
-      end
-
-      IAGC_STATUS_DUMP_REF: begin
-        led0_r = led_pwm;
-        led0_g = led_pwm;
-        led0_b = 1'b0;
-      end
-
-      IAGC_STATUS_DUMP_ERR: begin
-        led0_r = led_pwm;
         led0_g = led_pwm;
         led0_b = 1'b0;
       end

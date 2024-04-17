@@ -2,7 +2,7 @@
 
 module watchdog #(
     parameter IAGC_STATUS_SIZE = 4,
-    parameter TICKS = 60000000
+    parameter TICKS = 120000000
 ) (
     input wire i_clock,
     input wire [IAGC_STATUS_SIZE-1:0] i_iagcStatus,

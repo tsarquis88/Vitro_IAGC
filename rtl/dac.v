@@ -38,6 +38,10 @@ module dac #(
   assign o_dac_clkio_n   = 1'b0;
   assign o_dac_init_done = (dacInitDone && !initError);
 
+  /*
+        <--- IP Configuration --->
+        Gain Static = 1
+    */
   ZmodAWGController_0 u_ZmodAWGController_0 (
       .SysClk100(i_sys_clock),
       .DAC_InIO_Clk(i_dac_in_clock),
