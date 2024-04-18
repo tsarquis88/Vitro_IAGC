@@ -38,8 +38,8 @@ def parseIagcData(raw_data, verbose=False):
     if verbose:
         return {
             # Valores analogicos se obtienen multiplicando por 0.13e-3
-            'reference': (raw_data[BYTE_REF_AMP_L] + (raw_data[BYTE_REF_AMP_H] << 8)) * 0.13e-3,
-            'error': (raw_data[BYTE_ERR_AMP_L] + (raw_data[BYTE_ERR_AMP_H] << 8)) * 0.13e-3,
+            'reference': raw_data[BYTE_REF_AMP_L] + (raw_data[BYTE_REF_AMP_H] << 8),
+            'error': raw_data[BYTE_ERR_AMP_L] + (raw_data[BYTE_ERR_AMP_H] << 8),
 
             'relation': raw_data[BYTE_QUOTIENT] + parseFixedPoint(raw_data[BYTE_FRACTIONAL]),
             'inPhase': True if getBit(raw_data[BYTE_MISC], 0) == 1 else False,

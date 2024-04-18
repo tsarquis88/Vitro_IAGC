@@ -10,26 +10,75 @@ module watchdog #(
     output wire o_valid
 );
   localparam IAGC_STATUS_IDLE = 4'b0010;
-
+  localparam STATUS_RESET = 3'b000;
+  localparam STATUS_INIT = 3'b001;
+  localparam STATUS_WATCH = 3'b010;
+  localparam STATUS_VALIDATE = 3'b011;
+  localparam STATUS_MAINTAIN = 3'b100;
+  localparam STATUS_SIZE = 3;
+  reg [STATUS_SIZE-1:0] status;
+  reg [STATUS_SIZE-1:0] nextStatus;
   integer counter;
   reg gateAlive;
   reg valid;
+
   always @(posedge i_clock) begin
     if (i_iagcStatus != IAGC_STATUS_IDLE) begin
-      counter <= 0;
-      gateAlive <= 1'b0;
-      valid <= 1'b1;
+      status <= STATUS_RESET;
     end else begin
-      if (i_gate) begin
-        gateAlive <= 1'b1;
-      end
+      status <= nextStatus;
+    end
 
-      counter <= counter + 1;
-      if (counter == TICKS) begin
+    case (status)
+      STATUS_RESET: begin
         counter <= 0;
-        valid <= gateAlive;
         gateAlive <= 1'b0;
+        valid <= 1'b0;
       end
+      STATUS_INIT: begin
+        counter <= 0;
+        gateAlive <= 1'b0;
+        valid <= valid;
+      end
+      STATUS_WATCH: begin
+        counter <= counter + 1;
+        gateAlive <= i_gate ? 1'b1 : gateAlive;
+        valid <= valid;
+      end
+      STATUS_VALIDATE: begin
+        counter <= counter;
+        gateAlive <= gateAlive;
+        valid <= gateAlive;
+      end
+      STATUS_MAINTAIN: begin
+        counter <= counter;
+        gateAlive <= gateAlive;
+        valid <= valid;
+      end
+    endcase
+  end
+
+  always @(*) begin
+    if (i_iagcStatus != IAGC_STATUS_IDLE) begin
+      nextStatus = STATUS_RESET;
+    end else begin
+      case (status)
+        STATUS_RESET: begin
+          nextStatus = STATUS_INIT;
+        end
+        STATUS_INIT: begin
+          nextStatus = STATUS_WATCH;
+        end
+        STATUS_WATCH: begin
+          nextStatus = (counter == TICKS) ? STATUS_VALIDATE : STATUS_WATCH;
+        end
+        STATUS_VALIDATE: begin
+          nextStatus = STATUS_MAINTAIN;
+        end
+        STATUS_MAINTAIN: begin
+          nextStatus = STATUS_INIT;
+        end
+      endcase
     end
   end
 
